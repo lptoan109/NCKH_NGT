@@ -1,0 +1,390 @@
+Thiết lập chung cho toàn trang
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background-color: #f0f2f5; /* Một màu nền xám nhạt cho đẹp hơn */
+}
+
+/* --- Thanh Điều Hướng (Navbar) --- */
+.navbar {
+    background-color: #dbe4f0; /* Màu xanh da trời nhạt */
+    padding: 20px;
+    text-align: center;
+    font-weight: bold;
+    color: #333;
+    border-bottom: 2px solid #ccc;
+}
+
+/* --- Bố cục chính --- */
+.container {
+    display: flex;
+    padding: 40px;
+    gap: 40px;
+    max-width: 1400px; /* Thay đổi giá trị ở đây */
+    margin: 40px auto;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.left-column {
+    flex-basis: 20%; /* Cột trái chiếm 20% chiều rộng */
+    display: flex;
+    justify-content: center;
+}
+
+.right-column {
+    flex-basis: 80%;
+    display: flex;
+    flex-direction: column;
+    gap: 30px; /* Tăng khoảng cách lên 30px */
+}
+
+/* --- Các thành phần cụ thể --- */
+.logo {
+    width: 150px;
+    height: 150px;
+    background-color: #e8c3c3; /* Màu hồng nhạt cho logo */
+    border-radius: 50%; /* Bo góc thành hình tròn */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #555;
+    border: 2px solid #d1a3a3;
+}
+
+.top-section {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start; /* Căn các box theo phía trên */
+}
+
+.title-box {
+    background-color: #ffe8a1; /* Màu vàng */
+    padding: 20px;
+    flex-grow: 1; /* Cho phép hộp này tự dãn ra */
+    text-align: center;
+}
+
+.title-box h1 {
+    margin: 0;
+    font-size: 2.5em;
+    color: #333;
+}
+
+
+/* Container mới cho 2 nút */
+.auth-buttons {
+    display: flex; /* Sắp xếp 2 nút nằm cạnh nhau */
+    gap: 10px;     /* Tạo khoảng cách 10px giữa 2 nút */
+}
+
+/* Kiểu chung cho các nút */
+.btn {
+    display: inline-block;
+    background-color: #a1b6d1; /* Màu xanh dương như cũ */
+    color: white;              /* Chữ màu trắng */
+    padding: 15px 20px;        /* Tăng khoảng đệm cho nút to rõ hơn */
+    text-decoration: none;     /* Bỏ gạch chân của thẻ a */
+    font-weight: bold;
+    border-radius: 5px;        /* Bo tròn góc nút */
+    text-align: center;
+    transition: background-color 0.3s ease; /* Hiệu ứng chuyển màu khi di chuột */
+}
+
+/* Hiệu ứng khi người dùng di chuột qua nút */
+.btn:hover {
+    background-color: #8a9eb8; /* Màu xanh sẽ đậm hơn một chút */
+}
+
+.description-box {
+    background-color: #dbe4f0;
+    padding: 60px 20px; /* Tăng padding trên dưới lên 60px */
+    text-align: center;
+    font-size: 1.1em;
+}
+
+.bottom-section {
+    display: flex;
+    gap: 20px;
+}
+
+.action-box {
+    background-color: #a1b6d1; /* Màu xanh dương */
+    padding: 20px;
+    flex-basis: 50%; /* Chiếm 50% */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.diagnosis-button {
+    color: white;
+    font-weight: bold;
+    text-decoration: none;
+    font-size: 1.2em;
+    text-align: center;
+}
+
+.image-box {
+    background-color: #00ffff; /* Màu xanh cyan */
+    padding: 20px;
+    flex-basis: 50%; /* Chiếm 50% */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-weight: bold;
+}
+/* --- BẮT ĐẦU PHẦN RESPONSIVE --- */
+
+/* Áp dụng cho màn hình máy tính bảng và nhỏ hơn (chiều rộng tối đa 992px) */
+@media (max-width: 992px) {
+    .container {
+        /* Chuyển bố cục từ 2 cột ngang thành 1 cột dọc */
+        flex-direction: column;
+        align-items: center; /* Căn logo ra giữa */
+        gap: 40px; /* Tăng khoảng cách giữa logo và khối nội dung */
+    }
+
+    .left-column, .right-column {
+        /* Cho các cột chiếm toàn bộ chiều rộng */
+        flex-basis: 100%;
+        width: 100%;
+    }
+}
+
+/* Áp dụng cho màn hình điện thoại (chiều rộng tối đa 768px) */
+@media (max-width: 768px) {
+    .top-section, .bottom-section {
+        /* Chuyển các khối nằm ngang thành nằm dọc */
+        flex-direction: column;
+    }
+
+    .title-box h1 {
+        font-size: 2em; /* Giảm kích thước chữ tiêu đề cho dễ nhìn */
+    }
+
+    .container {
+        /* Giảm padding trên màn hình nhỏ */
+        padding: 20px;
+        margin: 20px;
+    }
+}
+/* --- CSS CHO FORM ĐĂNG NHẬP / ĐĂNG KÝ --- */
+.form-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh; /* Căn form ra giữa trang theo chiều dọc */
+    background-color: #f0f2f5;
+}
+
+.auth-form {
+    background-color: white;
+    padding: 40px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    width: 100%;
+    max-width: 400px;
+}
+
+.auth-form h2 {
+    text-align: center;
+    margin-bottom: 25px;
+    color: #333;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #555;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box; /* Quan trọng để padding không làm tăng width */
+}
+
+/* Chỉnh lại nút submit trong form */
+.auth-form .btn {
+    width: 100%;
+    padding: 12px;
+    font-size: 1.1em;
+}
+
+.form-switch {
+    text-align: center;
+    margin-top: 20px;
+}
+/* --- CSS cho nút Google --- */
+.btn-google {
+    background-color: #4285F4; /* Màu đặc trưng của Google */
+    color: white;
+}
+
+.btn-google:hover {
+    background-color: #357ae8; /* Màu đậm hơn khi di chuột */
+}
+/* --- CSS CHO NAVIGATION BAR MỚI (V2) --- */
+.navbar-v2 {
+    display: flex; /* Xếp các mục con trên cùng một hàng */
+    justify-content: space-between; /* Đẩy các mục con ra 2 phía */
+    align-items: center; /* Căn giữa các mục con theo chiều dọc */
+    background-color: #ffffff;
+    padding: 15px 30px;
+    border-bottom: 1px solid #e0e0e0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.nav-links a {
+    color: #333;
+    text-decoration: none;
+    font-weight: 500;
+    margin: 0 15px;
+    padding: 5px 0;
+    transition: color 0.3s ease;
+    border-bottom: 2px solid transparent;
+}
+
+.nav-links a:hover {
+    color: #007bff;
+    border-bottom-color: #007bff;
+}
+
+.nav-auth {
+    display: flex; /* Xếp các nút và avatar trên cùng một hàng */
+    align-items: center;
+    gap: 15px; /* Khoảng cách giữa các nút */
+}
+
+/* Nút phụ (ví dụ: nút Đăng ký) */
+.btn-secondary {
+    background-color: #6c757d;
+    color: white; /* Thêm màu chữ trắng cho dễ đọc */
+}
+.btn-secondary:hover {
+    background-color: #5a6268;
+}
+
+/* Nút Đăng xuất */
+.btn-logout {
+    background-color: #dc3545;
+    color: white; /* Thêm màu chữ trắng cho dễ đọc */
+}
+.btn-logout:hover {
+    background-color: #c82333;
+}
+
+/* Avatar trên thanh nav */
+.avatar-image-nav {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 2px solid #ddd;
+}
+
+/* --- CSS CHO TRANG CHẨN ĐOÁN --- */
+.diagnose-container {
+    display: flex;
+    gap: 30px; /* Khoảng cách giữa 2 cột */
+    padding: 40px;
+    max-width: 1200px;
+    margin: 40px auto;
+}
+
+/* Cột trái */
+.recording-panel {
+    flex: 1; /* Chiếm 1 phần */
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.history-btn {
+    background-color: #f3d9a2; /* Màu cam nhạt */
+    border: 1px solid #e2c07a;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    align-self: flex-start; /* Nút chỉ rộng bằng nội dung và nằm bên trái */
+}
+
+.recorder {
+    background-color: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 30px;
+    text-align: center;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+}
+
+.record-btn {
+    background-color: #28a745; /* Màu xanh lá */
+    color: white;
+    border: none;
+    border-radius: 50%; /* Bo tròn thành hình tròn */
+    width: 120px;
+    height: 120px;
+    font-size: 1.2em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.record-btn:hover {
+    background-color: #218838;
+}
+
+.record-btn .icon {
+    font-size: 2.5em; /* Kích thước icon micro */
+}
+
+.timeline {
+    margin-top: 20px;
+    font-size: 1.5em;
+    color: #555;
+    background-color: #f8f9fa;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+/* Cột phải */
+.results-panel {
+    flex: 2; /* Chiếm 2 phần, rộng hơn cột trái */
+    background-color: #fff8e1; /* Màu vàng nhạt */
+    border: 1px solid #ffecb3;
+    border-radius: 8px;
+    padding: 30px;
+}
+
+.results-content {
+    margin-top: 20px;
+}
+.avatar-text {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #007bff;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.2em;
+    font-weight: bold;
+}

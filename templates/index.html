@@ -1,0 +1,89 @@
+<!-- <!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trang Chủ - NGT Cough</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <header class="navbar">
+        NAVIGATION BAR
+    </header>
+
+    <main>
+        <div class="container">
+            <div class="left-column">
+                <div class="logo">LOGO</div>
+            </div>
+
+            <div class="right-column">
+                <div class="top-section">
+                    <div class="title-box">
+                        <h1>NGT COUGH</h1>
+                    </div>
+                    {% if user_is_logged_in %}
+                    {# Đoạn này hiển thị avatar nếu đã đăng nhập #}
+                    <div class="profile-section">
+                        <img src="{{ user_avatar }}" alt="User Avatar" class="avatar-image">
+                    </div>
+                    {% else %}
+                    {# Đoạn này hiển thị nút nếu chưa đăng nhập #}
+                    <div class="auth-buttons">
+                        <a href="{{ url_for('login') }}" class="btn">ĐĂNG NHẬP</a>
+                        <a href="{{ url_for('register') }}" class="btn">ĐĂNG KÝ</a>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="description-box">
+                    <p>MÔ TẢ VÀ TÓM TẮT VỀ ĐỀ TÀI</p>
+                </div>
+
+                <div class="bottom-section">
+                    <div class="action-box">
+                        <a href="#" class="diagnosis-button">NÚT DẪN ĐẾN TRANG CHẨN ĐOÁN</a>
+                    </div>
+                    <div class="image-box">
+                        <p>MỘT BỨC ẢNH GÌ ĐẤY LIÊN QUAN ĐẾN LĨNH VỰC</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+</body>
+</html> -->
+{% extends 'base.html' %}
+
+{% block content %}
+    {# Chỉ giữ lại phần nội dung riêng của trang chủ #}
+    <div class="container">
+        <div class="left-column">
+            <div class="logo">LOGO</div>
+        </div>
+
+        <div class="right-column">
+            <div class="top-section">
+                <div class="title-box">
+                    <h1>NGT SIGMA</h1>
+                </div>
+                {# Phần auth buttons đã được chuyển lên navbar #}
+            </div>
+
+            <div class="description-box">
+                <p>MÔ TẢ VÀ TÓM TẮT VỀ ĐỀ TÀI</p>
+            </div>
+
+            <div class="bottom-section">
+                <div class="action-box">
+                    <a href="{{ url_for('diagnose') }}" class="diagnosis-button">NÚT DẪN ĐẾN TRANG CHẨN ĐOÁN</a>
+                </div>
+                <div class="image-box">
+                    <p>MỘT BỨC ẢNH GÌ ĐẤY LIÊN QUAN ĐẾN LĨNH VỰC</p>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

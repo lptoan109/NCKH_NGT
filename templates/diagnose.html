@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block title %}Chẩn Đoán - NGT Cough{% endblock %}
+
+{% block content %}
+<div class="diagnose-container">
+    <div class="recording-panel">
+        <button class="history-btn">Lịch sử ghi âm</button>
+        
+        <div class="recorder">
+            <div class="record-btn-container">
+                <button id="record-btn" class="record-btn">
+                    <span class="icon">🎤</span>
+                    <span class="text">GHI ÂM</span>
+                </button>
+            </div>
+            <div class="timeline">
+                <span id="timer">00:00</span>
+                </div>
+        </div>
+    </div>
+
+    <div class="results-panel">
+        <h3>KẾT QUẢ CHẨN ĐOÁN</h3>
+        <div class="results-content">
+            <p>Sau khi ghi âm và phân tích, kết quả sẽ được hiển thị tại đây.</p>
+        </div>
+    </div>
+</div>
+<script src="{{ url_for('static', filename='recorder.js') }}"></script>
+{% endblock %}
