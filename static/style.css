@@ -388,3 +388,24 @@ body {
     font-size: 1.2em;
     font-weight: bold;
 }
+/* --- CSS CHO FLASH MESSAGES --- */
+.flash-messages {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto 20px auto;
+    padding: 0 40px;
+    box-sizing: border-box;
+}
+.alert {
+    padding: 15px;
+    margin-bottom: 20px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    color: #fff;
+}
+.alert-success {
+    background-color: #28a745; /* Màu xanh lá */
+}
+.alert-danger {
+    background-color: #dc3545; /* Màu đỏ */
+}

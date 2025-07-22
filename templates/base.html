@@ -38,6 +38,21 @@
 
     <main>
         {# Đây là nơi nội dung riêng của từng trang sẽ được chèn vào #}
+        {# --- THÊM KHỐI CODE NÀY VÀO --- #}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+    {# -------------------------------- #}
+
+    {% block content %}{% endblock %}
         {% block content %}{% endblock %}
     </main>
 
