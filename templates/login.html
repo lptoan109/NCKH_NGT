@@ -1,34 +1,28 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đăng Nhập</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body>
-    <div class="form-container">
-        <form class="auth-form" action="/login" method="post">
-            <h2>Đăng Nhập</h2>
-            
-            <div class="form-group">
-                <label for="username">Tên đăng nhập</label>
-                <input type="text" id="username" name="username" required>
-            </div>
-            <div class="form-group">
-                <label for="password">Mật khẩu</label>
-                <input type="password" id="password" name="password" required>
-            </div>
-            <button type="submit" class="btn">Đăng Nhập</button>
-            
-            <hr style="margin: 20px 0; border: 0; border-top: 1px solid #ccc;">
+{% extends 'base.html' %}
 
-            <a href="/login/google" class="btn btn-google">
-                Đăng nhập với Google
-            </a>
+{% block title %}Đăng Nhập - NGT Cough{% endblock %}
 
-            <p class="form-switch">Chưa có tài khoản? <a href="{{ url_for('register') }}">Đăng ký ngay</a></p>
-        </form>
-    </div>
-</body>
-</html>
+{% block content %}
+<div class="form-container">
+    <form class="auth-form" method="POST">
+        <h2>Đăng Nhập</h2>
+        <div class="form-group">
+            <label for="username">Tên đăng nhập</label>
+            <input type="text" id="username" name="username" required>
+        </div>
+        <div class="form-group">
+            <label for="password">Mật khẩu</label>
+            <input type="password" id="password" name="password" required>
+        </div>
+        <button type="submit" class="btn">Đăng Nhập</button>
+
+        <hr style="margin: 20px 0; border: 0; border-top: 1px solid #ccc;">
+
+        <a href="{{ url_for('login_google') }}" class="btn btn-google">
+            Đăng nhập với Google
+        </a>
+
+        <p class="form-switch">Chưa có tài khoản? <a href="{{ url_for('register') }}">Đăng ký ngay</a></p>
+    </form>
+</div>
+{% endblock %}
