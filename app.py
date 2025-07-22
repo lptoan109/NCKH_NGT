@@ -71,12 +71,32 @@ def login():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        hashed_password = bcrypt.generate_password_hash(request.form.get('password')).decode('utf-8')
-        new_user = User(username=request.form.get('username'), email=request.form.get('email'), password_hash=hashed_password)
+        email = request.form.get('email')
+        username = request.form.get('username')
+
+        # --- PHẦN NÂNG CẤP ---
+        # KIỂM TRA XEM EMAIL HOẶC USERNAME ĐÃ TỒN TẠI CHƯA
+        existing_user_email = User.query.filter_by(email=email).first()
+        if existing_user_email:
+            flash('Địa chỉ email này đã được sử dụng.', 'danger')
+            return redirect(url_for('register'))
+
+        existing_user_username = User.query.filter_by(username=username).first()
+        if existing_user_username:
+            flash('Tên đăng nhập này đã tồn tại.', 'danger')
+            return redirect(url_for('register'))
+        # ---------------------
+
+        # Nếu chưa tồn tại, tiếp tục tạo user mới
+        password = request.form.get('password')
+        hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+        new_user = User(username=username, email=email, password_hash=hashed_password)
         db.session.add(new_user)
         db.session.commit()
+
         flash('Tạo tài khoản thành công! Vui lòng đăng nhập.', 'success')
         return redirect(url_for('login'))
+
     return render_template('register.html')
 
 @app.route('/logout')
