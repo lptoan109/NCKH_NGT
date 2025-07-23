@@ -7,3 +7,4 @@ authlib
 requests
 Werkzeug
 gunicorn
+Flask-Mail
