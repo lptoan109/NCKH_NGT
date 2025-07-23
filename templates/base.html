@@ -14,7 +14,7 @@
                 <a href="{{ url_for('homepage') }}">Trang Chủ</a>
                 <a href="#">Giới Thiệu</a>
                 <a href="{{ url_for('diagnose') }}">Bắt Đầu Chẩn Đoán</a>
-                <a href="#">Liên Hệ & Báo Cáo Lỗi</a>
+                <a href="{{ url_for('contact') }}">Liên Hệ & Báo Cáo Lỗi</a>
             </div>
             <div class="nav-auth">
     {% if current_user.is_authenticated %}

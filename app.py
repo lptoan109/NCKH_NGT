@@ -140,6 +140,11 @@ def authorize():
 def diagnose():
     return render_template('diagnose.html')
 
+@app.route('/contact')
+def contact():
+    """Trang hiển thị thông tin liên hệ."""
+    return render_template('contact.html')
+
 # (Các route khác như history, upload_audio giữ nguyên)
 @app.route('/history')
 @login_required

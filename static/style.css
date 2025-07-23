@@ -422,3 +422,32 @@ body {
 .btn-delete:hover {
     background-color: #c82333;
 }
+
+/* --- CSS CHO TRANG PHỤ --- */
+.page-container {
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 40px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+.page-container h2 {
+    margin-bottom: 20px;
+}
+
+.page-container p {
+    line-height: 1.6;
+    margin-bottom: 20px;
+}
+
+.contact-button-container {
+    margin-top: 30px;
+}
+
+.contact-btn {
+    padding: 15px 30px;
+    font-size: 1.1em;
+}
