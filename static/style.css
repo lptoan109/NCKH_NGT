@@ -467,3 +467,10 @@ body {
     padding: 15px;
     font-size: 1.1em;
 }
+
+/* Thêm vào CSS cho trang liên hệ */
+.form-group-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Tạo 2 cột bằng nhau */
+    gap: 20px; /* Khoảng cách giữa các ô */
+}

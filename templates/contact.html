@@ -5,43 +5,46 @@
 {% block content %}
 <div class="page-container">
     <h2>Liên Hệ & Báo Cáo Lỗi</h2>
-    <p>Chúng tôi rất trân trọng mọi phản hồi từ bạn để cải thiện sản phẩm. Vui lòng sử dụng biểu mẫu bên dưới để gửi câu hỏi, góp ý hoặc báo cáo lỗi mà bạn gặp phải trong quá trình sử dụng.</p>
+    <p>Vui lòng sử dụng biểu mẫu bên dưới để gửi câu hỏi, góp ý hoặc báo cáo lỗi. Chúng tôi rất trân trọng mọi phản hồi từ bạn.</p>
 
     <hr class="divider">
 
-    <form class="contact-form" action="#" method="POST">
+    <form class="contact-form" action="{{ url_for('contact') }}" method="POST">
         
-        <div class="form-group">
-            <label for="name">Tên của bạn (Không bắt buộc)</label>
-            <input type="text" id="name" name="name">
+        <div class="form-group-grid">
+            <div class="form-group">
+                <label for="ho_ten">Họ và tên</label>
+                <input type="text" id="ho_ten" name="ho_ten" required>
+            </div>
+
+            <div class="form-group">
+                <label for="dia_chi">Địa chỉ (Không bắt buộc)</label>
+                <input type="text" id="dia_chi" name="dia_chi">
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+
+            <div class="form-group">
+                <label for="dien_thoai">Điện thoại (Không bắt buộc)</label>
+                <input type="text" id="dien_thoai" name="dien_thoai">
+            </div>
         </div>
 
         <div class="form-group">
-            <label for="email">Email liên hệ của bạn</label>
-            <input type="email" id="email" name="email" required>
+            <label for="tieu_de">Tiêu đề</label>
+            <input type="text" id="tieu_de" name="tieu_de" required>
         </div>
 
         <div class="form-group">
-            <label for="subject">Chủ đề</label>
-            <select id="subject" name="subject">
-                <option value="general">Hỏi đáp chung</option>
-                <option value="bug_report">Báo cáo lỗi kỹ thuật</option>
-                <option value="feedback">Góp ý, đề xuất</option>
-            </select>
-        </div>
-
-        <div class="form-group">
-            <label for="message">Nội dung tin nhắn</label>
-            <textarea id="message" name="message" rows="6" required></textarea>
+            <label for="noi_dung">Nội dung</label>
+            <textarea id="noi_dung" name="noi_dung" rows="6" required></textarea>
         </div>
         
         <button type="submit" class="btn">Gửi Tin Nhắn</button>
     </form>
-
-    <hr class="divider">
-
-    <p>Hoặc, nếu bạn muốn gửi email trực tiếp từ ứng dụng của mình, hãy nhấn vào đây:</p>
-    <a href="mailto:trongkhangnguyen503@gmail.com?subject=Góp ý / Báo cáo lỗi - Website NGT Cough" class="btn btn-secondary">Gửi Email Trực Tiếp</a>
 
 </div>
 {% endblock %}
