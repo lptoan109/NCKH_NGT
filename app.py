@@ -140,9 +140,15 @@ def authorize():
 def diagnose():
     return render_template('diagnose.html')
 
-@app.route('/contact')
+@app.route('/contact', methods=['GET', 'POST']) # <-- Cho phép cả POST
 def contact():
-    """Trang hiển thị thông tin liên hệ."""
+    if request.method == 'POST':
+        # Tạm thời, chúng ta chưa xử lý gửi email ở đây
+        # Chỉ hiển thị một thông báo cảm ơn
+        flash('Cảm ơn bạn đã gửi tin nhắn!', 'success')
+        return redirect(url_for('contact'))
+
+    # Nếu là request GET, chỉ hiển thị trang như bình thường
     return render_template('contact.html')
 
 # (Các route khác như history, upload_audio giữ nguyên)
