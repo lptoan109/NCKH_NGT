@@ -1,0 +1,6 @@
+# Các file và thư mục Git sẽ bỏ qua
+__pycache__/
+instance/
+database.db
+
+config.py           <-- THÊM DÒNG NÀY VÀO

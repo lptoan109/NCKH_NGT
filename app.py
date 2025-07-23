@@ -1,4 +1,6 @@
 import os
+from flask_mail import Mail, Message
+import config
 from flask import Flask, url_for, session, redirect, render_template, request, flash
 from authlib.integrations.flask_client import OAuth
 from datetime import datetime
@@ -9,6 +11,13 @@ from werkzeug.utils import secure_filename
 
 # --- 1. Cài đặt và Cấu hình ---
 app = Flask(__name__)
+# --- Cấu hình cho Flask-Mail ---
+app.config['MAIL_SERVER'] = 'smtp.googlemail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = config.EMAIL_USER # Đọc từ file config.py
+app.config['MAIL_PASSWORD'] = config.EMAIL_PASS # Đọc từ file config.py
+mail = Mail(app)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.secret_key = 'your_super_secret_key_change_this' # GIỮ NGUYÊN SECRET KEY CŨ CỦA BẠN
