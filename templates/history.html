@@ -1,21 +1,10 @@
 {% extends 'base.html' %}
 
-{% block title %}Lịch Sử Ghi Âm - NGT Cough{% endblock %}
+{% block title %}Lịch Sử Ghi Âm{% endblock %}
 
 {% block content %}
 <div class="history-container">
     <h2>Lịch sử các bản ghi âm của bạn</h2>
-    
-    {# Hiển thị thông báo nếu có #}
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="alert alert-{{ category }}">
-                    {{ message }}
-                </div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
 
     {% if recordings %}
         <ul class="recording-list">
@@ -26,14 +15,18 @@
                         <strong>Ngày ghi:</strong> {{ recording.timestamp.strftime('%H:%M:%S ngày %d-%m-%Y') }}
                     </div>
                     <div class="item-player">
-                        {# Đường dẫn tới file trong thư mục uploads #}
                         <audio controls src="/uploads/{{ recording.filename }}"></audio>
+                    </div>
+                    <div class="item-actions">
+                        <form action="{{ url_for('delete_recording', recording_id=recording.id) }}" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn xóa bản ghi này không?');">
+                            <button type="submit" class="btn-delete">Xóa</button>
+                        </form>
                     </div>
                 </li>
             {% endfor %}
         </ul>
     {% else %}
-        <p>Bạn chưa có bản ghi âm nào. Hãy đến trang Chẩn Đoán để bắt đầu!</p>
+        <p>Bạn chưa có bản ghi âm nào.</p>
     {% endif %}
 </div>
 {% endblock %}
