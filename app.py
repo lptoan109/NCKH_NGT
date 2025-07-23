@@ -146,6 +146,33 @@ def diagnose():
 def history():
     recordings = Recording.query.filter_by(user_id=current_user.id).order_by(Recording.timestamp.desc()).all()
     return render_template('history.html', recordings=recordings)
+
+@app.route('/delete_recording/<int:recording_id>', methods=['POST'])
+@login_required
+def delete_recording(recording_id):
+    # Tìm bản ghi trong database
+    recording = Recording.query.get_or_404(recording_id)
+    
+    # Đảm bảo người dùng chỉ có thể xóa bản ghi của chính mình
+    if recording.user_id != current_user.id:
+        return {"error": "Không có quyền truy cập"}, 403
+        
+    try:
+        # Xóa file trên máy chủ
+        filepath = os.path.join('uploads', recording.filename)
+        if os.path.exists(filepath):
+            os.remove(filepath)
+            
+        # Xóa bản ghi trong database
+        db.session.delete(recording)
+        db.session.commit()
+        
+        flash('Đã xóa bản ghi thành công.', 'success')
+    except Exception as e:
+        flash('Đã có lỗi xảy ra khi xóa file.', 'danger')
+        print(f"Lỗi khi xóa file: {e}") # Ghi log lỗi ra console
+    
+    return redirect(url_for('history'))
     
 if not os.path.exists('uploads'):
     os.makedirs('uploads')

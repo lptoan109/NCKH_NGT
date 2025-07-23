@@ -27,7 +27,7 @@
                     </div>
                     <div class="item-player">
                         {# Đường dẫn tới file trong thư mục uploads #}
-                        <audio controls src="{{ url_for('static', filename='../uploads/' + recording.filename) }}"></audio>
+                        <audio controls src="/uploads/{{ recording.filename }}"></audio>
                     </div>
                 </li>
             {% endfor %}

@@ -409,3 +409,16 @@ body {
 .alert-danger {
     background-color: #dc3545; /* Màu đỏ */
 }
+/* --- CSS CHO NÚT XÓA --- */
+.btn-delete {
+    background-color: #dc3545; /* Màu đỏ */
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+}
+.btn-delete:hover {
+    background-color: #c82333;
+}
