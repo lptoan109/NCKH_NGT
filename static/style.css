@@ -423,31 +423,47 @@ body {
     background-color: #c82333;
 }
 
-/* --- CSS CHO TRANG PHỤ --- */
-.page-container {
-    max-width: 800px;
-    margin: 40px auto;
-    padding: 40px;
-    background-color: #fff;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    text-align: center;
+/* --- CSS CHO TRANG LIÊN HỆ --- */
+.divider {
+    margin: 40px 0;
+    border: 0;
+    border-top: 1px solid #eee;
 }
 
-.page-container h2 {
+.contact-form {
+    text-align: left; /* Căn lề trái cho các nhãn */
+    margin: 0 auto;
+    max-width: 600px;
+}
+
+.contact-form .form-group {
     margin-bottom: 20px;
 }
 
-.page-container p {
-    line-height: 1.6;
-    margin-bottom: 20px;
+.contact-form label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: #555;
 }
 
-.contact-button-container {
-    margin-top: 30px;
+.contact-form input,
+.contact-form select,
+.contact-form textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box; 
+    font-size: 1em;
 }
 
-.contact-btn {
-    padding: 15px 30px;
+.contact-form textarea {
+    resize: vertical; /* Cho phép người dùng thay đổi chiều cao của ô nhập liệu */
+}
+
+.contact-form button {
+    width: 100%;
+    padding: 15px;
     font-size: 1.1em;
 }

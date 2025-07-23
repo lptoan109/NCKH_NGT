@@ -5,10 +5,43 @@
 {% block content %}
 <div class="page-container">
     <h2>Liên Hệ & Báo Cáo Lỗi</h2>
-    <p>Nếu bạn có bất kỳ câu hỏi, góp ý, hoặc phát hiện lỗi trong quá trình sử dụng, xin vui lòng gửi email cho chúng tôi.</p>
-    <p>Chúng tôi rất trân trọng mọi phản hồi từ bạn để cải thiện sản phẩm.</p>
-    <div class="contact-button-container">
-        <a href="mailto:trongkhangnguyen503@gmail.com?subject=Góp ý / Báo cáo lỗi - Website NGT Cough" class="btn contact-btn">Gửi Email cho chúng tôi</a>
-    </div>
+    <p>Chúng tôi rất trân trọng mọi phản hồi từ bạn để cải thiện sản phẩm. Vui lòng sử dụng biểu mẫu bên dưới để gửi câu hỏi, góp ý hoặc báo cáo lỗi mà bạn gặp phải trong quá trình sử dụng.</p>
+
+    <hr class="divider">
+
+    <form class="contact-form" action="#" method="POST">
+        
+        <div class="form-group">
+            <label for="name">Tên của bạn (Không bắt buộc)</label>
+            <input type="text" id="name" name="name">
+        </div>
+
+        <div class="form-group">
+            <label for="email">Email liên hệ của bạn</label>
+            <input type="email" id="email" name="email" required>
+        </div>
+
+        <div class="form-group">
+            <label for="subject">Chủ đề</label>
+            <select id="subject" name="subject">
+                <option value="general">Hỏi đáp chung</option>
+                <option value="bug_report">Báo cáo lỗi kỹ thuật</option>
+                <option value="feedback">Góp ý, đề xuất</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="message">Nội dung tin nhắn</label>
+            <textarea id="message" name="message" rows="6" required></textarea>
+        </div>
+        
+        <button type="submit" class="btn">Gửi Tin Nhắn</button>
+    </form>
+
+    <hr class="divider">
+
+    <p>Hoặc, nếu bạn muốn gửi email trực tiếp từ ứng dụng của mình, hãy nhấn vào đây:</p>
+    <a href="mailto:trongkhangnguyen503@gmail.com?subject=Góp ý / Báo cáo lỗi - Website NGT Cough" class="btn btn-secondary">Gửi Email Trực Tiếp</a>
+
 </div>
 {% endblock %}
