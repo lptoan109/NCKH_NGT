@@ -1,26 +1,177 @@
-Thiết lập chung cho toàn trang
+/* =============================================== */
+/* --- THIẾT LẬP CHUNG --- */
+/* =============================================== */
+
 body {
     margin: 0;
     font-family: Arial, sans-serif;
-    background-color: #f0f2f5; /* Một màu nền xám nhạt cho đẹp hơn */
+    background-color: #f0f2f5;
+    color: #333;
 }
 
-/* --- Thanh Điều Hướng (Navbar) --- */
-.navbar {
-    background-color: #dbe4f0; /* Màu xanh da trời nhạt */
-    padding: 20px;
-    text-align: center;
+/* =============================================== */
+/* --- NAVIGATION BAR --- */
+/* =============================================== */
+
+.navbar-v2 {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #ffffff;
+    padding: 15px 30px;
+    border-bottom: 1px solid #e0e0e0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.nav-brand {
+    font-size: 1.5em;
     font-weight: bold;
     color: #333;
-    border-bottom: 2px solid #ccc;
+    text-decoration: none;
 }
 
-/* --- Bố cục chính --- */
+.nav-links {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+}
+
+.nav-links a {
+    color: #333;
+    text-decoration: none;
+    font-weight: 500;
+    padding: 5px 0;
+    transition: color 0.3s ease, border-bottom-color 0.3s ease;
+    border-bottom: 2px solid transparent;
+}
+
+.nav-links a:hover {
+    color: #007bff;
+    border-bottom-color: #007bff;
+}
+
+.nav-auth {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.hamburger {
+    display: none; /* Mặc định ẩn trên desktop */
+    font-size: 2em;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #333;
+}
+
+/* =============================================== */
+/* --- CÁC THÀNH PHẦN CHUNG --- */
+/* =============================================== */
+
+/* Kiểu chung cho các nút */
+.btn {
+    display: inline-block;
+    background-color: #007bff;
+    color: white;
+    padding: 10px 20px;
+    text-decoration: none;
+    font-weight: bold;
+    border-radius: 5px;
+    border: none;
+    text-align: center;
+    transition: background-color 0.3s ease;
+}
+
+.btn:hover {
+    background-color: #0056b3;
+}
+
+/* Nút phụ (ví dụ: nút Đăng ký) */
+.btn-secondary {
+    background-color: #6c757d;
+}
+.btn-secondary:hover {
+    background-color: #5a6268;
+}
+
+/* Nút Đăng xuất */
+.btn-logout {
+    background-color: #dc3545;
+}
+.btn-logout:hover {
+    background-color: #c82333;
+}
+
+/* Nút Xóa */
+.btn-delete {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+}
+.btn-delete:hover {
+    background-color: #c82333;
+}
+
+/* Avatar dạng ảnh */
+.avatar-image-nav {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 2px solid #ddd;
+    object-fit: cover;
+}
+
+/* Avatar dạng chữ */
+.avatar-text {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #007bff;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
+/* Thông báo Flash */
+.flash-messages {
+    width: 100%;
+    max-width: 1200px;
+    margin: 20px auto 0 auto;
+    padding: 0 40px;
+    box-sizing: border-box;
+}
+.alert {
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 4px;
+    color: #fff;
+    text-align: center;
+}
+.alert-success {
+    background-color: #28a745;
+}
+.alert-danger {
+    background-color: #dc3545;
+}
+
+
+/* =============================================== */
+/* --- BỐ CỤC TRANG CHỦ (HOMEPAGE) --- */
+/* =============================================== */
+
 .container {
     display: flex;
     padding: 40px;
-    gap: 40px;
-    max-width: 1400px; /* Thay đổi giá trị ở đây */
+    gap: 30px;
+    max-width: 1200px;
     margin: 40px auto;
     background-color: white;
     border-radius: 8px;
@@ -28,24 +179,24 @@ body {
 }
 
 .left-column {
-    flex-basis: 20%; /* Cột trái chiếm 20% chiều rộng */
+    flex-basis: 20%;
     display: flex;
     justify-content: center;
+    align-items: flex-start;
 }
 
 .right-column {
     flex-basis: 80%;
     display: flex;
     flex-direction: column;
-    gap: 30px; /* Tăng khoảng cách lên 30px */
+    gap: 20px;
 }
 
-/* --- Các thành phần cụ thể --- */
 .logo {
     width: 150px;
     height: 150px;
-    background-color: #e8c3c3; /* Màu hồng nhạt cho logo */
-    border-radius: 50%; /* Bo góc thành hình tròn */
+    background-color: #e8c3c3;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -57,51 +208,23 @@ body {
 
 .top-section {
     display: flex;
-    gap: 20px;
-    align-items: flex-start; /* Căn các box theo phía trên */
 }
 
 .title-box {
-    background-color: #ffe8a1; /* Màu vàng */
+    background-color: #ffe8a1;
     padding: 20px;
-    flex-grow: 1; /* Cho phép hộp này tự dãn ra */
+    flex-grow: 1;
     text-align: center;
 }
 
 .title-box h1 {
     margin: 0;
     font-size: 2.5em;
-    color: #333;
-}
-
-
-/* Container mới cho 2 nút */
-.auth-buttons {
-    display: flex; /* Sắp xếp 2 nút nằm cạnh nhau */
-    gap: 10px;     /* Tạo khoảng cách 10px giữa 2 nút */
-}
-
-/* Kiểu chung cho các nút */
-.btn {
-    display: inline-block;
-    background-color: #a1b6d1; /* Màu xanh dương như cũ */
-    color: white;              /* Chữ màu trắng */
-    padding: 15px 20px;        /* Tăng khoảng đệm cho nút to rõ hơn */
-    text-decoration: none;     /* Bỏ gạch chân của thẻ a */
-    font-weight: bold;
-    border-radius: 5px;        /* Bo tròn góc nút */
-    text-align: center;
-    transition: background-color 0.3s ease; /* Hiệu ứng chuyển màu khi di chuột */
-}
-
-/* Hiệu ứng khi người dùng di chuột qua nút */
-.btn:hover {
-    background-color: #8a9eb8; /* Màu xanh sẽ đậm hơn một chút */
 }
 
 .description-box {
     background-color: #dbe4f0;
-    padding: 60px 20px; /* Tăng padding trên dưới lên 60px */
+    padding: 40px 20px;
     text-align: center;
     font-size: 1.1em;
 }
@@ -112,9 +235,9 @@ body {
 }
 
 .action-box {
-    background-color: #a1b6d1; /* Màu xanh dương */
+    background-color: #a1b6d1;
     padding: 20px;
-    flex-basis: 50%; /* Chiếm 50% */
+    flex-basis: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -129,72 +252,41 @@ body {
 }
 
 .image-box {
-    background-color: #00ffff; /* Màu xanh cyan */
+    background-color: #00ffff;
     padding: 20px;
-    flex-basis: 50%; /* Chiếm 50% */
+    flex-basis: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     text-align: center;
     font-weight: bold;
 }
-/* --- BẮT ĐẦU PHẦN RESPONSIVE --- */
 
-/* Áp dụng cho màn hình máy tính bảng và nhỏ hơn (chiều rộng tối đa 992px) */
-@media (max-width: 992px) {
-    .container {
-        /* Chuyển bố cục từ 2 cột ngang thành 1 cột dọc */
-        flex-direction: column;
-        align-items: center; /* Căn logo ra giữa */
-        gap: 40px; /* Tăng khoảng cách giữa logo và khối nội dung */
-    }
 
-    .left-column, .right-column {
-        /* Cho các cột chiếm toàn bộ chiều rộng */
-        flex-basis: 100%;
-        width: 100%;
-    }
-}
+/* =============================================== */
+/* --- TRANG FORM (ĐĂNG NHẬP, ĐĂNG KÝ, LIÊN HỆ) --- */
+/* =============================================== */
 
-/* Áp dụng cho màn hình điện thoại (chiều rộng tối đa 768px) */
-@media (max-width: 768px) {
-    .top-section, .bottom-section {
-        /* Chuyển các khối nằm ngang thành nằm dọc */
-        flex-direction: column;
-    }
-
-    .title-box h1 {
-        font-size: 2em; /* Giảm kích thước chữ tiêu đề cho dễ nhìn */
-    }
-
-    .container {
-        /* Giảm padding trên màn hình nhỏ */
-        padding: 20px;
-        margin: 20px;
-    }
-}
-/* --- CSS CHO FORM ĐĂNG NHẬP / ĐĂNG KÝ --- */
-.form-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh; /* Căn form ra giữa trang theo chiều dọc */
-    background-color: #f0f2f5;
-}
-
-.auth-form {
-    background-color: white;
+/* Container cho các trang phụ có nội dung ở giữa */
+.page-container, .form-container {
+    max-width: 800px;
+    margin: 40px auto;
     padding: 40px;
+    background-color: #fff;
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    width: 100%;
-    max-width: 400px;
+    text-align: center;
 }
 
-.auth-form h2 {
+.auth-form, .contact-form {
+    max-width: 450px;
+    margin: 0 auto;
+    text-align: left;
+}
+
+.auth-form h2, .contact-form h2, .page-container h2 {
     text-align: center;
     margin-bottom: 25px;
-    color: #333;
 }
 
 .form-group {
@@ -203,21 +295,26 @@ body {
 
 .form-group label {
     display: block;
-    margin-bottom: 5px;
+    margin-bottom: 8px;
     font-weight: bold;
-    color: #555;
 }
 
-.form-group input {
+.form-group input,
+.form-group select,
+.form-group textarea {
     width: 100%;
-    padding: 10px;
+    padding: 12px;
     border: 1px solid #ccc;
     border-radius: 5px;
-    box-sizing: border-box; /* Quan trọng để padding không làm tăng width */
+    box-sizing: border-box; 
+    font-size: 1em;
 }
 
-/* Chỉnh lại nút submit trong form */
-.auth-form .btn {
+.form-group textarea {
+    resize: vertical;
+}
+
+.auth-form .btn, .contact-form .btn {
     width: 100%;
     padding: 12px;
     font-size: 1.1em;
@@ -227,98 +324,56 @@ body {
     text-align: center;
     margin-top: 20px;
 }
-/* --- CSS cho nút Google --- */
+
 .btn-google {
-    background-color: #4285F4; /* Màu đặc trưng của Google */
+    background-color: #4285F4;
     color: white;
 }
 
 .btn-google:hover {
-    background-color: #357ae8; /* Màu đậm hơn khi di chuột */
-}
-/* --- CSS CHO NAVIGATION BAR MỚI (V2) --- */
-.navbar-v2 {
-    display: flex; /* Xếp các mục con trên cùng một hàng */
-    justify-content: space-between; /* Đẩy các mục con ra 2 phía */
-    align-items: center; /* Căn giữa các mục con theo chiều dọc */
-    background-color: #ffffff;
-    padding: 15px 30px;
-    border-bottom: 1px solid #e0e0e0;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    background-color: #357ae8;
 }
 
-.nav-links a {
-    color: #333;
-    text-decoration: none;
-    font-weight: 500;
-    margin: 0 15px;
-    padding: 5px 0;
-    transition: color 0.3s ease;
-    border-bottom: 2px solid transparent;
+.divider {
+    margin: 40px 0;
+    border: 0;
+    border-top: 1px solid #eee;
 }
 
-.nav-links a:hover {
-    color: #007bff;
-    border-bottom-color: #007bff;
+.form-group-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
 }
 
-.nav-auth {
-    display: flex; /* Xếp các nút và avatar trên cùng một hàng */
-    align-items: center;
-    gap: 15px; /* Khoảng cách giữa các nút */
-}
+/* =============================================== */
+/* --- TRANG CHẨN ĐOÁN --- */
+/* =============================================== */
 
-/* Nút phụ (ví dụ: nút Đăng ký) */
-.btn-secondary {
-    background-color: #6c757d;
-    color: white; /* Thêm màu chữ trắng cho dễ đọc */
-}
-.btn-secondary:hover {
-    background-color: #5a6268;
-}
-
-/* Nút Đăng xuất */
-.btn-logout {
-    background-color: #dc3545;
-    color: white; /* Thêm màu chữ trắng cho dễ đọc */
-}
-.btn-logout:hover {
-    background-color: #c82333;
-}
-
-/* Avatar trên thanh nav */
-.avatar-image-nav {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    border: 2px solid #ddd;
-}
-
-/* --- CSS CHO TRANG CHẨN ĐOÁN --- */
 .diagnose-container {
     display: flex;
-    gap: 30px; /* Khoảng cách giữa 2 cột */
+    gap: 30px;
     padding: 40px;
     max-width: 1200px;
     margin: 40px auto;
 }
 
-/* Cột trái */
 .recording-panel {
-    flex: 1; /* Chiếm 1 phần */
+    flex: 1;
     display: flex;
     flex-direction: column;
     gap: 20px;
 }
 
 .history-btn {
-    background-color: #f3d9a2; /* Màu cam nhạt */
+    background-color: #f3d9a2;
     border: 1px solid #e2c07a;
     padding: 10px 15px;
     border-radius: 5px;
     cursor: pointer;
     font-weight: bold;
-    align-self: flex-start; /* Nút chỉ rộng bằng nội dung và nằm bên trái */
+    align-self: flex-start;
+    color: #333;
 }
 
 .recorder {
@@ -331,10 +386,10 @@ body {
 }
 
 .record-btn {
-    background-color: #28a745; /* Màu xanh lá */
+    background-color: #28a745;
     color: white;
     border: none;
-    border-radius: 50%; /* Bo tròn thành hình tròn */
+    border-radius: 50%;
     width: 120px;
     height: 120px;
     font-size: 1.2em;
@@ -352,7 +407,7 @@ body {
 }
 
 .record-btn .icon {
-    font-size: 2.5em; /* Kích thước icon micro */
+    font-size: 2.5em;
 }
 
 .timeline {
@@ -364,167 +419,122 @@ body {
     border-radius: 5px;
 }
 
-/* Cột phải */
 .results-panel {
-    flex: 2; /* Chiếm 2 phần, rộng hơn cột trái */
-    background-color: #fff8e1; /* Màu vàng nhạt */
+    flex: 2;
+    background-color: #fff8e1;
     border: 1px solid #ffecb3;
     border-radius: 8px;
     padding: 30px;
 }
 
-.results-content {
+/* =============================================== */
+/* --- TRANG LỊCH SỬ --- */
+/* =============================================== */
+
+.history-container {
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 30px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+.recording-list {
+    list-style-type: none;
+    padding: 0;
     margin-top: 20px;
 }
-.avatar-text {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background-color: #007bff;
-    color: white;
+.recording-item {
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
-    font-size: 1.2em;
-    font-weight: bold;
-}
-/* --- CSS CHO FLASH MESSAGES --- */
-.flash-messages {
-    width: 100%;
-    max-width: 1200px;
-    margin: 0 auto 20px auto;
-    padding: 0 40px;
-    box-sizing: border-box;
-}
-.alert {
+    flex-wrap: wrap; /* Cho phép xuống dòng trên màn hình nhỏ */
+    gap: 15px;
     padding: 15px;
-    margin-bottom: 20px;
-    border: 1px solid transparent;
-    border-radius: 4px;
-    color: #fff;
+    border-bottom: 1px solid #eee;
 }
-.alert-success {
-    background-color: #28a745; /* Màu xanh lá */
+.recording-item:last-child {
+    border-bottom: none;
 }
-.alert-danger {
-    background-color: #dc3545; /* Màu đỏ */
-}
-/* --- CSS CHO NÚT XÓA --- */
-.btn-delete {
-    background-color: #dc3545; /* Màu đỏ */
-    color: white;
-    border: none;
-    padding: 8px 12px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-weight: bold;
-}
-.btn-delete:hover {
-    background-color: #c82333;
+.item-player audio {
+    width: 250px;
 }
 
-/* --- CSS CHO TRANG LIÊN HỆ --- */
-.divider {
-    margin: 40px 0;
-    border: 0;
-    border-top: 1px solid #eee;
-}
+/* =============================================== */
+/* --- RESPONSIVE DESIGN (CHO MÀN HÌNH NHỎ) --- */
+/* =============================================== */
 
-.contact-form {
-    text-align: left; /* Căn lề trái cho các nhãn */
-    margin: 0 auto;
-    max-width: 600px;
-}
-
-.contact-form .form-group {
-    margin-bottom: 20px;
-}
-
-.contact-form label {
-    display: block;
-    margin-bottom: 8px;
-    font-weight: bold;
-    color: #555;
-}
-
-.contact-form input,
-.contact-form select,
-.contact-form textarea {
-    width: 100%;
-    padding: 12px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    box-sizing: border-box; 
-    font-size: 1em;
-}
-
-.contact-form textarea {
-    resize: vertical; /* Cho phép người dùng thay đổi chiều cao của ô nhập liệu */
-}
-
-.contact-form button {
-    width: 100%;
-    padding: 15px;
-    font-size: 1.1em;
-}
-
-/* Thêm vào CSS cho trang liên hệ */
-.form-group-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr; /* Tạo 2 cột bằng nhau */
-    gap: 20px; /* Khoảng cách giữa các ô */
-}
-
-/* --- CSS CHO RESPONSIVE NAVIGATION BAR --- */
-.nav-brand {
-    font-size: 1.5em;
-    font-weight: bold;
-    color: #333;
-    text-decoration: none;
-}
-
-.hamburger {
-    display: none; /* Mặc định ẩn trên desktop */
-    font-size: 2em;
-    background: none;
-    border: none;
-    cursor: pointer;
-}
-
-/* Áp dụng khi chiều rộng màn hình từ 992px trở xuống */
+/* Áp dụng khi chiều rộng màn hình từ 992px trở xuống (Máy tính bảng, điện thoại ngang) */
 @media (max-width: 992px) {
+    /* --- Navbar --- */
     .nav-links {
-        display: none; /* Ẩn danh sách link đi */
+        display: none; /* Ẩn menu chính */
         position: absolute;
-        top: 70px; /* Vị trí ngay dưới navbar */
+        top: 70px; /* Chiều cao của navbar */
         left: 0;
         background-color: white;
         width: 100%;
-        flex-direction: column; /* Xếp các link theo chiều dọc */
+        flex-direction: column;
         text-align: center;
         box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        z-index: 1000;
     }
 
     .nav-links.active {
-        display: flex; /* Hiện lại danh sách link khi có class 'active' */
+        display: flex; /* Hiện menu khi nhấn hamburger */
     }
 
     .nav-links a {
         padding: 15px 0;
         border-bottom: 1px solid #f0f0f0;
+        margin: 0;
     }
 
     .hamburger {
-        display: block; /* Hiện nút hamburger lên */
+        display: block; /* Hiện nút hamburger */
+    }
+
+    /* --- Bố cục chung --- */
+    .container, .diagnose-container {
+        flex-direction: column;
+        padding: 20px;
+        margin: 20px;
+    }
+}
+
+/* Áp dụng khi chiều rộng màn hình từ 768px trở xuống (Điện thoại đứng) */
+@media (max-width: 768px) {
+    /* --- Trang chủ --- */
+    .bottom-section {
+        flex-direction: column;
+    }
+    .title-box h1 {
+        font-size: 2em;
+    }
+
+    /* --- Form --- */
+    .form-group-grid {
+        grid-template-columns: 1fr; /* Chuyển thành 1 cột */
+    }
+
+    .page-container, .form-container {
+        padding: 20px;
+        margin: 20px;
+    }
+
+     /* --- Lịch sử --- */
+    .recording-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .item-player audio {
+        width: 100%;
     }
 }
 
 /* Áp dụng cho màn hình rất nhỏ */
 @media (max-width: 480px) {
-    .nav-auth .btn {
-        display: none; /* Ẩn nút Đăng Nhập/Ký, chỉ hiện avatar/logout */
-    }
-    .nav-auth .btn-logout {
-        display: block;
+    .nav-auth .btn-secondary {
+        display: none; /* Ẩn nút đăng ký trên điện thoại nhỏ */
     }
 }
