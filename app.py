@@ -149,15 +149,45 @@ def authorize():
 def diagnose():
     return render_template('diagnose.html')
 
-@app.route('/contact', methods=['GET', 'POST']) # <-- Cho phép cả POST
+@app.route('/contact', methods=['GET', 'POST'])
 def contact():
     if request.method == 'POST':
-        # Tạm thời, chúng ta chưa xử lý gửi email ở đây
-        # Chỉ hiển thị một thông báo cảm ơn
-        flash('Cảm ơn bạn đã gửi tin nhắn!', 'success')
+        try:
+            # Lấy dữ liệu từ form
+            name = request.form.get('ho_ten')
+            sender_email_from_form = request.form.get('email')
+            subject = request.form.get('tieu_de')
+            message_body = request.form.get('noi_dung')
+
+            # Tạo email
+            msg = Message(
+                subject=f"Tin nhắn từ Web NGT Cough: {subject}",
+                # NGƯỜI GỬI (sender) PHẢI LÀ EMAIL CỦA BẠN
+                sender=("Website NGT Cough", config.EMAIL_USER),
+                recipients=[config.EMAIL_USER] # Gửi về email của chính bạn
+            )
+
+            # Đưa thông tin người liên hệ vào nội dung thư
+            msg.body = f"""
+Bạn đã nhận được một tin nhắn mới từ:
+
+Tên: {name}
+Email: {sender_email_from_form}
+
+Nội dung:
+{message_body}
+"""
+
+            # Gửi đi
+            mail.send(msg)
+
+            flash('Cảm ơn bạn đã gửi tin nhắn! Chúng tôi sẽ phản hồi sớm.', 'success')
+        except Exception as e:
+            flash('Đã có lỗi xảy ra khi gửi tin nhắn. Vui lòng thử lại.', 'danger')
+            print(e) # In lỗi ra server log để debug
+
         return redirect(url_for('contact'))
 
-    # Nếu là request GET, chỉ hiển thị trang như bình thường
     return render_template('contact.html')
 
 # (Các route khác như history, upload_audio giữ nguyên)
