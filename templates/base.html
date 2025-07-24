@@ -21,18 +21,21 @@
                 </div>
 
                 <div class="nav-auth">
-                    {% if current_user.is_authenticated %}
-                        <a href="{{ url_for('logout') }}" class="btn btn-logout">Đăng Xuất</a>
-                        {% if current_user.picture %}
-                             <img src="{{ current_user.picture }}" alt="User Avatar" class="avatar-image-nav">
-                        {% else %}
-                            <div class="avatar-text">{{ current_user.username[0]|upper }}</div>
-                        {% endif %}
-                    {% else %}
-                        <a href="{{ url_for('login') }}" class="btn">Đăng Nhập</a>
-                        <a href="{{ url_for('register') }}" class="btn btn-secondary">Đăng Ký</a>
-                    {% endif %}
-                </div>
+    {% if current_user.is_authenticated %}
+        <a href="{{ url_for('logout') }}" class="btn btn-logout">Đăng Xuất</a>
+        
+        <a href="{{ url_for('profile') }}">
+            {% if current_user.picture %}
+                 <img src="{{ current_user.picture }}" alt="User Avatar" class="avatar-image-nav">
+            {% else %}
+                <div class="avatar-text">{{ current_user.username[0]|upper }}</div>
+            {% endif %}
+        </a>
+        {% else %}
+        <a href="{{ url_for('login') }}" class="btn">Đăng Nhập</a>
+        <a href="{{ url_for('register') }}" class="btn btn-secondary">Đăng Ký</a>
+    {% endif %}
+`           </div>
             </div>
 
             <button class="hamburger" id="hamburger">
