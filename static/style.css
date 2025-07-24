@@ -9,61 +9,6 @@ body {
     color: #333;
 }
 
-/* =============================================== */
-/* --- NAVIGATION BAR --- */
-/* =============================================== */
-
-.navbar-v2 {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background-color: #ffffff;
-    padding: 15px 30px;
-    border-bottom: 1px solid #e0e0e0;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-}
-
-.nav-brand {
-    font-size: 1.5em;
-    font-weight: bold;
-    color: #333;
-    text-decoration: none;
-}
-
-.nav-links {
-    display: flex;
-    align-items: center;
-    gap: 30px;
-}
-
-.nav-links a {
-    color: #333;
-    text-decoration: none;
-    font-weight: 500;
-    padding: 5px 0;
-    transition: color 0.3s ease, border-bottom-color 0.3s ease;
-    border-bottom: 2px solid transparent;
-}
-
-.nav-links a:hover {
-    color: #007bff;
-    border-bottom-color: #007bff;
-}
-
-.nav-auth {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
-
-.hamburger {
-    display: none; /* Mặc định ẩn trên desktop */
-    font-size: 2em;
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: #333;
-}
 
 /* =============================================== */
 /* --- CÁC THÀNH PHẦN CHUNG --- */
@@ -117,14 +62,14 @@ body {
     background-color: #c82333;
 }
 
-/* Avatar dạng ảnh */
+/* Avatar dạng ảnh
 .avatar-image-nav {
     width: 40px;
     height: 40px;
     border-radius: 50%;
     border: 2px solid #ddd;
     object-fit: cover;
-}
+} */
 
 /* Avatar dạng chữ */
 .avatar-text {
@@ -466,34 +411,6 @@ body {
 
 /* Áp dụng khi chiều rộng màn hình từ 992px trở xuống (Máy tính bảng, điện thoại ngang) */
 @media (max-width: 992px) {
-    /* --- Navbar --- */
-    .nav-links {
-        display: none; /* Ẩn menu chính */
-        position: absolute;
-        top: 70px; /* Chiều cao của navbar */
-        left: 0;
-        background-color: white;
-        width: 100%;
-        flex-direction: column;
-        text-align: center;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        z-index: 1000;
-    }
-
-    .nav-links.active {
-        display: flex; /* Hiện menu khi nhấn hamburger */
-    }
-
-    .nav-links a {
-        padding: 15px 0;
-        border-bottom: 1px solid #f0f0f0;
-        margin: 0;
-    }
-
-    .hamburger {
-        display: block; /* Hiện nút hamburger */
-    }
-
     /* --- Bố cục chung --- */
     .container, .diagnose-container {
         flex-direction: column;
@@ -532,14 +449,82 @@ body {
     }
 }
 
-/* Áp dụng cho màn hình rất nhỏ */
-@media (max-width: 480px) {
-    .nav-auth .btn-secondary {
-        display: none; /* Ẩn nút đăng ký trên điện thoại nhỏ */
-    }
+
+/* --- NAVIGATION BAR --- */
+.navbar-v2 {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #ffffff;
+    padding: 15px 30px;
+    border-bottom: 1px solid #e0e0e0;
 }
-.nav-right-group {
+.nav-brand {
+    font-size: 1.5em;
+    font-weight: bold;
+    color: #333;
+    text-decoration: none;
+}
+.nav-menu {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+}
+.nav-links {
+    display: flex;
+    gap: 30px;
+}
+.nav-links a {
+    color: #333;
+    text-decoration: none;
+    font-weight: 500;
+}
+.nav-auth {
     display: flex;
     align-items: center;
     gap: 15px;
+}
+.hamburger {
+    display: none;
+    font-size: 2em;
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+/* --- RESPONSIVE CHO NAVIGATION BAR --- */
+@media (max-width: 992px) {
+    .nav-menu {
+        display: none;
+        position: absolute;
+        top: 70px;
+        left: 0;
+        width: 100%;
+        background-color: #ffffff;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        flex-direction: column;
+        align-items: stretch;
+        z-index: 1000;
+    }
+    .nav-menu.active {
+        display: flex;
+    }
+    .nav-links, .nav-auth {
+        flex-direction: column;
+        width: 100%;
+        gap: 0;
+    }
+    .nav-links a, .nav-auth a, .nav-auth div {
+        padding: 15px;
+        width: 100%;
+        text-align: center;
+        box-sizing: border-box;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    .nav-auth {
+        flex-direction: column-reverse;
+    }
+    .hamburger {
+        display: block;
+    }
 }
