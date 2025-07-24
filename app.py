@@ -11,6 +11,10 @@ from werkzeug.utils import secure_filename
 
 # --- 1. Cài đặt và Cấu hình ---
 app = Flask(__name__)
+# ...
+UPLOAD_FOLDER = 'static/uploads'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+# ...
 # --- Cấu hình cho Flask-Mail ---
 app.config['MAIL_SERVER'] = 'smtp.googlemail.com'
 app.config['MAIL_PORT'] = 587
@@ -236,18 +240,25 @@ def profile():
 @login_required
 def edit_profile():
     if request.method == 'POST':
-        # Lấy tên người dùng mới từ form
+        # Xử lý cập nhật tên người dùng
         new_username = request.form.get('username')
-        
-        # Cập nhật thông tin của người dùng hiện tại
         current_user.username = new_username
+
+        # Xử lý file ảnh được tải lên
+        if 'profile_picture' in request.files:
+            file = request.files['profile_picture']
+            if file.filename != '':
+                # Tạo tên file an toàn và duy nhất
+                filename = secure_filename(file.filename)
+                # Lưu file vào thư mục uploads
+                file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                # Lưu đường dẫn vào database
+                current_user.picture = f"/{app.config['UPLOAD_FOLDER']}/{filename}"
+
         db.session.commit()
-        
-        # Báo thành công và chuyển về trang profile
         flash('Cập nhật thông tin thành công!', 'success')
         return redirect(url_for('profile'))
-        
-    # Nếu là GET request, chỉ hiển thị form
+
     return render_template('edit_profile.html')
 
 @app.route('/upload_audio', methods=['POST'])
