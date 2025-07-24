@@ -544,3 +544,59 @@ body {
         display: block;
     }
 }
+
+/* --- CSS CHO TRANG PROFILE --- */
+
+.profile-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 30px;
+    margin-top: 30px;
+    text-align: left;
+}
+
+.profile-avatar {
+    flex-shrink: 0;
+}
+
+.avatar-image-large,
+.avatar-text-large {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid #fff;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+}
+
+.avatar-text-large {
+    background-color: #007bff;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 4em;
+    font-weight: bold;
+}
+
+.profile-info {
+    flex-grow: 1;
+}
+
+.profile-info .info-item {
+    margin-bottom: 20px;
+}
+
+.profile-info .info-item strong {
+    font-size: 1.1em;
+    color: #555;
+}
+
+.profile-info .info-item p {
+    font-size: 1em;
+    color: #333;
+    margin: 5px 0 0 0;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+}

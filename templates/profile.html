@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block title %}Hồ Sơ Cá Nhân{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <h2>Hồ Sơ Của Bạn</h2>
+
+    <div class="profile-card">
+        <div class="profile-avatar">
+            {% if current_user.picture %}
+                <img src="{{ current_user.picture }}" alt="User Avatar" class="avatar-image-large">
+            {% else %}
+                <div class="avatar-text-large">{{ current_user.username[0]|upper }}</div>
+            {% endif %}
+        </div>
+        <div class="profile-info">
+            <div class="info-item">
+                <strong>Tên người dùng:</strong>
+                <p>{{ current_user.username }}</p>
+            </div>
+            <div class="info-item">
+                <strong>Email:</strong>
+                <p>{{ current_user.email }}</p>
+            </div>
+            <div class="info-item">
+                <a href="#" class="btn btn-secondary">Chỉnh sửa thông tin</a>
+                <a href="#" class="btn">Xem lịch sử chẩn đoán</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

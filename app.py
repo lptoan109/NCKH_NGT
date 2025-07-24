@@ -227,6 +227,11 @@ def delete_recording(recording_id):
 if not os.path.exists('uploads'):
     os.makedirs('uploads')
 
+@app.route('/profile')
+@login_required
+def profile():
+    return render_template('profile.html')
+
 @app.route('/upload_audio', methods=['POST'])
 @login_required
 def upload_audio():
