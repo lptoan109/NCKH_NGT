@@ -1,4 +1,6 @@
 import os
+from flask_babel import Babel, _
+from flask import session
 from flask_mail import Mail, Message
 import config
 from flask import Flask, url_for, session, redirect, render_template, request, flash
@@ -11,20 +13,35 @@ from werkzeug.utils import secure_filename
 
 # --- 1. Cài đặt và Cấu hình ---
 app = Flask(__name__)
-# ...
+
+app.config['SECRET_KEY'] = 'your-very-secret-key'
+
+# --- CẤU HÌNH BABEL ---
+app.config['LANGUAGES'] = {
+    'en': 'English',
+    'vi': 'Tiếng Việt'
+}
+babel = Babel(app)
+
+@babel.localeselector
+def get_locale():
+    if 'language' in session:
+        return session['language']
+    return request.accept_languages.best_match(app.config['LANGUAGES'].keys())
+
 UPLOAD_FOLDER = 'static/uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-# ...
+
 # --- Cấu hình cho Flask-Mail ---
 app.config['MAIL_SERVER'] = 'smtp.googlemail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = config.EMAIL_USER # Đọc từ file config.py
-app.config['MAIL_PASSWORD'] = config.EMAIL_PASS # Đọc từ file config.py
+app.config['MAIL_USERNAME'] = config.EMAIL_USER
+app.config['MAIL_PASSWORD'] = config.EMAIL_PASS
 mail = Mail(app)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.secret_key = 'your_super_secret_key_change_this' # GIỮ NGUYÊN SECRET KEY CŨ CỦA BẠN
+app.secret_key = 'your_super_secret_key_change_this'
 
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
@@ -44,14 +61,12 @@ google = oauth.register(
 )
 
 # --- 2. Định nghĩa các Model cho Database ---
-
-# Model User được nâng cấp
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
-    password_hash = db.Column(db.String(128), nullable=True) # Cho phép null cho user Google
-    picture = db.Column(db.String(200), nullable=True) # Lưu link avatar Google
+    password_hash = db.Column(db.String(128), nullable=True)
+    picture = db.Column(db.String(200), nullable=True)
     recordings = db.relationship('Recording', backref='user', lazy=True)
 
 class Recording(db.Model):
@@ -70,6 +85,11 @@ def load_user(user_id):
 def homepage():
     return render_template('index.html')
 
+@app.route('/language/<language>')
+def set_language(language=None):
+    session['language'] = language
+    return redirect(request.referrer)
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -78,7 +98,7 @@ def login():
             login_user(user)
             return redirect(url_for('diagnose'))
         else:
-            flash('Sai tên đăng nhập hoặc mật khẩu.', 'danger')
+            flash(_('Invalid username or password.'), 'danger')
     return render_template('login.html')
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -87,27 +107,23 @@ def register():
         email = request.form.get('email')
         username = request.form.get('username')
 
-        # --- PHẦN NÂNG CẤP ---
-        # KIỂM TRA XEM EMAIL HOẶC USERNAME ĐÃ TỒN TẠI CHƯA
         existing_user_email = User.query.filter_by(email=email).first()
         if existing_user_email:
-            flash('Địa chỉ email này đã được sử dụng.', 'danger')
+            flash(_('This email address is already in use.'), 'danger')
             return redirect(url_for('register'))
 
         existing_user_username = User.query.filter_by(username=username).first()
         if existing_user_username:
-            flash('Tên đăng nhập này đã tồn tại.', 'danger')
+            flash(_('This username already exists.'), 'danger')
             return redirect(url_for('register'))
-        # ---------------------
 
-        # Nếu chưa tồn tại, tiếp tục tạo user mới
         password = request.form.get('password')
         hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
         new_user = User(username=username, email=email, password_hash=hashed_password)
         db.session.add(new_user)
         db.session.commit()
 
-        flash('Tạo tài khoản thành công! Vui lòng đăng nhập.', 'success')
+        flash(_('Account created successfully! Please log in.'), 'success')
         return redirect(url_for('login'))
 
     return render_template('register.html')
@@ -116,7 +132,7 @@ def register():
 @login_required
 def logout():
     logout_user()
-    session.pop('user_info', None) # Xóa session của Google nếu có
+    session.pop('user_info', None)
     return redirect(url_for('homepage'))
 
 @app.route('/login/google')
@@ -124,27 +140,22 @@ def login_google():
     redirect_uri = url_for('authorize', _external=True)
     return google.authorize_redirect(redirect_uri)
 
-# Hàm authorize được nâng cấp để hợp nhất user
 @app.route('/authorize')
 def authorize():
     token = google.authorize_access_token()
     user_info = google.userinfo()
     
-    # Tìm user trong DB bằng email từ Google
     user = User.query.filter_by(email=user_info['email']).first()
     
-    # Nếu user chưa có, tạo mới trong DB
     if not user:
         user = User(
             email=user_info['email'],
             username=user_info['name'],
             picture=user_info['picture']
-            # Không cần password_hash cho user Google
         )
         db.session.add(user)
         db.session.commit()
     
-    # Đăng nhập người dùng bằng Flask-Login
     login_user(user)
     return redirect(url_for('diagnose'))
 
@@ -157,21 +168,16 @@ def diagnose():
 def contact():
     if request.method == 'POST':
         try:
-            # Lấy dữ liệu từ form
             name = request.form.get('ho_ten')
             sender_email_from_form = request.form.get('email')
             subject = request.form.get('tieu_de')
             message_body = request.form.get('noi_dung')
 
-            # Tạo email
             msg = Message(
                 subject=f"Tin nhắn từ Web NGT Cough: {subject}",
-                # NGƯỜI GỬI (sender) PHẢI LÀ EMAIL CỦA BẠN
                 sender=("Website NGT Cough", config.EMAIL_USER),
-                recipients=[config.EMAIL_USER] # Gửi về email của chính bạn
+                recipients=[config.EMAIL_USER]
             )
-
-            # Đưa thông tin người liên hệ vào nội dung thư
             msg.body = f"""
 Bạn đã nhận được một tin nhắn mới từ:
 
@@ -181,20 +187,16 @@ Email: {sender_email_from_form}
 Nội dung:
 {message_body}
 """
-
-            # Gửi đi
             mail.send(msg)
-
-            flash('Cảm ơn bạn đã gửi tin nhắn! Chúng tôi sẽ phản hồi sớm.', 'success')
+            flash(_('Thank you for your message! We will get back to you shortly.'), 'success')
         except Exception as e:
-            flash('Đã có lỗi xảy ra khi gửi tin nhắn. Vui lòng thử lại.', 'danger')
-            print(e) # In lỗi ra server log để debug
+            flash(_('An error occurred while sending the message. Please try again.'), 'danger')
+            print(e)
 
         return redirect(url_for('contact'))
 
     return render_template('contact.html')
 
-# (Các route khác như history, upload_audio giữ nguyên)
 @app.route('/history')
 @login_required
 def history():
@@ -204,27 +206,23 @@ def history():
 @app.route('/delete_recording/<int:recording_id>', methods=['POST'])
 @login_required
 def delete_recording(recording_id):
-    # Tìm bản ghi trong database
     recording = Recording.query.get_or_404(recording_id)
     
-    # Đảm bảo người dùng chỉ có thể xóa bản ghi của chính mình
     if recording.user_id != current_user.id:
         return {"error": "Không có quyền truy cập"}, 403
         
     try:
-        # Xóa file trên máy chủ
         filepath = os.path.join('uploads', recording.filename)
         if os.path.exists(filepath):
             os.remove(filepath)
             
-        # Xóa bản ghi trong database
         db.session.delete(recording)
         db.session.commit()
         
-        flash('Đã xóa bản ghi thành công.', 'success')
+        flash(_('Recording deleted successfully.'), 'success')
     except Exception as e:
-        flash('Đã có lỗi xảy ra khi xóa file.', 'danger')
-        print(f"Lỗi khi xóa file: {e}") # Ghi log lỗi ra console
+        flash(_('An error occurred while deleting the file.'), 'danger')
+        print(f"Lỗi khi xóa file: {e}")
     
     return redirect(url_for('history'))
     
@@ -240,25 +238,22 @@ def profile():
 @login_required
 def edit_profile():
     if request.method == 'POST':
-        # Xử lý cập nhật tên người dùng
         new_username = request.form.get('username')
         current_user.username = new_username
 
-        # Xử lý file ảnh được tải lên
         if 'profile_picture' in request.files:
             file = request.files['profile_picture']
-            if file.filename != '':
-                # Tạo tên file an toàn và duy nhất
+            if file and file.filename != '':
                 filename = secure_filename(file.filename)
-                # Lưu file vào thư mục uploads
-                file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-                # Lưu đường dẫn vào database
+                upload_path = os.path.join(app.root_path, app.config['UPLOAD_FOLDER'])
+                os.makedirs(upload_path, exist_ok=True)
+                file.save(os.path.join(upload_path, filename))
                 current_user.picture = f"/{app.config['UPLOAD_FOLDER']}/{filename}"
 
         db.session.commit()
-        flash('Cập nhật thông tin thành công!', 'success')
+        flash(_('Profile updated successfully!'), 'success')
         return redirect(url_for('profile'))
-
+        
     return render_template('edit_profile.html')
 
 @app.route('/upload_audio', methods=['POST'])
@@ -279,7 +274,6 @@ def upload_audio():
     
     return {"success": True, "filename": filename}
 
-# --- 4. Chạy ứng dụng ---
 # --- 4. Chạy ứng dụng ---
 if __name__ == '__main__':
     app.run(debug=True)
