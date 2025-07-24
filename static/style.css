@@ -474,3 +474,57 @@ body {
     grid-template-columns: 1fr 1fr; /* Tạo 2 cột bằng nhau */
     gap: 20px; /* Khoảng cách giữa các ô */
 }
+
+/* --- CSS CHO RESPONSIVE NAVIGATION BAR --- */
+.nav-brand {
+    font-size: 1.5em;
+    font-weight: bold;
+    color: #333;
+    text-decoration: none;
+}
+
+.hamburger {
+    display: none; /* Mặc định ẩn trên desktop */
+    font-size: 2em;
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+/* Áp dụng khi chiều rộng màn hình từ 992px trở xuống */
+@media (max-width: 992px) {
+    .nav-links {
+        display: none; /* Ẩn danh sách link đi */
+        position: absolute;
+        top: 70px; /* Vị trí ngay dưới navbar */
+        left: 0;
+        background-color: white;
+        width: 100%;
+        flex-direction: column; /* Xếp các link theo chiều dọc */
+        text-align: center;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    .nav-links.active {
+        display: flex; /* Hiện lại danh sách link khi có class 'active' */
+    }
+
+    .nav-links a {
+        padding: 15px 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .hamburger {
+        display: block; /* Hiện nút hamburger lên */
+    }
+}
+
+/* Áp dụng cho màn hình rất nhỏ */
+@media (max-width: 480px) {
+    .nav-auth .btn {
+        display: none; /* Ẩn nút Đăng Nhập/Ký, chỉ hiện avatar/logout */
+    }
+    .nav-auth .btn-logout {
+        display: block;
+    }
+}
