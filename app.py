@@ -232,6 +232,24 @@ if not os.path.exists('uploads'):
 def profile():
     return render_template('profile.html')
 
+@app.route('/edit_profile', methods=['GET', 'POST'])
+@login_required
+def edit_profile():
+    if request.method == 'POST':
+        # Lấy tên người dùng mới từ form
+        new_username = request.form.get('username')
+        
+        # Cập nhật thông tin của người dùng hiện tại
+        current_user.username = new_username
+        db.session.commit()
+        
+        # Báo thành công và chuyển về trang profile
+        flash('Cập nhật thông tin thành công!', 'success')
+        return redirect(url_for('profile'))
+        
+    # Nếu là GET request, chỉ hiển thị form
+    return render_template('edit_profile.html')
+
 @app.route('/upload_audio', methods=['POST'])
 @login_required
 def upload_audio():

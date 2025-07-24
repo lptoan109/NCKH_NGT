@@ -24,8 +24,8 @@
                 <p>{{ current_user.email }}</p>
             </div>
             <div class="info-item">
-                <a href="#" class="btn btn-secondary">Chỉnh sửa thông tin</a>
-                <a href="#" class="btn">Xem lịch sử chẩn đoán</a>
+                <a href="{{ url_for('edit_profile') }}" class="btn btn-secondary">Chỉnh sửa thông tin</a>
+                <a href="{{ url_for('history') }}" class="btn">Xem lịch sử chẩn đoán</a>
             </div>
         </div>
     </div>
