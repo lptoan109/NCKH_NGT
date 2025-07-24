@@ -538,3 +538,8 @@ body {
         display: none; /* Ẩn nút đăng ký trên điện thoại nhỏ */
     }
 }
+.nav-right-group {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
