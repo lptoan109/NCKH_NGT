@@ -3,5 +3,6 @@ __pycache__/
 instance/
 database.db
 venv/
+config.py
 
 config.py 

@@ -14,7 +14,7 @@ from werkzeug.utils import secure_filename
 # --- 1. Cài đặt và Cấu hình ---
 app = Flask(__name__)
 
-app.config['SECRET_KEY'] = 'your-very-secret-key'
+app.config['SECRET_KEY'] = config.SECRET_KEY
 
 # --- CẤU HÌNH BABEL ---
 app.config['LANGUAGES'] = {
