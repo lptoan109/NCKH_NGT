@@ -1,0 +1,91 @@
+# Vietnamese translations for PROJECT.
+# Copyright (C) 2025 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2025-07-25 08:24+0700\n"
+"PO-Revision-Date: 2025-07-25 09:00+0700\n"
+"Last-Translator: Gemini\n"
+"Language: vi\n"
+"Language-Team: vi <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.12.1\n"
+
+#: app.py:102
+msgid "Invalid username or password."
+msgstr "Sai tên đăng nhập hoặc mật khẩu."
+
+#: app.py:113
+msgid "This email address is already in use."
+msgstr "Địa chỉ email này đã được sử dụng."
+
+#: app.py:118
+msgid "This username already exists."
+msgstr "Tên đăng nhập này đã tồn tại."
+
+#: app.py:127
+msgid "Account created successfully! Please log in."
+msgstr "Tạo tài khoản thành công! Vui lòng đăng nhập."
+
+#: app.py:192
+msgid "Thank you for your message! We will get back to you shortly."
+msgstr "Cảm ơn bạn đã gửi tin nhắn! Chúng tôi sẽ phản hồi sớm."
+
+#: app.py:194
+msgid "An error occurred while sending the message. Please try again."
+msgstr "Đã có lỗi xảy ra khi gửi tin nhắn. Vui lòng thử lại."
+
+#: app.py:223
+msgid "Recording deleted successfully."
+msgstr "Đã xóa bản ghi thành công."
+
+#: app.py:225
+msgid "An error occurred while deleting the file."
+msgstr "Đã có lỗi xảy ra khi xóa file."
+
+#: app.py:255
+msgid "Profile updated successfully!"
+msgstr "Cập nhật thông tin thành công!"
+
+#: templates/profile.html:7
+msgid "Your Profile"
+msgstr "Hồ Sơ Của Bạn"
+
+#: templates/profile.html:19
+msgid "Username:"
+msgstr "Tên người dùng:"
+
+#: templates/profile.html:23
+msgid "Email:"
+msgstr "Email:"
+
+#: templates/profile.html:27
+msgid "Edit Profile"
+msgstr "Chỉnh sửa thông tin"
+
+#: templates/profile.html:28
+msgid "View Diagnosis History"
+msgstr "Xem lịch sử chẩn đoán"
+
+# ... CÁC CHUỖI CỦA THƯ VIỆN CLICK, KHÔNG CẦN DỊCH ...
+#: venv/Lib/site-packages/click/_termui_impl.py:556
+#, python-brace-format
+msgid "{editor}: Editing failed"
+msgstr ""
+
+#: venv/Lib/site-packages/click/_termui_impl.py:560
+#, python-brace-format
+msgid "{editor}: Editing failed: {e}"
+msgstr ""
+
+#: venv/Lib/site-packages/click/core.py:1124
+msgid "Aborted!"
+msgstr ""
+# ... VÀ CÁC CHUỖI CÒN LẠI ĐỂ TRỐNG ...
