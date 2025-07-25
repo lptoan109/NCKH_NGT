@@ -21,13 +21,14 @@ app.config['LANGUAGES'] = {
     'en': 'English',
     'vi': 'Tiếng Việt'
 }
-babel = Babel(app)
-
-@babel.localeselector
+# 1. Định nghĩa hàm get_locale một cách bình thường (không có @ ở trên)
 def get_locale():
     if 'language' in session:
         return session['language']
     return request.accept_languages.best_match(app.config['LANGUAGES'].keys())
+
+# 2. Truyền thẳng hàm vào khi khởi tạo Babel
+babel = Babel(app, locale_selector=get_locale)
 
 UPLOAD_FOLDER = 'static/uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
