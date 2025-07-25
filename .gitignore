@@ -2,5 +2,6 @@
 __pycache__/
 instance/
 database.db
+venv/
 
-config.py           <-- THÊM DÒNG NÀY VÀO
+config.py 
