@@ -23,6 +23,9 @@ app.config['LANGUAGES'] = {
 }
 # 1. Định nghĩa hàm get_locale một cách bình thường (không có @ ở trên)
 def get_locale():
+    # IN RA ĐỂ GỠ LỖI
+    print(f"SESSION LANGUAGE: {session.get('language')}") 
+    
     if 'language' in session:
         return session['language']
     return request.accept_languages.best_match(app.config['LANGUAGES'].keys())
