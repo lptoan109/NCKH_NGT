@@ -10,42 +10,42 @@
 
     <header>
         <nav class="navbar-v2">
-            <a href="{{ url_for('homepage') }}" class="nav-brand">NGT Cough</a>
+    <a href="{{ url_for('homepage') }}" class="nav-brand">NGT Cough</a>
 
-            <div class="nav-menu" id="nav-menu">
-                <div class="nav-links">
-                    <a href="{{ url_for('homepage') }}">Trang Chủ</a>
-                    <a href="#">Giới Thiệu</a>
-                    <a href="{{ url_for('diagnose') }}">Bắt Đầu Chẩn Đoán</a>
-                    <a href="{{ url_for('contact') }}">Liên Hệ & Báo Cáo Lỗi</a>
-                </div>
+    <div class="nav-menu" id="nav-menu">
+        <div class="nav-links">
+            <a href="{{ url_for('homepage') }}">{{ _('Homepage') }}</a>
+            <a href="#">{{ _('About') }}</a>
+            <a href="{{ url_for('diagnose') }}">{{ _('Start Diagnosis') }}</a>
+            <a href="{{ url_for('contact') }}">{{ _('Contact & Report Bug') }}</a>
+        </div>
 
-                <div class="nav-auth">
-                    <div class="language-selector" style="display: flex; gap: 10px; align-items: center;">
-    <a href="{{ url_for('set_language', language='vi') }}">🇻🇳</a>
-    <a href="{{ url_for('set_language', language='en') }}">🇬🇧</a>
-                    </div>
-    {% if current_user.is_authenticated %}
-        <a href="{{ url_for('logout') }}" class="btn btn-logout">Đăng Xuất</a>
-        
-        <a href="{{ url_for('profile') }}">
-            {% if current_user.picture %}
-                 <img src="{{ current_user.picture }}" alt="User Avatar" class="avatar-image-nav">
-            {% else %}
-                <div class="avatar-text">{{ current_user.username[0]|upper }}</div>
-            {% endif %}
-        </a>
-        {% else %}
-        <a href="{{ url_for('login') }}" class="btn">Đăng Nhập</a>
-        <a href="{{ url_for('register') }}" class="btn btn-secondary">Đăng Ký</a>
-    {% endif %}
-`           </div>
+        <div class="nav-auth">
+            <div class="language-selector" style="display: flex; gap: 10px; align-items: center;">
+                <a href="{{ url_for('set_language', language='vi') }}">🇻🇳</a>
+                <a href="{{ url_for('set_language', language='en') }}">🇬🇧</a>
             </div>
 
-            <button class="hamburger" id="hamburger">
-                &#9776;
-            </button>
-        </nav>
+            {% if current_user.is_authenticated %}
+                <a href="{{ url_for('logout') }}" class="btn btn-logout">{{ _('Logout') }}</a>
+                <a href="{{ url_for('profile') }}">
+                    {% if current_user.picture %}
+                         <img src="{{ current_user.picture }}" alt="User Avatar" class="avatar-image-nav">
+                    {% else %}
+                        <div class="avatar-text">{{ current_user.username[0]|upper }}</div>
+                    {% endif %}
+                </a>
+            {% else %}
+                <a href="{{ url_for('login') }}" class="btn">{{ _('Login') }}</a>
+                <a href="{{ url_for('register') }}" class="btn btn-secondary">{{ _('Register') }}</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <button class="hamburger" id="hamburger">
+        &#9776;
+    </button>
+            </nav>
     </header>
 
     <main>
