@@ -396,7 +396,7 @@ main {
 }
 
 .wave {
-    background: url(https://cdn.kcak11.com/codepen_assets/wave_animation/wave.svg) repeat-x;
+    background: url("{{ url_for('static', filename='soundwave.png') }}") repeat-x;
     position: absolute;
     bottom: 0;
     width: 6400px; 
