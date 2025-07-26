@@ -15,7 +15,7 @@
                         <strong>Ngày ghi:</strong> {{ recording.timestamp.strftime('%H:%M:%S ngày %d-%m-%Y') }}
                     </div>
                     <div class="item-player">
-                        <audio controls src="/uploads/{{ recording.filename }}"></audio>
+                        <audio controls src="{{ url_for('static', filename='uploads/' + recording.filename) }}"></audio>
                     </div>
                     <div class="item-actions">
                         <form action="{{ url_for('delete_recording', recording_id=recording.id) }}" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn xóa bản ghi này không?');">

@@ -219,7 +219,8 @@ def upload_audio():
     if not audio_file:
         return {"error": "No audio file"}, 400
     
-    upload_folder = os.path.join(app.root_path, 'uploads')
+    # Sửa thành
+    upload_folder = os.path.join(app.root_path, 'static', 'uploads')
     os.makedirs(upload_folder, exist_ok=True)
 
     timestamp_str = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
