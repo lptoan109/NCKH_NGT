@@ -1,12 +1,14 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@700;900&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}NGT Cough{% endblock %}</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@700;900&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
@@ -34,7 +36,7 @@
                             {% endif %}
                         </a>
                     {% else %}
-                        <a href="{{ url_for('login') }}" class="btn">Đăng Nhập</a>
+                        <a href="{{ url_for('login') }}" class="btn btn-primary">Đăng Nhập</a>
                         <a href="{{ url_for('register') }}" class="btn btn-secondary">Đăng Ký</a>
                     {% endif %}
                 </div>
@@ -47,7 +49,7 @@
     </header>
 
     <main>
-        {# Hiển thị các thông báo (ví dụ: đăng ký thành công) #}
+        {# Hiển thị các thông báo flash #}
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 <div class="flash-messages">
