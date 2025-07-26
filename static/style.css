@@ -204,6 +204,8 @@ main {
     align-items: center;
     padding: 80px 20px;
     text-align: center;
+    position: relative; /* Để làm mốc cho sóng âm */
+    min-height: 80vh;   /* Để nó có đủ chiều cao gần lấp đầy màn hình */
 }
 .hero-content { max-width: 700px; }
 .hero-title {
