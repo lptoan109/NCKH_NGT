@@ -7,41 +7,40 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-<!-- edlsn -->
+
     <header>
         <nav class="navbar-v2">
-    <a href="{{ url_for('homepage') }}" class="nav-brand">NGT Cough</a>
+            <a href="{{ url_for('homepage') }}" class="nav-brand">NGT Cough</a>
 
-    <div class="nav-menu" id="nav-menu">
-        <div class="nav-links">
-            <a href="{{ url_for('homepage') }}">Trang Chủ</a>
-            <a href="#">Giới Thiệu</a>
-            <a href="{{ url_for('diagnose') }}">Bắt Đầu Chẩn Đoán</a>
-        </div>
+            <div class="nav-menu" id="nav-menu">
+                <div class="nav-links">
+                    <a href="{{ url_for('homepage') }}">Trang Chủ</a>
+                    <a href="#">Giới Thiệu</a>
+                    <a href="{{ url_for('diagnose') }}">Bắt Đầu Chẩn Đoán</a>
+                    <a href="{{ url_for('contact') }}">Liên Hệ & Báo Cáo Lỗi</a>
+                </div>
 
-        <div class="nav-auth">
-            
-
-            {% if current_user.is_authenticated %}
-                <a href="{{ url_for('logout') }}" class="btn btn-logout">{{ _('Logout') }}</a>
-                <a href="{{ url_for('profile') }}">
-                    {% if current_user.picture %}
-                         <img src="{{ current_user.picture }}" alt="User Avatar" class="avatar-image-nav">
+                <div class="nav-auth">
+                    {% if current_user.is_authenticated %}
+                        <a href="{{ url_for('logout') }}" class="btn btn-logout">Đăng Xuất</a>
+                        <a href="{{ url_for('profile') }}">
+                            {% if current_user.picture %}
+                                 <img src="{{ current_user.picture }}" alt="User Avatar" class="avatar-image-nav">
+                            {% else %}
+                                <div class="avatar-text">{{ current_user.username[0]|upper }}</div>
+                            {% endif %}
+                        </a>
                     {% else %}
-                        <div class="avatar-text">{{ current_user.username[0]|upper }}</div>
+                        <a href="{{ url_for('login') }}" class="btn">Đăng Nhập</a>
+                        <a href="{{ url_for('register') }}" class="btn btn-secondary">Đăng Ký</a>
                     {% endif %}
-                </a>
-            {% else %}
-                <a href="{{ url_for('login') }}" class="btn">{{ _('Login') }}</a>
-                <a href="{{ url_for('register') }}" class="btn btn-secondary">{{ _('Register') }}</a>
-            {% endif %}
-        </div>
-    </div>
+                </div>
+            </div>
 
-    <button class="hamburger" id="hamburger">
-        &#9776;
-    </button>
-            </nav>
+            <button class="hamburger" id="hamburger">
+                &#9776;
+            </button>
+        </nav>
     </header>
 
     <main>

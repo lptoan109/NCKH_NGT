@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="page-container">
-    <h2>{{ _('Your Profile') }}</h2>
+    <h2>Hồ Sơ Của Bạn</h2>
 
     <div class="profile-card">
         <div class="profile-avatar">
@@ -16,16 +16,16 @@
         </div>
         <div class="profile-info">
             <div class="info-item">
-                <strong>{{ _('Username:') }}</strong>
+                <strong>Tên người dùng:</strong>
                 <p>{{ current_user.username }}</p>
             </div>
             <div class="info-item">
-                <strong>{{ _('Email:') }}</strong>
+                <strong>Email:</strong>
                 <p>{{ current_user.email }}</p>
             </div>
             <div class="info-item">
-                <a href="{{ url_for('edit_profile') }}" class="btn btn-secondary">{{ _('Edit Profile') }}</a>
-                <a href="{{ url_for('history') }}" class="btn">{{ _('View Diagnosis History') }}</a>
+                <a href="{{ url_for('edit_profile') }}" class="btn btn-secondary">Chỉnh sửa thông tin</a>
+                <a href="{{ url_for('history') }}" class="btn">Xem lịch sử chẩn đoán</a>
             </div>
         </div>
     </div>
