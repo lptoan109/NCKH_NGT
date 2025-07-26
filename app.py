@@ -7,7 +7,6 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from flask_bcrypt import Bcrypt
 from flask_mail import Mail, Message
-from flask_babel import Babel, _
 
 from authlib.integrations.flask_client import OAuth
 from werkzeug.utils import secure_filename
@@ -29,18 +28,6 @@ app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['MAIL_SERVER'] = 'smtp.googlemail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
-
-# --- CẤU HÌNH BABEL ---
-app.config['LANGUAGES'] = {
-    'en': 'English',
-    'vi': 'Tiếng Việt'
-}
-
-def get_locale():
-    return session.get('language', request.accept_languages.best_match(app.config['LANGUAGES'].keys()))
-
-babel = Babel(app, locale_selector=get_locale)
-# --------------------
 
 # Khởi tạo các extension
 db = SQLAlchemy(app)
@@ -78,23 +65,11 @@ class Recording(db.Model):
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# TẠO DATABASE (CHẠY MỘT LẦN)
-# Lần đầu tiên chạy trên server, bạn cần mở Bash console,
-# kích hoạt venv và chạy các lệnh sau trong python shell:
-# from app import app, db
-# with app.app_context():
-#     db.create_all()
-
 # --- 3. ĐỊNH NGHĨA ROUTE ---
 
 @app.route('/')
 def homepage():
     return render_template('index.html')
-
-@app.route('/language/<language>')
-def set_language(language=None):
-    session['language'] = language
-    return redirect(request.referrer)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -104,7 +79,7 @@ def login():
             login_user(user)
             return redirect(url_for('diagnose'))
         else:
-            flash(_('Invalid username or password.'), 'danger')
+            flash('Sai tên đăng nhập hoặc mật khẩu.', 'danger')
     return render_template('login.html')
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -115,12 +90,12 @@ def register():
 
         existing_user_email = User.query.filter_by(email=email).first()
         if existing_user_email:
-            flash(_('This email address is already in use.'), 'danger')
+            flash('Địa chỉ email này đã được sử dụng.', 'danger')
             return redirect(url_for('register'))
 
         existing_user_username = User.query.filter_by(username=username).first()
         if existing_user_username:
-            flash(_('This username already exists.'), 'danger')
+            flash('Tên đăng nhập này đã tồn tại.', 'danger')
             return redirect(url_for('register'))
 
         password = request.form.get('password')
@@ -129,7 +104,7 @@ def register():
         db.session.add(new_user)
         db.session.commit()
 
-        flash(_('Account created successfully! Please log in.'), 'success')
+        flash('Tạo tài khoản thành công! Vui lòng đăng nhập.', 'success')
         return redirect(url_for('login'))
     return render_template('register.html')
 
@@ -138,7 +113,6 @@ def register():
 def logout():
     logout_user()
     session.pop('user_info', None)
-    session.pop('language', None)
     return redirect(url_for('homepage'))
 
 @app.route('/login/google')
@@ -183,9 +157,9 @@ def contact():
             )
             msg.body = f"Message from: {name} <{sender_email_from_form}>\n\n{message_body}"
             mail.send(msg)
-            flash(_('Thank you for your message! We will get back to you shortly.'), 'success')
+            flash('Cảm ơn bạn đã gửi tin nhắn! Chúng tôi sẽ phản hồi sớm.', 'success')
         except Exception as e:
-            flash(_('An error occurred while sending the message. Please try again.'), 'danger')
+            flash('Đã có lỗi xảy ra khi gửi tin nhắn. Vui lòng thử lại.', 'danger')
             print(e)
         return redirect(url_for('contact'))
     return render_template('contact.html')
@@ -208,9 +182,9 @@ def delete_recording(recording_id):
             os.remove(filepath)
         db.session.delete(recording)
         db.session.commit()
-        flash(_('Recording deleted successfully.'), 'success')
+        flash('Đã xóa bản ghi thành công.', 'success')
     except Exception as e:
-        flash(_('An error occurred while deleting the file.'), 'danger')
+        flash('Đã có lỗi xảy ra khi xóa file.', 'danger')
         print(f"Error deleting file: {e}")
     return redirect(url_for('history'))
 
@@ -234,7 +208,7 @@ def edit_profile():
                 file.save(os.path.join(upload_path, filename))
                 current_user.picture = f"/{app.config['UPLOAD_FOLDER']}/{filename}"
         db.session.commit()
-        flash(_('Profile updated successfully!'), 'success')
+        flash('Cập nhật thông tin thành công!', 'success')
         return redirect(url_for('profile'))
     return render_template('edit_profile.html')
 
@@ -261,4 +235,6 @@ def upload_audio():
 
 # --- 4. CHẠY ỨNG DỤNG ---
 if __name__ == '__main__':
+    with app.app_context():
+        db.create_all() # Tự động tạo file database nếu chưa có khi chạy local
     app.run(debug=True)
