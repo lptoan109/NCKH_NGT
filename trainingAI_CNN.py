@@ -1,402 +1,310 @@
-# ===================================================================
-# BLOCK 1: CÀI ĐẶT, KẾT NỐI VÀ IMPORT
-# ===================================================================
+################################################################################
+# BƯỚC 1: THIẾT LẬP MÔI TRƯỜNG VÀ CÀI ĐẶT THƯ VIỆN
+################################################################################
 
-# Cài đặt các thư viện cần thiết
-!pip install librosa soundfile numpy tqdm audiomentations scikit-learn pytorch-grad-cam psutil fpdf2 seaborn -q
-
-# Import các thư viện
-import os
-import re
-import shutil
-import numpy as np
-import librosa
-from tqdm import tqdm
-from collections import defaultdict
-import matplotlib.pyplot as plt
-import glob
-import time
-import psutil
-from datetime import datetime
-import pytz
-
-import torch
-import torch.nn as nn
-import torch.optim as optim
-from torch.utils.data import Dataset, DataLoader
-import torchvision.models as models
-from torchvision.models import ResNet18_Weights
-
-from audiomentations import Compose, AddGaussianNoise, TimeStretch, PitchShift
-from sklearn.metrics import classification_report, confusion_matrix
-import seaborn as sns
-from fpdf import FPDF
-
-from pytorch_grad_cam import GradCam
-from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
-from pytorch_grad_cam.utils.image import show_cam_on_image
-
-# Kết nối với Google Drive
+# Kết nối Google Drive với Colab
 from google.colab import drive
 drive.mount('/content/drive')
 
+# Cài đặt/Nâng cấp các thư viện cần thiết
+!pip install -q librosa tensorflow pandas scikit-learn matplotlib seaborn pytz
 
-# ===================================================================
-# BLOCK 2: CẤU HÌNH TẬP TRUNG (CENTRALIZED CONFIGURATION)
-# ===================================================================
+# Import các thư viện
+import os
+import pandas as pd
+import numpy as np
+import librosa
+import librosa.display
+import tensorflow as tf
+from tensorflow.keras.applications import ResNet50V2
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Input, GlobalAveragePooling2D, Dense, Dropout
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import classification_report, confusion_matrix
+import matplotlib.pyplot as plt
+import seaborn as sns
+import datetime
+import pytz
 
-# --- Đường dẫn ---
-DRIVE_PATH = "/content/drive/MyDrive/"
-# THƯ MỤC INPUT: Chứa dữ liệu âm thanh thô (.wav, .mp3)
-INPUT_BASE_DIR = os.path.join(DRIVE_PATH, "du_lieu_goc")
-# THƯ MỤC OUTPUT GỐC: Nơi script sẽ tạo các thư mục output được đánh dấu thời gian
-BASE_OUTPUT_DRIVE_DIR = os.path.join(DRIVE_PATH, "KET_QUA_NGHIEN_CUU")
+print("TensorFlow Version:", tf.__version__)
 
-# --- Hyperparameters cho Model và Huấn luyện ---
-DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-NUM_EPOCHS = 50
+################################################################################
+# BƯỚC 2: CẤU HÌNH DỰ ÁN VÀ CHUẨN BỊ DỮ LIỆU
+################################################################################
+print("\n--- Bắt đầu Bước 2: Cấu hình và chuẩn bị dữ liệu ---")
+
+# --- ⚙️ 1. CẤU HÌNH ĐƯỜNG DẪN ---
+INPUT_FOLDER = '/content/drive/MyDrive/DuLieuTiengHo/'
+OUTPUT_FOLDER = '/content/drive/MyDrive/KetQuaNghienCuu/'
+
+# --- ⚙️ 2. CẤU HÌNH THAM SỐ HUẤN LUYỆN ---
+EPOCHS = 25
 BATCH_SIZE = 32
-LEARNING_RATE = 0.001
 PATIENCE = 5
-MIN_DELTA = 0.001
 
-# --- Cấu hình Xử lý Âm thanh ---
+# --- ⚙️ 3. CẤU HÌNH TIỀN XỬ LÝ ---
+USE_SEGMENTATION = True
+DURATION = 5
+SEGMENT_DURATION = 2
+ENERGY_THRESHOLD_DB = 20
+# ---------------------------------------------------------
+
+if not os.path.isdir(INPUT_FOLDER): raise ValueError("Lỗi: Đường dẫn INPUT_FOLDER không tồn tại.")
+if not os.path.isdir(OUTPUT_FOLDER): os.makedirs(OUTPUT_FOLDER)
+
+vn_timezone = pytz.timezone('Asia/Ho_Chi_Minh')
+timestamp = datetime.datetime.now(vn_timezone).strftime('%Y%m%d_%H%M%S')
+FINAL_OUTPUT_PATH = os.path.join(OUTPUT_FOLDER, f'output_{timestamp}')
+os.makedirs(FINAL_OUTPUT_PATH, exist_ok=True)
+print(f"Tất cả kết quả sẽ được lưu tại: {FINAL_OUTPUT_PATH}")
+
+COUGH_PATH = os.path.join(INPUT_FOLDER, 'ho_va_tho')
+NO_COUGH_PATH = os.path.join(INPUT_FOLDER, 'khong_ho_va_tho')
+MANIFEST_CSV_PATH = os.path.join(FINAL_OUTPUT_PATH, f'{timestamp}_manifest.csv')
+
+def extract_patient_id(filename): return filename.split('_')[0]
+
+print("Đang tạo file manifest...")
+data = [{'filepath': os.path.join(COUGH_PATH, f), 'label': 1, 'patient_id': extract_patient_id(f)}
+        for f in os.listdir(COUGH_PATH) if f.endswith(('.wav', '.mp3', '.flac'))]
+data.extend([{'filepath': os.path.join(NO_COUGH_PATH, f), 'label': 0, 'patient_id': extract_patient_id(f)}
+             for f in os.listdir(NO_COUGH_PATH) if f.endswith(('.wav', '.mp3', '.flac'))])
+
+df = pd.DataFrame(data)
+df.to_csv(MANIFEST_CSV_PATH, index=False)
+print(f"Đã tạo và lưu file manifest tại: {MANIFEST_CSV_PATH}")
+print(f"Tổng số file: {len(df)}")
+print(f"Tổng số bệnh nhân: {df['patient_id'].nunique()}")
+
+################################################################################
+# BƯỚC 3: PHÂN CHIA DỮ LIỆU THEO BỆNH NHÂN
+################################################################################
+print("\n--- Bắt đầu Bước 3: Phân chia dữ liệu theo bệnh nhân ---")
+unique_patients = df['patient_id'].unique()
+train_val_pids, test_pids = train_test_split(unique_patients, test_size=0.2, random_state=42)
+train_pids, val_pids = train_test_split(train_val_pids, test_size=0.2, random_state=42)
+train_df = df[df['patient_id'].isin(train_pids)]
+val_df = df[df['patient_id'].isin(val_pids)]
+test_df = df[df['patient_id'].isin(test_pids)]
+print(f"Bệnh nhân trong tập huấn luyện: {len(train_pids)}, file: {len(train_df)}")
+print(f"Bệnh nhân trong tập kiểm định: {len(val_pids)}, file: {len(val_df)}")
+print(f"Bệnh nhân trong tập thử nghiệm: {len(test_pids)}, file: {len(test_df)}")
+
+################################################################################
+# BƯỚC 4: TIỀN XỬ LÝ VÀ TRÍCH XUẤT ĐẶC TRƯNG (VỚI XỬ LÝ KHÁC BIỆT)
+################################################################################
+print("\n--- Bắt đầu Bước 4: Thiết lập pipeline xử lý dữ liệu ---")
 SAMPLE_RATE = 16000
-DURATION_SECONDS = 5
-N_FFT = 2048
-HOP_LENGTH = 512
-N_MELS = 128
+N_MELS = 224
+IMG_SIZE = (224, 224)
 
-# --- Cấu hình Phân chia Dữ liệu ---
-TRAIN_RATIO, VAL_RATIO, TEST_RATIO = 0.7, 0.15, 0.15
-RANDOM_SEED = 42
-
-# --- Cấu hình Tăng cường Dữ liệu ---
-augmenter = Compose([
-    AddGaussianNoise(min_amplitude=0.001, max_amplitude=0.015, p=0.5),
-    TimeStretch(min_rate=0.8, max_rate=1.25, p=0.5),
-    PitchShift(min_semitones=-4, max_semitones=4, p=0.5)
-])
-
-# --- Định nghĩa các Lớp ---
-CLASSES_TO_PROCESS = {
-    "COUGH/healthy": {"is_minority": False}, "COUGH/covid": {"is_minority": True},
-    "BREATHING/healthy": {"is_minority": False}, "BREATHING/covid": {"is_minority": True},
-    "BREATHING/asthma": {"is_minority": True}, "BREATHING/pneumonia": {"is_minority": True},
-    "BREATHING/copd": {"is_minority": False}, "BREATHING/lrit": {"is_minority": True},
-}
-CLASS_NAMES = sorted(list(set([k.split('/')[1] for k in CLASSES_TO_PROCESS.keys()])))
-NUM_CLASSES = len(CLASS_NAMES)
-
-
-# ===================================================================
-# BLOCK 3: CÁC LỚP VÀ HÀM TIỆN ÍCH
-# ===================================================================
-
-class EarlyStopping:
-    def __init__(self, patience=5, min_delta=0, model_path='checkpoint.pth'):
-        self.patience, self.min_delta, self.model_path = patience, min_delta, model_path
-        self.counter, self.best_score, self.early_stop, self.val_loss_min = 0, None, False, np.Inf
-    def __call__(self, val_loss, model):
-        score = -val_loss
-        if self.best_score is None:
-            self.best_score = score
-            self.save_checkpoint(val_loss, model)
-        elif score < self.best_score + self.min_delta:
-            self.counter += 1
-            if self.counter >= self.patience: self.early_stop = True
-        else:
-            self.best_score = score
-            self.save_checkpoint(val_loss, model)
-            self.counter = 0
-    def save_checkpoint(self, val_loss, model):
-        print(f'Validation loss giảm ({self.val_loss_min:.6f} --> {val_loss:.6f}). Đang lưu model...')
-        torch.save(model.state_dict(), self.model_path)
-        self.val_loss_min = val_loss
-
-class CoughSpectrogramDataset(Dataset):
-    def __init__(self, data_dir, class_names):
-        self.class_to_idx = {name: i for i, name in enumerate(class_names)}
-        self.file_paths, self.labels = [], []
-        for class_name in class_names:
-            paths = glob.glob(os.path.join(data_dir, "**", class_name, "*.npy"), recursive=True)
-            self.file_paths.extend(paths)
-            self.labels.extend([self.class_to_idx[class_name]] * len(paths))
-    def __len__(self): return len(self.file_paths)
-    def __getitem__(self, idx):
-        file_path, label = self.file_paths[idx], self.labels[idx]
-        spectrogram = np.load(file_path)
-        spectrogram_tensor = torch.from_numpy(spectrogram).float().unsqueeze(0).repeat(3, 1, 1)
-        return spectrogram_tensor, label
-
-
-# ===================================================================
-# BLOCK 4: LỚP PIPELINE CHÍNH
-# ===================================================================
-
-class TrainingPipeline:
-    def __init__(self, config):
-        self.config = config
-        self.history = {'train_loss': [], 'val_loss': [], 'val_acc': []}
-        self.model = None
-        self._setup_paths_and_timestamp()
-        
-    def _setup_paths_and_timestamp(self):
-        tz_vietnam = pytz.timezone('Asia/Ho_Chi_Minh')
-        self.timestamp = datetime.now(tz_vietnam).strftime('%Y-%m-%d_%H-%M-%S')
-        self.output_dir = os.path.join(self.config['BASE_OUTPUT_DRIVE_DIR'], f"output_{self.timestamp}")
-        os.makedirs(self.output_dir, exist_ok=True)
-        print(f"Tất cả output sẽ được lưu tại: {self.output_dir}")
-        self.config['FINAL_DATASET_DIR'] = os.path.join(self.output_dir, "final_dataset")
-        self.config['MODEL_SAVE_PATH'] = os.path.join(self.output_dir, f"model_{self.timestamp}.pth")
-
-    def run(self):
-        data_prepared = self._preprocess_and_split_data()
-        if data_prepared:
-            self._train_model()
-            self._evaluate_and_report()
-        print(f"\n🎉 TOÀN BỘ PIPELINE HOÀN TẤT! KẾT QUẢ TẠI: {self.output_dir}")
-
-    def _get_patient_id(self, filename):
-        match = re.match(r"([a-zA-Z0-9\-]+)_", filename)
-        if match: return match.group(1)
-        return os.path.splitext(filename)[0]
-
-    def _preprocess_and_split_data(self):
-        print("\n===== QUY TRÌNH 1: XỬ LÝ VÀ CHIA DỮ LIỆU =====")
-        cfg = self.config
-        patient_files, all_audio_files = defaultdict(list), []
-        for root, _, files in os.walk(cfg['INPUT_BASE_DIR']):
-            for file in files:
-                if file.endswith(('.wav', '.mp3', '.flac')):
-                    full_path = os.path.join(root, file)
-                    all_audio_files.append(full_path)
-                    patient_id = self._get_patient_id(file)
-                    patient_files[patient_id].append(full_path)
-        
-        if not patient_files: 
-            print("LỖI: Không tìm thấy file âm thanh trong thư mục input."); return False
-        
-        all_patient_ids = list(patient_files.keys())
-        np.random.seed(cfg['RANDOM_SEED']); np.random.shuffle(all_patient_ids)
-        train_idx = int(len(all_patient_ids) * cfg['TRAIN_RATIO'])
-        val_idx = train_idx + int(len(all_patient_ids) * cfg['VAL_RATIO'])
-        train_ids, val_ids, test_ids = all_patient_ids[:train_idx], all_patient_ids[train_idx:val_idx], all_patient_ids[val_idx:]
-        
-        patient_to_split_map = {pid: 'train' for pid in train_ids}
-        patient_to_split_map.update({pid: 'val' for pid in val_ids})
-        patient_to_split_map.update({pid: 'test' for pid in test_ids})
-
-        for source_path in tqdm(all_audio_files, desc="Đang xử lý và chia file"):
-            try:
-                patient_id = self._get_patient_id(os.path.basename(source_path))
-                split_name = patient_to_split_map[patient_id]
-                
-                signal, _ = librosa.load(source_path, sr=cfg['SAMPLE_RATE'], mono=True)
-                target_samples = cfg['DURATION_SECONDS'] * cfg['SAMPLE_RATE']
-                if len(signal) > target_samples: signal = signal[:target_samples]
-                else: signal = np.pad(signal, (0, target_samples - len(signal)), 'constant')
-                
-                class_path_part = os.path.relpath(os.path.dirname(source_path), cfg['INPUT_BASE_DIR'])
-                if cfg['CLASSES_TO_PROCESS'].get(class_path_part, {}).get("is_minority", False):
-                    signal = cfg['augmenter'](samples=signal, sample_rate=cfg['SAMPLE_RATE'])
-                
-                mel_spec = librosa.feature.melspectrogram(y=signal, sr=cfg['SAMPLE_RATE'], n_fft=cfg['N_FFT'], hop_length=cfg['HOP_LENGTH'], n_mels=cfg['N_MELS'])
-                db_mel_spec = librosa.power_to_db(mel_spec, ref=np.max)
-                
-                relative_path = os.path.relpath(source_path, cfg['INPUT_BASE_DIR'])
-                destination_path = os.path.join(cfg['FINAL_DATASET_DIR'], split_name, os.path.splitext(relative_path)[0] + ".npy")
-                os.makedirs(os.path.dirname(destination_path), exist_ok=True)
-                np.save(destination_path, db_mel_spec)
-            except Exception as e:
-                print(f"\nLỗi khi xử lý file {source_path}: {e}")
-        
-        print("\n===== HOÀN TẤT QUY TRÌNH 1 ====="); return True
-
-    def _train_model(self):
-        print("\n===== QUY TRÌNH 2: HUẤN LUYỆN MODEL =====")
-        cfg = self.config
-        train_dataset = CoughSpectrogramDataset(os.path.join(cfg['FINAL_DATASET_DIR'], "train"), cfg['CLASS_NAMES'])
-        val_dataset = CoughSpectrogramDataset(os.path.join(cfg['FINAL_DATASET_DIR'], "val"), cfg['CLASS_NAMES'])
-        train_loader = DataLoader(train_dataset, batch_size=cfg['BATCH_SIZE'], shuffle=True, num_workers=2, pin_memory=True)
-        val_loader = DataLoader(val_dataset, batch_size=cfg['BATCH_SIZE'], shuffle=False, num_workers=2, pin_memory=True)
-
-        class_weights = torch.tensor(compute_class_weight('balanced', classes=np.arange(cfg['NUM_CLASSES']), y=train_dataset.labels), dtype=torch.float).to(cfg['DEVICE'])
-        
-        self.model = models.resnet18(weights=ResNet18_Weights.IMAGENET1K_V1)
-        self.model.fc = nn.Linear(self.model.fc.in_features, cfg['NUM_CLASSES'])
-        self.model = self.model.to(cfg['DEVICE'])
-        
-        criterion = nn.CrossEntropyLoss(weight=class_weights)
-        optimizer = optim.Adam(self.model.parameters(), lr=cfg['LEARNING_RATE'])
-        early_stopping = EarlyStopping(patience=cfg['PATIENCE'], model_path=cfg['MODEL_SAVE_PATH'])
-
-        for epoch in range(cfg['NUM_EPOCHS']):
-            self.model.train()
-            train_loss = 0.0
-            for inputs, labels in tqdm(train_loader, desc=f"Epoch {epoch+1}/{cfg['NUM_EPOCHS']}"):
-                inputs, labels = inputs.to(cfg['DEVICE'], non_blocking=True), labels.to(cfg['DEVICE'], non_blocking=True)
-                optimizer.zero_grad()
-                outputs = self.model(inputs)
-                loss = criterion(outputs, labels)
-                loss.backward()
-                optimizer.step()
-                train_loss += loss.item()
-
-            self.model.eval()
-            val_loss, val_corrects = 0.0, 0
-            with torch.no_grad():
-                for inputs, labels in val_loader:
-                    inputs, labels = inputs.to(cfg['DEVICE'], non_blocking=True), labels.to(cfg['DEVICE'], non_blocking=True)
-                    outputs = self.model(inputs)
-                    val_loss += criterion(outputs, labels).item()
-                    _, preds = torch.max(outputs, 1)
-                    val_corrects += torch.sum(preds == labels.data)
-            
-            avg_train_loss = train_loss / len(train_loader)
-            avg_val_loss = val_loss / len(val_loader)
-            val_acc = val_corrects.double() / len(val_dataset) * 100
-
-            self.history['train_loss'].append(avg_train_loss)
-            self.history['val_loss'].append(avg_val_loss)
-            self.history['val_acc'].append(val_acc.item())
-            
-            print(f"Epoch {epoch+1} - Train Loss: {avg_train_loss:.4f}, Val Loss: {avg_val_loss:.4f}, Val Acc: {val_acc:.2f}%")
-            
-            early_stopping(avg_val_loss, self.model)
-            if early_stopping.early_stop: print("Dừng sớm do không có cải thiện!"); break
-        
-        print("\n===== HOÀN TẤT HUẤN LUYỆN =====")
-
-    def _evaluate_and_report(self):
-        print("\n===== QUY TRÌNH 3: ĐÁNH GIÁ & TẠO BÁO CÁO =====")
-        model = self._load_best_model()
-        val_dataset = CoughSpectrogramDataset(os.path.join(self.config['FINAL_DATASET_DIR'], 'val'), self.config['CLASS_NAMES'])
-        val_loader = DataLoader(val_dataset, batch_size=self.config['BATCH_SIZE'], shuffle=False, num_workers=2)
-        
-        y_true, y_pred, y_paths = self._get_predictions(model, val_loader)
-        
-        if len(y_true) == 0: print("Không có dữ liệu kiểm định để đánh giá."); return
-
-        report_dict = classification_report(y_true, y_pred, target_names=self.config['CLASS_NAMES'], output_dict=True, zero_division=0)
-        
-        self._generate_plots(y_true, y_pred)
-        self._generate_gradcam_visuals(model, val_dataset, y_true, y_pred)
-        self._generate_pdf_report(report_dict)
-
-    def _load_best_model(self):
-        print(f"Đang tải model tốt nhất từ: {self.config['MODEL_SAVE_PATH']}")
-        model = models.resnet18(weights=None)
-        model.fc = nn.Linear(model.fc.in_features, self.config['NUM_CLASSES'])
-        model.load_state_dict(torch.load(self.config['MODEL_SAVE_PATH']))
-        model = model.to(self.config['DEVICE'])
-        model.eval()
-        return model
-
-    def _get_predictions(self, model, loader):
-        model.eval()
-        all_labels, all_preds, all_paths = [], [], []
-        with torch.no_grad():
-            for i, (inputs, labels) in enumerate(loader):
-                inputs = inputs.to(self.config['DEVICE'])
-                outputs = model(inputs)
-                _, preds = torch.max(outputs, 1)
-                all_labels.extend(labels.cpu().numpy())
-                all_preds.extend(preds.cpu().numpy())
-                start_idx = i * loader.batch_size
-                end_idx = start_idx + len(labels)
-                all_paths.extend(loader.dataset.file_paths[start_idx:end_idx])
-        return np.array(all_labels), np.array(all_preds), all_paths
+# Hàm phân đoạn dựa trên năng lượng (chỉ dùng cho lớp "Ho")
+def segment_cough(signal, sr, top_db):
+    intervals = librosa.effects.split(signal, top_db=top_db)
+    if len(intervals) == 0:
+        return signal # Trả về tín hiệu gốc nếu không tìm thấy đoạn nào
     
-    def _generate_plots(self, y_true, y_pred):
-        print("Đang tạo các biểu đồ...")
-        plt.figure(figsize=(12, 5))
-        plt.subplot(1, 2, 1); plt.plot(self.history['train_loss'], label='Train Loss'); plt.plot(self.history['val_loss'], label='Val Loss'); plt.title('Training & Validation Loss'); plt.legend()
-        plt.subplot(1, 2, 2); plt.plot(self.history['val_acc'], label='Val Accuracy'); plt.title('Validation Accuracy'); plt.legend()
-        curves_path = os.path.join(self.output_dir, f"curves_{self.timestamp}.png"); plt.savefig(curves_path); plt.close()
-        
-        cm = confusion_matrix(y_true, y_pred)
-        plt.figure(figsize=(10, 8)); sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=self.config['CLASS_NAMES'], yticklabels=self.config['CLASS_NAMES']); plt.title('Confusion Matrix'); plt.xlabel('Predicted'); plt.ylabel('True')
-        cm_path = os.path.join(self.output_dir, f"confusion_matrix_{self.timestamp}.png"); plt.savefig(cm_path); plt.close()
-        print(f"Đã lưu biểu đồ và ma trận nhầm lẫn.")
-
-    def _generate_gradcam_visuals(self, model, dataset, y_true, y_pred):
-        print("Đang tạo ảnh Grad-CAM chi tiết...")
-        target_layer = model.layer4[-1]
-        cam = GradCam(model=model, target_layers=[target_layer], use_cuda=torch.cuda.is_available())
-
-        for class_idx, class_name in enumerate(self.config['CLASS_NAMES']):
-            correct_indices = np.where((y_true == class_idx) & (y_pred == class_idx))[0]
-            incorrect_indices = np.where((y_true == class_idx) & (y_pred != class_idx))[0]
+    max_energy = 0
+    best_interval = intervals[0]
+    for start, end in intervals:
+        energy = np.sum(signal[start:end]**2)
+        if energy > max_energy:
+            max_energy = energy
+            best_interval = (start, end)
             
-            indices_to_viz = {}
-            if len(correct_indices) > 0: indices_to_viz['correct'] = correct_indices[0]
-            if len(incorrect_indices) > 0: indices_to_viz['incorrect'] = incorrect_indices[0]
+    return signal[best_interval[0]:best_interval[1]]
 
-            for viz_type, idx in indices_to_viz.items():
-                input_tensor, _ = dataset[idx]
-                rgb_img = input_tensor.permute(1, 2, 0).numpy()
-                rgb_img = (rgb_img - np.min(rgb_img)) / (np.max(rgb_img) - np.min(rgb_img))
-                
-                targets = [ClassifierOutputTarget(y_pred[idx])]
-                grayscale_cam = cam(input_tensor=input_tensor.unsqueeze(0), targets=targets)[0, :]
-                visualization = show_cam_on_image(rgb_img, grayscale_cam, use_rgb=True)
-                
-                fig, ax = plt.subplots(1, 1); ax.imshow(visualization); ax.axis('off')
-                ax.set_title(f"Lop: {class_name} ({viz_type})\nThuc te: {class_name}, Du doan: {self.config['CLASS_NAMES'][y_pred[idx]]}")
-                
-                save_path = os.path.join(self.output_dir, f"gradcam_{class_name}_{viz_type}_{self.timestamp}.png")
-                fig.savefig(save_path); plt.close(fig)
-        print("Đã tạo xong ảnh Grad-CAM.")
-
-    def _generate_pdf_report(self, report):
-        print("Đang tạo báo cáo PDF...")
-        pdf = FPDF()
-        pdf.add_page()
-        # Thêm font hỗ trợ Unicode (cần có file font .ttf)
-        # Tải font từ Google Fonts: https://fonts.google.com/specimen/Roboto
-        try:
-             # Sửa lại đường dẫn này cho đúng với vị trí file của bạn trên Drive
-            font_path = os.path.join(self.config['DRIVE_PATH'], 'Roboto-Regular.ttf') 
-            pdf.add_font('Roboto', '', font_path, uni=True)
-            pdf.set_font('Roboto', 'B', 16)
-        except RuntimeError:
-            print("Cảnh báo: Không tìm thấy font Roboto. PDF sẽ không hiển thị tiếng Việt có dấu.")
-            pdf.set_font("Arial", 'B', 16)
+# <<< CẬP NHẬT: HÀM PROCESS_AUDIO_FILE VỚI LOGIC XỬ LÝ KHÁC BIỆT CHO MỖI LỚP >>>
+def process_audio_file(filepath, label):
+    try:
+        signal, sr = librosa.load(filepath, sr=SAMPLE_RATE, duration=DURATION)
         
-        pdf.cell(0, 10, f"Bao cao HLV Model - {self.timestamp}", ln=True, align='C')
+        final_signal = None
         
-        pdf.set_font(pdf.font_family, 'B', 14); pdf.cell(0, 10, "1. Hieu suat qua cac Epoch", ln=True); pdf.ln(5)
-        pdf.image(os.path.join(self.output_dir, f"curves_{self.timestamp}.png"), w=190)
+        # Áp dụng logic khác nhau dựa trên nhãn và cấu hình
+        if label == 1 and USE_SEGMENTATION:
+            # LỚP 1 (HO): Phân đoạn để lấy sự kiện chính
+            final_signal = segment_cough(signal, sr, top_db=ENERGY_THRESHOLD_DB)
+            target_duration = SEGMENT_DURATION
+        else:
+            # LỚP 0 (KHÔNG HO) hoặc khi tắt phân đoạn: Lấy một đoạn ngẫu nhiên
+            target_duration = SEGMENT_DURATION if USE_SEGMENTATION else DURATION
+            target_length_process = int(target_duration * sr)
+
+            if len(signal) > target_length_process:
+                start = np.random.randint(0, len(signal) - target_length_process + 1)
+                final_signal = signal[start : start + target_length_process]
+            else:
+                final_signal = signal
+
+        # Chuẩn hóa độ dài cho tín hiệu cuối cùng
+        target_length = int(target_duration * sr)
+        if len(final_signal) < target_length:
+            final_signal = np.pad(final_signal, (0, target_length - len(final_signal)), 'constant')
+        else:
+            final_signal = final_signal[:target_length]
         
-        pdf.add_page()
-        pdf.set_font(pdf.font_family, 'B', 14); pdf.cell(0, 10, "2. Bang ket qua chi tiet", ln=True); pdf.ln(5)
-        pdf.set_font(pdf.font_family, 'B', 10); pdf.cell(40, 7, 'Class', 1); pdf.cell(25, 7, 'Precision', 1); pdf.cell(25, 7, 'Recall', 1); pdf.cell(25, 7, 'F1-Score', 1); pdf.cell(25, 7, 'Support', 1); pdf.ln()
+        # Tạo spectrogram từ tín hiệu cuối cùng
+        mel_spec = librosa.feature.melspectrogram(y=final_signal, sr=sr, n_mels=N_MELS)
+        log_mel_spec = librosa.power_to_db(mel_spec, ref=np.max)
+        log_mel_spec = (log_mel_spec - log_mel_spec.min()) / (log_mel_spec.max() - log_mel_spec.min() + 1e-6)
+        resized_spec = tf.image.resize(np.expand_dims(log_mel_spec, -1), IMG_SIZE)
+        resized_spec_rgb = tf.image.grayscale_to_rgb(resized_spec)
         
-        pdf.set_font(pdf.font_family, '', 10)
-        for class_name, metrics in report.items():
-            if isinstance(metrics, dict):
-                pdf.cell(40, 7, class_name, 1); pdf.cell(25, 7, f"{metrics.get('precision', 0):.2f}", 1); pdf.cell(25, 7, f"{metrics.get('recall', 0):.2f}", 1); pdf.cell(25, 7, f"{metrics.get('f1-score', 0):.2f}", 1); pdf.cell(25, 7, str(metrics.get('support', 0)), 1); pdf.ln()
+        return resized_spec_rgb, np.int64(label)
+    except Exception as e:
+        print(f"Lỗi xử lý file {filepath}: {e}")
+        return tf.zeros((*IMG_SIZE, 3), dtype=tf.float32), np.int64(-1)
 
-        report_path = os.path.join(self.output_dir, f"report_{self.timestamp}.pdf"); pdf.output(report_path)
-        print(f"Đã tạo báo cáo PDF.")
+# Các hàm còn lại của Bước 4 giữ nguyên
+def create_tf_dataset(df):
+    dataset = tf.data.Dataset.from_tensor_slices((df['filepath'].values, df['label'].values))
+    dataset = dataset.map(lambda x, y: tf.py_function(process_audio_file, [x, y], [tf.float32, tf.int64]), num_parallel_calls=tf.data.AUTOTUNE)
+    return dataset.filter(lambda x, y: y != -1)
 
-# ===================================================================
-# BLOCK 5: THỰC THI PIPELINE
-# ===================================================================
+train_ds = create_tf_dataset(train_df).shuffle(1000).batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
+val_ds = create_tf_dataset(val_df).batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
+test_ds = create_tf_dataset(test_df).batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
+print("Đã tạo xong các pipeline dữ liệu cho TensorFlow với logic xử lý khác biệt.")
 
-# Định nghĩa toàn bộ cấu hình
-config = {
-    "DRIVE_PATH": DRIVE_PATH, "INPUT_BASE_DIR": INPUT_BASE_DIR, "BASE_OUTPUT_DRIVE_DIR": BASE_OUTPUT_DRIVE_DIR,
-    "DEVICE": DEVICE, "NUM_EPOCHS": NUM_EPOCHS, "BATCH_SIZE": BATCH_SIZE, 
-    "LEARNING_RATE": LEARNING_RATE, "PATIENCE": PATIENCE, "MIN_DELTA": MIN_DELTA,
-    "SAMPLE_RATE": SAMPLE_RATE, "DURATION_SECONDS": DURATION_SECONDS, "N_FFT": N_FFT, 
-    "HOP_LENGTH": HOP_LENGTH, "N_MELS": N_MELS,
-    "TRAIN_RATIO": TRAIN_RATIO, "VAL_RATIO": VAL_RATIO, "TEST_RATIO": TEST_RATIO, "RANDOM_SEED": RANDOM_SEED,
-    "augmenter": augmenter, "CLASSES_TO_PROCESS": CLASSES_TO_PROCESS,
-    "CLASS_NAMES": CLASS_NAMES, "NUM_CLASSES": NUM_CLASSES
-}
+################################################################################
+# BƯỚC 5: XÂY DỰNG MÔ HÌNH (SỬ DỤNG RESNET50V2)
+################################################################################
+print("\n--- Bắt đầu Bước 5: Xây dựng mô hình ---")
+def build_model(input_shape):
+    base_model = ResNet50V2(include_top=False, weights='imagenet', input_shape=input_shape)
+    base_model.trainable = False
+    inputs = Input(shape=input_shape)
+    x = tf.keras.applications.resnet_v2.preprocess_input(inputs)
+    x = base_model(x, training=False)
+    x = GlobalAveragePooling2D()(x)
+    x = Dropout(0.5)(x)
+    x = Dense(256, activation='relu')(x)
+    outputs = Dense(1, activation='sigmoid')(x)
+    return Model(inputs, outputs)
 
-# Khởi tạo và chạy pipeline
-pipeline = TrainingPipeline(config)
-pipeline.run()
+input_shape = (*IMG_SIZE, 3)
+model = build_model(input_shape)
+model.summary()
+
+################################################################################
+# BƯỚC 6: HUẤN LUYỆN MÔ HÌNH
+################################################################################
+print("\n--- Bắt đầu Bước 6: Huấn luyện mô hình ---")
+model_checkpoint_path = os.path.join(FINAL_OUTPUT_PATH, f'{timestamp}_best_model.keras')
+callbacks = [
+    tf.keras.callbacks.ModelCheckpoint(model_checkpoint_path, save_best_only=True, monitor='val_accuracy', mode='max'),
+    tf.keras.callbacks.EarlyStopping(patience=PATIENCE, monitor='val_accuracy', restore_best_weights=True, mode='max')
+]
+model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=1e-3), loss='binary_crossentropy', metrics=['accuracy'])
+history = model.fit(train_ds, epochs=EPOCHS, validation_data=val_ds, callbacks=callbacks)
+
+################################################################################
+# BƯỚC 7: ĐÁNH GIÁ MÔ HÌNH VÀ LƯU KẾT QUẢ
+################################################################################
+print("\n--- Bắt đầu Bước 7: Đánh giá và Giải thích mô hình ---")
+print("Tải lại mô hình tốt nhất từ checkpoint...")
+
+# Đảm bảo các biến cần thiết từ Ô 1 có thể truy cập được
+try:
+    model = tf.keras.models.load_model(model_checkpoint_path)
+except NameError:
+    print("Lỗi: Vui lòng chạy Ô 1 trước để huấn luyện và lưu mô hình.")
+    # Dừng thực thi nếu các biến cần thiết không tồn tại
+    raise
+
+loss, accuracy = model.evaluate(test_ds)
+print(f"Độ chính xác cuối cùng trên tập thử nghiệm: {accuracy * 100:.2f}%")
+
+y_true = np.concatenate([y.numpy() for _, y in test_ds], axis=0)
+y_pred_probs = model.predict(test_ds)
+y_pred = (y_pred_probs > 0.5).astype(int).flatten()
+
+print("\nBáo cáo Phân loại:")
+report = classification_report(y_true, y_pred, target_names=['Không Ho', 'Ho'])
+print(report)
+report_path = os.path.join(FINAL_OUTPUT_PATH, f'{timestamp}_report.txt')
+with open(report_path, 'w') as f:
+    f.write(f"Cấu hình: EPOCHS={EPOCHS}, BATCH_SIZE={BATCH_SIZE}, PATIENCE={PATIENCE}\n")
+    f.write(f"Sử dụng phân đoạn: {USE_SEGMENTATION}\n")
+    f.write("-" * 50 + "\n")
+    f.write(f"Độ chính xác trên tập thử nghiệm: {accuracy * 100:.2f}%\n\n")
+    f.write(report)
+
+cm = confusion_matrix(y_true, y_pred)
+plt.figure(figsize=(8, 6))
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=['Không Ho', 'Ho'], yticklabels=['Không Ho', 'Ho'])
+plt.xlabel('Dự đoán'); plt.ylabel('Thực tế'); plt.title('Ma trận nhầm lẫn')
+plt.savefig(os.path.join(FINAL_OUTPUT_PATH, f'{timestamp}_confusion_matrix.png'))
+plt.show()
+
+pd.DataFrame(history.history).plot(figsize=(10, 6))
+plt.grid(True); plt.gca().set_ylim(0, 1); plt.title('Lịch sử Huấn luyện'); plt.xlabel('Epochs')
+plt.savefig(os.path.join(FINAL_OUTPUT_PATH, f'{timestamp}_training_history.png'))
+plt.show()
+
+################################################################################
+# BƯỚC 8: GIẢI THÍCH MÔ HÌNH VỚI GRAD-CAM TRUNG BÌNH
+################################################################################
+print("\n--- Bắt đầu tính toán Grad-CAM trung bình cho lớp 'Ho' ---")
+
+def make_gradcam_heatmap(img_array, model, last_conv_layer_name):
+    grad_model = Model([model.inputs], [model.get_layer(last_conv_layer_name).output, model.output])
+    with tf.GradientTape() as tape:
+        last_conv_layer_output, preds = grad_model(img_array)
+        class_channel = preds[:, 0]
+    grads = tape.gradient(class_channel, last_conv_layer_output)
+    pooled_grads = tf.reduce_mean(grads, axis=(0, 1, 2))
+    heatmap = last_conv_layer_output[0] @ pooled_grads[..., tf.newaxis]
+    heatmap = tf.squeeze(heatmap)
+    return (tf.maximum(heatmap, 0) / (tf.math.reduce_max(heatmap) + 1e-6)).numpy()
+
+def save_and_display_gradcam(img, heatmap, save_path, class_name, alpha=0.5):
+    if isinstance(img, tf.Tensor): img = img.numpy()
+    heatmap_resized = tf.image.resize(np.expand_dims(heatmap, -1), (img.shape[0], img.shape[1]))
+    heatmap_uint8 = np.uint8(255 * heatmap_resized)
+    jet = plt.cm.get_cmap("jet")
+    jet_colors = jet(np.arange(256))[:, :3]
+    jet_heatmap = jet_colors[heatmap_uint8.squeeze()]
+    jet_heatmap = tf.keras.utils.array_to_img(jet_heatmap)
+    jet_heatmap = tf.keras.utils.img_to_array(jet_heatmap)
+    superimposed_img = tf.keras.utils.array_to_img(jet_heatmap * alpha + tf.keras.utils.img_to_array(img * 255))
+    
+    plt.figure(figsize=(14, 6))
+    plt.subplot(1, 2, 1); plt.imshow(img); plt.title(f"Ảnh Spectrogram Trung bình\nLớp: {class_name}"); plt.axis('off')
+    plt.subplot(1, 2, 2); plt.imshow(superimposed_img); plt.title(f"Grad-CAM Trung bình - Vùng AI Chú ý"); plt.axis('off')
+    plt.tight_layout()
+    plt.savefig(save_path)
+    plt.show()
+
+last_conv_layer_name = next((layer.name for layer in reversed(model.layers) if isinstance(layer, tf.keras.layers.Conv2D)), None)
+if last_conv_layer_name:
+    print(f"Sử dụng lớp '{last_conv_layer_name}' để tạo Grad-CAM.")
+    
+    heatmap_sum, spectrogram_sum, cough_sample_count = None, None, 0
+
+    for spec_batch, label_batch in test_ds:
+        cough_indices = tf.where(label_batch == 1).numpy().flatten()
+        if len(cough_indices) > 0:
+            cough_specs = tf.gather(spec_batch, cough_indices)
+            if spectrogram_sum is None: spectrogram_sum = tf.reduce_sum(cough_specs, axis=0)
+            else: spectrogram_sum += tf.reduce_sum(cough_specs, axis=0)
+            
+            for i in range(cough_specs.shape[0]):
+                heatmap = make_gradcam_heatmap(np.expand_dims(cough_specs[i], 0), model, last_conv_layer_name)
+                if heatmap_sum is None: heatmap_sum = heatmap
+                else: heatmap_sum += heatmap
+            
+            cough_sample_count += len(cough_indices)
+
+    if cough_sample_count > 0:
+        avg_heatmap = heatmap_sum / cough_sample_count
+        avg_spectrogram = spectrogram_sum / cough_sample_count
+        save_path = os.path.join(FINAL_OUTPUT_PATH, f'{timestamp}_gradcam_avg_ho.png')
+        save_and_display_gradcam(avg_spectrogram, avg_heatmap, save_path, "Ho")
+    else:
+        print("Không tìm thấy mẫu 'Ho' nào trong tập test để tạo Grad-CAM.")
+else:
+    print("Không tìm thấy lớp Conv2D để tạo Grad-CAM.")
+
+print(f"\n--- Pipeline đã hoàn thành! Mọi kết quả đã được lưu tại {FINAL_OUTPUT_PATH} ---")
