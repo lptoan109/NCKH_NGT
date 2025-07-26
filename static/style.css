@@ -396,8 +396,7 @@ main {
 }
 
 .wave {
-    background: url("{{ url_for('static', filename='soundwave.png') }}") repeat-x;
-    position: absolute;
+    background: url('/static/soundwave.png') repeat-x;    position: absolute;
     bottom: 0;
     width: 6400px; 
     height: 100%;
