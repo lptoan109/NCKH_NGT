@@ -389,10 +389,10 @@ main {
 .ocean {
     height: 150px; 
     width: 100%;
-    position: absolute;
+    position: fixed;   /* <-- Thay đổi 1: Đổi thành 'fixed' */
     bottom: 0;
     left: 0;
-    z-index: 0; 
+    z-index: -1;       /* <-- Thay đổi 2: Đổi thành '-1' */
 }
 
 .wave {
