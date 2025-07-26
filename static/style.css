@@ -600,3 +600,17 @@ body {
     background-color: #f8f9fa;
     border-radius: 5px;
 }
+
+/* --- CSS CHO PHÂN TRANG --- */
+.pagination-nav {
+    margin-top: 30px;
+    text-align: center;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.pagination-nav span {
+    font-weight: bold;
+    color: #555;
+}

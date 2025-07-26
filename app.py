@@ -167,8 +167,19 @@ def contact():
 @app.route('/history')
 @login_required
 def history():
-    recordings = Recording.query.filter_by(user_id=current_user.id).order_by(Recording.timestamp.desc()).all()
-    return render_template('history.html', recordings=recordings)
+    # Lấy số trang từ URL, ví dụ: /history?page=2. Mặc định là trang 1.
+    page = request.args.get('page', 1, type=int)
+    
+    # Sử dụng .paginate() thay vì .all()
+    # per_page=10 có nghĩa là mỗi trang sẽ hiển thị 10 bản ghi.
+    pagination = Recording.query.filter_by(user_id=current_user.id)\
+                                .order_by(Recording.timestamp.desc())\
+                                .paginate(page=page, per_page=10, error_out=False)
+    
+    # pagination.items chứa danh sách các bản ghi của trang hiện tại
+    recordings = pagination.items
+    
+    return render_template('history.html', recordings=recordings, pagination=pagination)
 
 @app.route('/delete_recording/<int:recording_id>', methods=['POST'])
 @login_required
