@@ -1,476 +1,415 @@
-Thiết lập chung cho toàn trang
+/* =============================================== */
+/* --- THIẾT LẬP CHUNG (BRANDING MỚI) --- */
+/* =============================================== */
+
+:root {
+    --primary-color: #3B82F6; /* Xanh dương */
+    --primary-hover: #2563EB; /* Xanh dương đậm hơn */
+    --secondary-color: #6B7280; /* Xám */
+    --secondary-hover: #4B5563; /* Xám đậm hơn */
+    --danger-color: #EF4444; /* Đỏ */
+    --danger-hover: #DC2626; /* Đỏ đậm hơn */
+    --success-color: #10B981;  /* Xanh ngọc */
+    
+    --background-color: #F9FAFB; /* Nền trắng xám */
+    --card-bg: #FFFFFF;      /* Nền cho các thẻ box */
+    --border-color: #E5E7EB;  /* Màu viền */
+
+    --text-dark: #111827;     /* Chữ đen */
+    --text-light: #6B7280;    /* Chữ xám nhạt */
+
+    --font-heading: 'Lato', sans-serif;
+    --font-body: 'Open Sans', sans-serif;
+}
+
 body {
     margin: 0;
-    font-family: Arial, sans-serif;
-    background-color: #f0f2f5; /* Một màu nền xám nhạt cho đẹp hơn */
+    font-family: var(--font-body);
+    background-color: var(--background-color);
+    color: var(--text-dark);
+    font-weight: 400;
 }
 
-/* --- Thanh Điều Hướng (Navbar) --- */
-.navbar {
-    background-color: #dbe4f0; /* Màu xanh da trời nhạt */
+h1, h2, h3, .nav-brand {
+    font-family: var(--font-heading);
+    font-weight: 700;
+}
+
+main {
     padding: 20px;
-    text-align: center;
-    font-weight: bold;
-    color: #333;
-    border-bottom: 2px solid #ccc;
-}
-
-/* --- Bố cục chính --- */
-.container {
-    display: flex;
-    padding: 40px;
-    gap: 40px;
-    max-width: 1400px; /* Thay đổi giá trị ở đây */
-    margin: 40px auto;
-    background-color: white;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
-
-.left-column {
-    flex-basis: 20%; /* Cột trái chiếm 20% chiều rộng */
-    display: flex;
-    justify-content: center;
-}
-
-.right-column {
-    flex-basis: 80%;
-    display: flex;
-    flex-direction: column;
-    gap: 30px; /* Tăng khoảng cách lên 30px */
-}
-
-/* --- Các thành phần cụ thể --- */
-.logo {
-    width: 150px;
-    height: 150px;
-    background-color: #e8c3c3; /* Màu hồng nhạt cho logo */
-    border-radius: 50%; /* Bo góc thành hình tròn */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.2em;
-    font-weight: bold;
-    color: #555;
-    border: 2px solid #d1a3a3;
-}
-
-.top-section {
-    display: flex;
-    gap: 20px;
-    align-items: flex-start; /* Căn các box theo phía trên */
-}
-
-.title-box {
-    background-color: #ffe8a1; /* Màu vàng */
-    padding: 20px;
-    flex-grow: 1; /* Cho phép hộp này tự dãn ra */
-    text-align: center;
-}
-
-.title-box h1 {
-    margin: 0;
-    font-size: 2.5em;
-    color: #333;
 }
 
 
-/* Container mới cho 2 nút */
-.auth-buttons {
-    display: flex; /* Sắp xếp 2 nút nằm cạnh nhau */
-    gap: 10px;     /* Tạo khoảng cách 10px giữa 2 nút */
-}
+/* =============================================== */
+/* --- CÁC THÀNH PHẦN CHUNG (STYLE MỚI) --- */
+/* =============================================== */
 
-/* Kiểu chung cho các nút */
-.btn {
-    display: inline-block;
-    background-color: #a1b6d1; /* Màu xanh dương như cũ */
-    color: white;              /* Chữ màu trắng */
-    padding: 15px 20px;        /* Tăng khoảng đệm cho nút to rõ hơn */
-    text-decoration: none;     /* Bỏ gạch chân của thẻ a */
-    font-weight: bold;
-    border-radius: 5px;        /* Bo tròn góc nút */
-    text-align: center;
-    transition: background-color 0.3s ease; /* Hiệu ứng chuyển màu khi di chuột */
-}
-
-/* Hiệu ứng khi người dùng di chuột qua nút */
-.btn:hover {
-    background-color: #8a9eb8; /* Màu xanh sẽ đậm hơn một chút */
-}
-
-.description-box {
-    background-color: #dbe4f0;
-    padding: 60px 20px; /* Tăng padding trên dưới lên 60px */
-    text-align: center;
-    font-size: 1.1em;
-}
-
-.bottom-section {
-    display: flex;
-    gap: 20px;
-}
-
-.action-box {
-    background-color: #a1b6d1; /* Màu xanh dương */
-    padding: 20px;
-    flex-basis: 50%; /* Chiếm 50% */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.diagnosis-button {
-    color: white;
-    font-weight: bold;
-    text-decoration: none;
-    font-size: 1.2em;
-    text-align: center;
-}
-
-.image-box {
-    background-color: #00ffff; /* Màu xanh cyan */
-    padding: 20px;
-    flex-basis: 50%; /* Chiếm 50% */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    font-weight: bold;
-}
-/* --- BẮT ĐẦU PHẦN RESPONSIVE --- */
-
-/* Áp dụng cho màn hình máy tính bảng và nhỏ hơn (chiều rộng tối đa 992px) */
-@media (max-width: 992px) {
-    .container {
-        /* Chuyển bố cục từ 2 cột ngang thành 1 cột dọc */
-        flex-direction: column;
-        align-items: center; /* Căn logo ra giữa */
-        gap: 40px; /* Tăng khoảng cách giữa logo và khối nội dung */
-    }
-
-    .left-column, .right-column {
-        /* Cho các cột chiếm toàn bộ chiều rộng */
-        flex-basis: 100%;
-        width: 100%;
-    }
-}
-
-/* Áp dụng cho màn hình điện thoại (chiều rộng tối đa 768px) */
-@media (max-width: 768px) {
-    .top-section, .bottom-section {
-        /* Chuyển các khối nằm ngang thành nằm dọc */
-        flex-direction: column;
-    }
-
-    .title-box h1 {
-        font-size: 2em; /* Giảm kích thước chữ tiêu đề cho dễ nhìn */
-    }
-
-    .container {
-        /* Giảm padding trên màn hình nhỏ */
-        padding: 20px;
-        margin: 20px;
-    }
-}
-/* --- CSS CHO FORM ĐĂNG NHẬP / ĐĂNG KÝ --- */
-.form-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh; /* Căn form ra giữa trang theo chiều dọc */
-    background-color: #f0f2f5;
-}
-
-.auth-form {
-    background-color: white;
-    padding: 40px;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    width: 100%;
-    max-width: 400px;
-}
-
-.auth-form h2 {
-    text-align: center;
-    margin-bottom: 25px;
-    color: #333;
-}
-
-.form-group {
-    margin-bottom: 20px;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 5px;
-    font-weight: bold;
-    color: #555;
-}
-
-.form-group input {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    box-sizing: border-box; /* Quan trọng để padding không làm tăng width */
-}
-
-/* Chỉnh lại nút submit trong form */
-.auth-form .btn {
-    width: 100%;
-    padding: 12px;
-    font-size: 1.1em;
-}
-
-.form-switch {
-    text-align: center;
-    margin-top: 20px;
-}
-/* --- CSS cho nút Google --- */
-.btn-google {
-    background-color: #4285F4; /* Màu đặc trưng của Google */
-    color: white;
-}
-
-.btn-google:hover {
-    background-color: #357ae8; /* Màu đậm hơn khi di chuột */
-}
-/* --- CSS CHO NAVIGATION BAR MỚI (V2) --- */
+/* --- THANH ĐIỀU HƯỚNG --- */
 .navbar-v2 {
-    display: flex; /* Xếp các mục con trên cùng một hàng */
-    justify-content: space-between; /* Đẩy các mục con ra 2 phía */
-    align-items: center; /* Căn giữa các mục con theo chiều dọc */
-    background-color: #ffffff;
-    padding: 15px 30px;
-    border-bottom: 1px solid #e0e0e0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--card-bg);
+    padding: 1rem 2rem;
+    border-bottom: 1px solid var(--border-color);
     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
-.nav-links a {
-    color: #333;
+.nav-brand {
+    font-size: 1.5em;
+    font-weight: 900;
+    color: var(--text-dark);
     text-decoration: none;
-    font-weight: 500;
-    margin: 0 15px;
-    padding: 5px 0;
-    transition: color 0.3s ease;
-    border-bottom: 2px solid transparent;
+}
+
+.nav-menu {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+}
+
+.nav-links {
+    display: flex;
+    gap: 1.5rem;
+}
+
+.nav-links a {
+    color: var(--text-light);
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.2s ease;
 }
 
 .nav-links a:hover {
-    color: #007bff;
-    border-bottom-color: #007bff;
+    color: var(--primary-color);
 }
 
 .nav-auth {
-    display: flex; /* Xếp các nút và avatar trên cùng một hàng */
+    display: flex;
     align-items: center;
-    gap: 15px; /* Khoảng cách giữa các nút */
+    gap: 1rem;
 }
 
-/* Nút phụ (ví dụ: nút Đăng ký) */
-.btn-secondary {
-    background-color: #6c757d;
-    color: white; /* Thêm màu chữ trắng cho dễ đọc */
-}
-.btn-secondary:hover {
-    background-color: #5a6268;
-}
-
-/* Nút Đăng xuất */
-.btn-logout {
-    background-color: #dc3545;
-    color: white; /* Thêm màu chữ trắng cho dễ đọc */
-}
-.btn-logout:hover {
-    background-color: #c82333;
-}
-
-/* Avatar trên thanh nav */
-.avatar-image-nav {
+.avatar-image-nav, .avatar-text {
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    border: 2px solid #ddd;
+    object-fit: cover;
+    border: 2px solid var(--border-color);
+}
+.avatar-text {
+    background-color: var(--primary-color);
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.2em;
+    font-weight: bold;
 }
 
-/* --- CSS CHO TRANG CHẨN ĐOÁN --- */
-.diagnose-container {
-    display: flex;
-    gap: 30px; /* Khoảng cách giữa 2 cột */
+.hamburger {
+    display: none;
+    font-size: 2em;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-dark);
+}
+
+/* --- CÁC LOẠI NÚT BẤM --- */
+.btn {
+    display: inline-block;
+    color: white;
+    padding: 10px 20px;
+    text-decoration: none;
+    font-weight: 600;
+    border-radius: 8px;
+    border: none;
+    text-align: center;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+    cursor: pointer;
+}
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.btn-primary { background-color: var(--primary-color); }
+.btn-primary:hover { background-color: var(--primary-hover); }
+
+.btn-secondary { background-color: var(--secondary-color); }
+.btn-secondary:hover { background-color: var(--secondary-hover); }
+
+.btn-logout, .btn-delete { background-color: var(--danger-color); }
+.btn-logout:hover, .btn-delete:hover { background-color: var(--danger-hover); }
+
+/* --- CÁC LOẠI BOX/CARD --- */
+.page-container, .history-container, .form-container {
+    max-width: 900px;
+    margin: 40px auto;
     padding: 40px;
+    background-color: var(--card-bg);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+/* --- FORM --- */
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: var(--text-dark);
+}
+.form-group input, .form-group textarea, .form-group select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-sizing: border-box;
+    font-size: 1em;
+    font-family: var(--font-body);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+}
+
+/* --- THÔNG BÁO FLASH --- */
+.flash-messages {
+    max-width: 1200px;
+    margin: 0 auto 20px auto;
+    padding: 0 20px;
+}
+.alert {
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 8px;
+    color: #fff;
+    text-align: center;
+    font-weight: 600;
+}
+.alert-success { background-color: var(--success-color); }
+.alert-danger { background-color: var(--danger-color); }
+
+
+/* =============================================== */
+/* --- TRANG CHỦ (HERO SECTION MỚI) --- */
+/* =============================================== */
+.hero-section {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 80px 20px;
+    text-align: center;
+    position: relative; /* Để làm mốc cho sóng âm */
+    min-height: 80vh;   /* Để nó có đủ chiều cao gần lấp đầy màn hình */
+}
+.hero-content { max-width: 700px; }
+.hero-title {
+    font-size: 3rem;
+    font-weight: 900;
+    color: var(--text-dark);
+    margin-bottom: 20px;
+}
+.hero-subtitle {
+    font-size: 1.125rem;
+    color: var(--text-light);
+    line-height: 1.6;
+    margin-bottom: 40px;
+}
+.hero-button {
+    font-size: 1rem;
+    padding: 16px 32px;
+}
+
+/* =============================================== */
+/* --- TRANG CHẨN ĐOÁN --- */
+/* =============================================== */
+.diagnose-container {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 30px;
     max-width: 1200px;
     margin: 40px auto;
 }
-
-/* Cột trái */
-.recording-panel {
-    flex: 1; /* Chiếm 1 phần */
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
+.recording-panel, .results-panel, .recorder {
+    background-color: var(--card-bg);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    padding: 30px;
 }
-
-.history-btn {
-    background-color: #f3d9a2; /* Màu cam nhạt */
-    border: 1px solid #e2c07a;
-    padding: 10px 15px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-weight: bold;
-    align-self: flex-start; /* Nút chỉ rộng bằng nội dung và nằm bên trái */
-}
-
 .recorder {
-    background-color: #fff;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    padding: 30px;
     text-align: center;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+}
+.results-panel h3 {
+    margin-top: 0;
 }
 
-.record-btn {
-    background-color: #28a745; /* Màu xanh lá */
-    color: white;
-    border: none;
-    border-radius: 50%; /* Bo tròn thành hình tròn */
-    width: 120px;
-    height: 120px;
-    font-size: 1.2em;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
+/* =============================================== */
+/* --- TRANG LỊCH SỬ --- */
+/* =============================================== */
+.recording-list {
+    list-style-type: none;
+    padding: 0;
+    margin-top: 20px;
+}
+.recording-item {
     display: flex;
-    flex-direction: column;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
+    gap: 15px;
+    padding: 20px;
+    border-bottom: 1px solid var(--border-color);
+}
+.recording-item:last-child {
+    border-bottom: none;
+}
+.item-info strong {
+    font-weight: 600;
+}
+.item-player audio {
+    width: 250px;
 }
 
-.record-btn:hover {
-    background-color: #218838;
+/* =============================================== */
+/* --- TRANG PROFILE --- */
+/* =============================================== */
+.profile-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 30px;
+    margin-top: 30px;
+    text-align: left;
 }
-
-.record-btn .icon {
-    font-size: 2.5em; /* Kích thước icon micro */
+.profile-avatar {
+    flex-shrink: 0;
 }
-
-.timeline {
-    margin-top: 20px;
-    font-size: 1.5em;
-    color: #555;
-    background-color: #f8f9fa;
-    padding: 10px;
-    border-radius: 5px;
-}
-
-/* Cột phải */
-.results-panel {
-    flex: 2; /* Chiếm 2 phần, rộng hơn cột trái */
-    background-color: #fff8e1; /* Màu vàng nhạt */
-    border: 1px solid #ffecb3;
-    border-radius: 8px;
-    padding: 30px;
-}
-
-.results-content {
-    margin-top: 20px;
-}
-.avatar-text {
-    width: 40px;
-    height: 40px;
+.avatar-image-large, .avatar-text-large {
+    width: 150px;
+    height: 150px;
     border-radius: 50%;
-    background-color: #007bff;
+    object-fit: cover;
+    border: 4px solid var(--card-bg);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+}
+.avatar-text-large {
+    background-color: var(--primary-color);
     color: white;
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 1.2em;
+    font-size: 4em;
     font-weight: bold;
 }
-/* --- CSS CHO FLASH MESSAGES --- */
-.flash-messages {
-    width: 100%;
-    max-width: 1200px;
-    margin: 0 auto 20px auto;
-    padding: 0 40px;
-    box-sizing: border-box;
-}
-.alert {
-    padding: 15px;
-    margin-bottom: 20px;
-    border: 1px solid transparent;
-    border-radius: 4px;
-    color: #fff;
-}
-.alert-success {
-    background-color: #28a745; /* Màu xanh lá */
-}
-.alert-danger {
-    background-color: #dc3545; /* Màu đỏ */
-}
-/* --- CSS CHO NÚT XÓA --- */
-.btn-delete {
-    background-color: #dc3545; /* Màu đỏ */
-    color: white;
-    border: none;
-    padding: 8px 12px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-weight: bold;
-}
-.btn-delete:hover {
-    background-color: #c82333;
-}
-
-/* --- CSS CHO TRANG LIÊN HỆ --- */
-.divider {
-    margin: 40px 0;
-    border: 0;
-    border-top: 1px solid #eee;
-}
-
-.contact-form {
-    text-align: left; /* Căn lề trái cho các nhãn */
-    margin: 0 auto;
-    max-width: 600px;
-}
-
-.contact-form .form-group {
-    margin-bottom: 20px;
-}
-
-.contact-form label {
-    display: block;
-    margin-bottom: 8px;
-    font-weight: bold;
-    color: #555;
-}
-
-.contact-form input,
-.contact-form select,
-.contact-form textarea {
-    width: 100%;
-    padding: 12px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    box-sizing: border-box; 
+.profile-info .info-item p {
     font-size: 1em;
+    margin: 5px 0 0 0;
+    padding: 10px;
+    background-color: var(--background-color);
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
 }
 
-.contact-form textarea {
-    resize: vertical; /* Cho phép người dùng thay đổi chiều cao của ô nhập liệu */
+/* =============================================== */
+/* --- PHÂN TRANG --- */
+/* =============================================== */
+.pagination-nav {
+    margin-top: 30px;
+    text-align: center;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.pagination-nav span {
+    font-weight: bold;
+    color: var(--text-light);
 }
 
-.contact-form button {
+/* =============================================== */
+/* --- RESPONSIVE DESIGN --- */
+/* =============================================== */
+@media (max-width: 992px) {
+    .diagnose-container {
+        grid-template-columns: 1fr;
+    }
+    /* Responsive cho Navbar */
+    .nav-menu {
+        display: none;
+        position: absolute;
+        top: 70px; /* Chiều cao của navbar */
+        left: 0;
+        width: 100%;
+        background-color: var(--card-bg);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        flex-direction: column;
+        align-items: stretch;
+        padding: 1rem 0;
+    }
+    .nav-menu.is-active {
+        display: flex;
+    }
+    .nav-links, .nav-auth {
+        flex-direction: column;
+        width: 100%;
+        gap: 0;
+    }
+    .nav-links a, .nav-auth > a, .nav-auth .language-selector {
+        padding: 1rem 2rem;
+        text-align: left;
+    }
+    .nav-auth {
+        flex-direction: column-reverse; /* Đưa avatar lên trên */
+        align-items: stretch;
+    }
+    .hamburger {
+        display: block;
+    }
+}
+
+@media (max-width: 768px) {
+    main { padding: 10px; }
+    .page-container, .history-container, .form-container {
+        margin: 20px 10px;
+        padding: 20px;
+    }
+    .hero-title { font-size: 2.25rem; }
+    .hero-subtitle { font-size: 1rem; }
+    .recording-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 20px;
+    }
+    .item-player audio { width: 100%; }
+    .profile-card { flex-direction: column; align-items: center; text-align: center; }
+}
+/* --- CSS CHO HIỆU ỨNG SÓNG ÂM --- */
+.ocean {
+    height: 150px; 
     width: 100%;
-    padding: 15px;
-    font-size: 1.1em;
+    position: fixed;   /* <-- Thay đổi 1: Đổi thành 'fixed' */
+    bottom: 0;
+    left: 0;
+    z-index: -1;       /* <-- Thay đổi 2: Đổi thành '-1' */
 }
 
-/* Thêm vào CSS cho trang liên hệ */
-.form-group-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr; /* Tạo 2 cột bằng nhau */
-    gap: 20px; /* Khoảng cách giữa các ô */
+.wave {
+    background: url('/static/soundwave.png') repeat-x;    position: absolute;
+    bottom: 0;
+    width: 6400px; 
+    height: 100%;
+    animation: wave 10s cubic-bezier(0.36, 0.45, 0.63, 0.53) infinite;
+    transform: translate3d(0, 0, 0);
+}
+
+.wave:nth-of-type(2) {
+    animation-delay: -2.5s;
+    opacity: 0.7;
+}
+
+@keyframes wave {
+    0% { margin-left: 0; }
+    100% { margin-left: -1600px; } 
 }

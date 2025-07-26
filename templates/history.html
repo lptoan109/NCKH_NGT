@@ -15,7 +15,7 @@
                         <strong>Ngày ghi:</strong> {{ recording.timestamp.strftime('%H:%M:%S ngày %d-%m-%Y') }}
                     </div>
                     <div class="item-player">
-                        <audio controls src="/uploads/{{ recording.filename }}"></audio>
+                        <audio controls src="{{ url_for('static', filename='uploads/' + recording.filename) }}"></audio>
                     </div>
                     <div class="item-actions">
                         <form action="{{ url_for('delete_recording', recording_id=recording.id) }}" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn xóa bản ghi này không?');">
@@ -28,5 +28,17 @@
     {% else %}
         <p>Bạn chưa có bản ghi âm nào.</p>
     {% endif %}
-</div>
+
+    <div class="pagination-nav">
+        {% if pagination.has_prev %}
+            <a href="{{ url_for('history', page=pagination.prev_num) }}" class="btn btn-secondary">&laquo; Trang Trước</a>
+        {% endif %}
+        
+        <span>Trang {{ pagination.page }} của {{ pagination.pages }}.</span>
+        
+        {% if pagination.has_next %}
+            <a href="{{ url_for('history', page=pagination.next_num) }}" class="btn btn-secondary">Trang Sau &raquo;</a>
+        {% endif %}
+    </div>
+    </div>
 {% endblock %}

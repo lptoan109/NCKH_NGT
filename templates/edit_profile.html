@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block title %}Chỉnh Sửa Hồ Sơ{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h2>Chỉnh Sửa Hồ Sơ</h2>
+    <form class="auth-form" method="POST" enctype="multipart/form-data">
+        <div class="form-group">
+            <label for="profile_picture">Ảnh đại diện mới</label>
+            <input type="file" id="profile_picture" name="profile_picture" accept="image/png, image/jpeg, image/gif">
+        </div>
+        <div class="form-group">
+            <label for="username">Tên người dùng</label>
+            <input type="text" id="username" name="username" value="{{ current_user.username }}" required>
+        </div>
+        <div class="form-group">
+            <label for="email">Email (Không thể thay đổi)</label>
+            <input type="email" id="email" name="email" value="{{ current_user.email }}" disabled>
+        </div>
+
+        <button type="submit" class="btn">Lưu Thay Đổi</button>
+        <a href="{{ url_for('profile') }}" class="btn btn-secondary" style="text-align: center; display: block; margin-top: 10px;">Hủy</a>
+    </form>
+</div>
+{% endblock %}
