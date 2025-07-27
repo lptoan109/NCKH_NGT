@@ -1,15 +1,11 @@
 ################################################################################
 # BƯỚC 1: THIẾT LẬP MÔI TRƯỜNG VÀ CÀI ĐẶT THƯ VIỆN
 ################################################################################
-
-# Kết nối Google Drive với Colab
 from google.colab import drive
 drive.mount('/content/drive')
 
-# Cài đặt/Nâng cấp các thư viện cần thiết
 !pip install -q librosa tensorflow pandas scikit-learn matplotlib seaborn pytz
 
-# Import các thư viện
 import os
 import pandas as pd
 import numpy as np
@@ -32,22 +28,15 @@ print("TensorFlow Version:", tf.__version__)
 # BƯỚC 2: CẤU HÌNH DỰ ÁN VÀ CHUẨN BỊ DỮ LIỆU
 ################################################################################
 print("\n--- Bắt đầu Bước 2: Cấu hình và chuẩn bị dữ liệu ---")
-
-# --- ⚙️ 1. CẤU HÌNH ĐƯỜNG DẪN ---
 INPUT_FOLDER = '/content/drive/MyDrive/DuLieuTiengHo/'
 OUTPUT_FOLDER = '/content/drive/MyDrive/KetQuaNghienCuu/'
-
-# --- ⚙️ 2. CẤU HÌNH THAM SỐ HUẤN LUYỆN ---
 EPOCHS = 25
 BATCH_SIZE = 32
 PATIENCE = 5
-
-# --- ⚙️ 3. CẤU HÌNH TIỀN XỬ LÝ ---
 USE_SEGMENTATION = True
 DURATION = 5
 SEGMENT_DURATION = 2
 ENERGY_THRESHOLD_DB = 20
-# ---------------------------------------------------------
 
 if not os.path.isdir(INPUT_FOLDER): raise ValueError("Lỗi: Đường dẫn INPUT_FOLDER không tồn tại.")
 if not os.path.isdir(OUTPUT_FOLDER): os.makedirs(OUTPUT_FOLDER)
@@ -65,11 +54,8 @@ MANIFEST_CSV_PATH = os.path.join(FINAL_OUTPUT_PATH, f'{timestamp}_manifest.csv')
 def extract_patient_id(filename): return filename.split('_')[0]
 
 print("Đang tạo file manifest...")
-data = [{'filepath': os.path.join(COUGH_PATH, f), 'label': 1, 'patient_id': extract_patient_id(f)}
-        for f in os.listdir(COUGH_PATH) if f.endswith(('.wav', '.mp3', '.flac'))]
-data.extend([{'filepath': os.path.join(NO_COUGH_PATH, f), 'label': 0, 'patient_id': extract_patient_id(f)}
-             for f in os.listdir(NO_COUGH_PATH) if f.endswith(('.wav', '.mp3', '.flac'))])
-
+data = [{'filepath': os.path.join(COUGH_PATH, f), 'label': 1, 'patient_id': extract_patient_id(f)} for f in os.listdir(COUGH_PATH) if f.endswith(('.wav', '.mp3', '.flac'))]
+data.extend([{'filepath': os.path.join(NO_COUGH_PATH, f), 'label': 0, 'patient_id': extract_patient_id(f)} for f in os.listdir(NO_COUGH_PATH) if f.endswith(('.wav', '.mp3', '.flac'))])
 df = pd.DataFrame(data)
 df.to_csv(MANIFEST_CSV_PATH, index=False)
 print(f"Đã tạo và lưu file manifest tại: {MANIFEST_CSV_PATH}")
@@ -91,19 +77,17 @@ print(f"Bệnh nhân trong tập kiểm định: {len(val_pids)}, file: {len(val
 print(f"Bệnh nhân trong tập thử nghiệm: {len(test_pids)}, file: {len(test_df)}")
 
 ################################################################################
-# BƯỚC 4: TIỀN XỬ LÝ VÀ TRÍCH XUẤT ĐẶC TRƯNG (VỚI XỬ LÝ KHÁC BIỆT)
+# BƯỚC 4: TIỀN XỬ LÝ VÀ TRÍCH XUẤT ĐẶC TRƯNG
 ################################################################################
 print("\n--- Bắt đầu Bước 4: Thiết lập pipeline xử lý dữ liệu ---")
 SAMPLE_RATE = 16000
 N_MELS = 224
 IMG_SIZE = (224, 224)
 
-# Hàm phân đoạn dựa trên năng lượng (chỉ dùng cho lớp "Ho")
 def segment_cough(signal, sr, top_db):
     intervals = librosa.effects.split(signal, top_db=top_db)
-    if len(intervals) == 0:
-        return signal # Trả về tín hiệu gốc nếu không tìm thấy đoạn nào
-    
+    if not intervals.any():
+        return signal
     max_energy = 0
     best_interval = intervals[0]
     for start, end in intervals:
@@ -111,52 +95,38 @@ def segment_cough(signal, sr, top_db):
         if energy > max_energy:
             max_energy = energy
             best_interval = (start, end)
-            
     return signal[best_interval[0]:best_interval[1]]
 
-# <<< CẬP NHẬT: HÀM PROCESS_AUDIO_FILE VỚI LOGIC XỬ LÝ KHÁC BIỆT CHO MỖI LỚP >>>
 def process_audio_file(filepath, label):
     try:
         signal, sr = librosa.load(filepath, sr=SAMPLE_RATE, duration=DURATION)
-        
         final_signal = None
-        
-        # Áp dụng logic khác nhau dựa trên nhãn và cấu hình
         if label == 1 and USE_SEGMENTATION:
-            # LỚP 1 (HO): Phân đoạn để lấy sự kiện chính
             final_signal = segment_cough(signal, sr, top_db=ENERGY_THRESHOLD_DB)
             target_duration = SEGMENT_DURATION
         else:
-            # LỚP 0 (KHÔNG HO) hoặc khi tắt phân đoạn: Lấy một đoạn ngẫu nhiên
             target_duration = SEGMENT_DURATION if USE_SEGMENTATION else DURATION
             target_length_process = int(target_duration * sr)
-
             if len(signal) > target_length_process:
                 start = np.random.randint(0, len(signal) - target_length_process + 1)
                 final_signal = signal[start : start + target_length_process]
             else:
                 final_signal = signal
-
-        # Chuẩn hóa độ dài cho tín hiệu cuối cùng
         target_length = int(target_duration * sr)
         if len(final_signal) < target_length:
             final_signal = np.pad(final_signal, (0, target_length - len(final_signal)), 'constant')
         else:
             final_signal = final_signal[:target_length]
-        
-        # Tạo spectrogram từ tín hiệu cuối cùng
         mel_spec = librosa.feature.melspectrogram(y=final_signal, sr=sr, n_mels=N_MELS)
         log_mel_spec = librosa.power_to_db(mel_spec, ref=np.max)
         log_mel_spec = (log_mel_spec - log_mel_spec.min()) / (log_mel_spec.max() - log_mel_spec.min() + 1e-6)
         resized_spec = tf.image.resize(np.expand_dims(log_mel_spec, -1), IMG_SIZE)
         resized_spec_rgb = tf.image.grayscale_to_rgb(resized_spec)
-        
         return resized_spec_rgb, np.int64(label)
     except Exception as e:
         print(f"Lỗi xử lý file {filepath}: {e}")
         return tf.zeros((*IMG_SIZE, 3), dtype=tf.float32), np.int64(-1)
 
-# Các hàm còn lại của Bước 4 giữ nguyên
 def create_tf_dataset(df):
     dataset = tf.data.Dataset.from_tensor_slices((df['filepath'].values, df['label'].values))
     dataset = dataset.map(lambda x, y: tf.py_function(process_audio_file, [x, y], [tf.float32, tf.int64]), num_parallel_calls=tf.data.AUTOTUNE)
@@ -199,18 +169,17 @@ callbacks = [
 model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=1e-3), loss='binary_crossentropy', metrics=['accuracy'])
 history = model.fit(train_ds, epochs=EPOCHS, validation_data=val_ds, callbacks=callbacks)
 
+print("\n--- HOÀN THÀNH HUẤN LUYỆN. CHUYỂN SANG Ô TIẾP THEO ĐỂ ĐÁNH GIÁ. ---")
+
 ################################################################################
 # BƯỚC 7: ĐÁNH GIÁ MÔ HÌNH VÀ LƯU KẾT QUẢ
 ################################################################################
 print("\n--- Bắt đầu Bước 7: Đánh giá và Giải thích mô hình ---")
 print("Tải lại mô hình tốt nhất từ checkpoint...")
-
-# Đảm bảo các biến cần thiết từ Ô 1 có thể truy cập được
 try:
     model = tf.keras.models.load_model(model_checkpoint_path)
 except NameError:
     print("Lỗi: Vui lòng chạy Ô 1 trước để huấn luyện và lưu mô hình.")
-    # Dừng thực thi nếu các biến cần thiết không tồn tại
     raise
 
 loss, accuracy = model.evaluate(test_ds)
@@ -280,23 +249,18 @@ def save_and_display_gradcam(img, heatmap, save_path, class_name, alpha=0.5):
 last_conv_layer_name = next((layer.name for layer in reversed(model.layers) if isinstance(layer, tf.keras.layers.Conv2D)), None)
 if last_conv_layer_name:
     print(f"Sử dụng lớp '{last_conv_layer_name}' để tạo Grad-CAM.")
-    
     heatmap_sum, spectrogram_sum, cough_sample_count = None, None, 0
-
     for spec_batch, label_batch in test_ds:
         cough_indices = tf.where(label_batch == 1).numpy().flatten()
         if len(cough_indices) > 0:
             cough_specs = tf.gather(spec_batch, cough_indices)
             if spectrogram_sum is None: spectrogram_sum = tf.reduce_sum(cough_specs, axis=0)
             else: spectrogram_sum += tf.reduce_sum(cough_specs, axis=0)
-            
             for i in range(cough_specs.shape[0]):
                 heatmap = make_gradcam_heatmap(np.expand_dims(cough_specs[i], 0), model, last_conv_layer_name)
                 if heatmap_sum is None: heatmap_sum = heatmap
                 else: heatmap_sum += heatmap
-            
             cough_sample_count += len(cough_indices)
-
     if cough_sample_count > 0:
         avg_heatmap = heatmap_sum / cough_sample_count
         avg_spectrogram = spectrogram_sum / cough_sample_count
