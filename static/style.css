@@ -396,16 +396,13 @@ main {
 }
 
 .wave {
-background: url('/static/soundwave.png') repeat-x;
-position: fixed;
-bottom: -20px; 
-left: 0;
-width: 100%;
-height: 80px; / Điều chỉnh chiều cao cho phù hợp /
-animation: wave 10s cubic-bezier(0.36, 0.45, 0.63, 0.53) infinite;
-transform: translate3d(0, 0, 0);
-z-index: -1;
-background-size: auto 100%; / Đảm bảo SVG không bị méo */
+    background: url("{{ url_for('static', filename='soundwave.png') }}") repeat-x;
+    position: absolute;
+    bottom: 0;
+    width: 6400px; 
+    height: 100%;
+    animation: wave 10s cubic-bezier(0.36, 0.45, 0.63, 0.53) infinite;
+    transform: translate3d(0, 0, 0);
 }
 /* sda */
 .wave:nth-of-type(2) {
