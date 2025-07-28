@@ -385,28 +385,47 @@ main {
     .item-player audio { width: 100%; }
     .profile-card { flex-direction: column; align-items: center; text-align: center; }
 }
-/* --- CSS CHO HIỆU ỨNG SÓNG ÂM --- */
-.ocean {
-    height: 120px; /* Đặt một chiều cao hợp lý */
-    width: 100%;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    z-index: -1;
-    overflow: hidden;
+/* --- CSS HIỆU ỨNG SÓNG MỚI (ĐƠN GIẢN HƠN) --- */
+
+.hero-section {
+    /* Sửa lại hero-section một chút */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 80px 20px;
+    text-align: center;
+    min-height: 90vh; /* Tăng chiều cao để có không gian cho sóng */
+    position: relative; /* Rất quan trọng: làm mốc cho sóng */
+    overflow: hidden;   /* Giấu phần sóng bị thừa ra */
 }
 
-.wave {
+.hero-section::after {
+    /* Tạo một lớp sóng giả ngay bên trong hero-section */
+    content: "";
     background: url('/static/soundwave.png') repeat-x;
     background-position: bottom;
+    background-size: contain; 
     position: absolute;
-    bottom: -60px; /* <-- SỬA DÒNG NÀY */
-    width: 200%; 
-    height: 120px;
-    animation: wave 15s linear infinite; 
+    bottom: -10px; /* Đẩy sóng xuống một chút để đẹp hơn */
+    left: 0;
+    width: 200%; /* Rộng gấp đôi để tạo hiệu ứng cuộn */
+    height: 150px; /* Chiều cao của sóng */
+    animation: wave-move 15s linear infinite;
+    z-index: 0;
 }
 
-@keyframes wave {
-    0% { transform: translateX(0); }
-    100% { transform: translateX(-50%); } 
+.hero-content {
+    /* Đảm bảo nội dung luôn nằm trên sóng */
+    position: relative;
+    z-index: 1;
+}
+
+
+@keyframes wave-move {
+    0% {
+        transform: translateX(0);
+    }
+    100% {
+        transform: translateX(-50%);
+    }
 }
