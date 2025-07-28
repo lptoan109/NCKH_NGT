@@ -32,7 +32,6 @@ print("TensorFlow Version:", tf.__version__)
 ################################################################################
 print("\n--- Bắt đầu Bước 2: Cấu hình và chuẩn bị dữ liệu ---")
 
-# <<< THAY ĐỔI: Cập nhật đường dẫn đến thư mục dữ liệu chính của bạn >>>
 INPUT_FOLDER = '/content/ngtai_data/ngtai_dataset/'
 OUTPUT_FOLDER = '/content/drive/MyDrive/Tai_Lieu_NCKH/newAiData'
 USE_SEGMENTATION = True
@@ -61,41 +60,30 @@ print(f"Tất cả kết quả sẽ được lưu tại: {FINAL_OUTPUT_PATH}")
 ################################################################################
 # BƯỚC 3: TẠO MANIFEST VÀ PHÂN CHIA DỮ LIỆU
 ################################################################################
-print("Đang tạo file manifest từ cấu trúc thư mục mới...")
+print("\n--- Bắt đầu Bước 3: Tạo manifest từ cấu trúc thư mục mới ---")
 
-# <<< THAY ĐỔI LỚN: Logic quét thư mục và gán nhãn mới >>>
 POSITIVE_FOLDERS = [os.path.join(INPUT_FOLDER, 'cough'), os.path.join(INPUT_FOLDER, 'breathing')]
 NEGATIVE_FOLDER = os.path.join(INPUT_FOLDER, 'noise')
 
 def extract_patient_id(filepath):
-    # Logic này có thể cần được điều chỉnh tùy theo cấu trúc tên file của bạn
     filename = os.path.basename(filepath)
-    return filename.split('_')[0]
+    parts = filename.split('_')
+    return parts[0] if len(parts) > 1 else os.path.splitext(filename)[0]
 
 data = []
-# Lấy file cho lớp "Ho và thở" (label 1)
 for folder in POSITIVE_FOLDERS:
-    for root, dirs, files in os.walk(folder):
-        for filename in files:
-            if filename.endswith(('.wav', '.mp3', '.flac')):
-                file_path = os.path.join(root, filename)
-                patient_id = extract_patient_id(file_path)
-                data.append({'filepath': file_path, 'label': 1, 'patient_id': patient_id})
+    if os.path.isdir(folder):
+        for root, _, files in os.walk(folder):
+            for filename in files:
+                if filename.lower().endswith(('.wav', '.mp3', '.flac')):
+                    data.append({'filepath': os.path.join(root, filename), 'label': 1, 'patient_id': extract_patient_id(filename)})
+if os.path.isdir(NEGATIVE_FOLDER):
+    for filename in os.listdir(NEGATIVE_FOLDER):
+        if filename.lower().endswith(('.wav', '.mp3', '.flac')):
+            data.append({'filepath': os.path.join(NEGATIVE_FOLDER, filename), 'label': 0, 'patient_id': os.path.splitext(filename)[0]})
 
-# Lấy file cho lớp "Không ho và thở" (label 0)
-for root, dirs, files in os.walk(NEGATIVE_FOLDER):
-    for filename in files:
-        if filename.endswith(('.wav', '.mp3', '.flac')):
-            file_path = os.path.join(root, filename)
-            # Đối với file noise, có thể dùng tên file làm ID bệnh nhân giả định
-            patient_id = os.path.splitext(filename)[0]
-            data.append({'filepath': file_path, 'label': 0, 'patient_id': patient_id})
-
-df = pd.DataFrame(data)
-df = df.sample(frac=1).reset_index(drop=True) # Xáo trộn dữ liệu
-print(f"Đã quét xong. Tổng số file: {len(df)}")
-print(f"Số file 'Ho/Thở': {len(df[df['label']==1])}")
-print(f"Số file 'Noise': {len(df[df['label']==0])}")
+df = pd.DataFrame(data).sample(frac=1).reset_index(drop=True)
+print(f"Đã quét xong. Tổng số file hợp lệ: {len(df)}")
 
 unique_patients = df['patient_id'].unique()
 train_val_pids, test_pids = train_test_split(unique_patients, test_size=0.2, random_state=42)
@@ -103,15 +91,13 @@ train_pids, val_pids = train_test_split(train_val_pids, test_size=0.2, random_st
 train_df = df[df['patient_id'].isin(train_pids)]
 val_df = df[df['patient_id'].isin(val_pids)]
 test_df = df[df['patient_id'].isin(test_pids)]
-print(f"Tập huấn luyện: {len(train_df)} file, {len(train_pids)} bệnh nhân")
-print(f"Tập kiểm định: {len(val_df)} file, {len(val_pids)} bệnh nhân")
-print(f"Tập thử nghiệm: {len(test_df)} file, {len(test_pids)} bệnh nhân")
 
 ################################################################################
-# BƯỚC 4: XÂY DỰNG BỘ TRÍCH XUẤT ĐẶC TRƯNG VÀ XỬ LÝ DỮ LIỆU
+# BƯỚC 4: XÂY DỰNG BỘ TRÍCH XUẤT ĐẶC TRƯNG VÀ XỬ LÝ DỮ LIỆU (THEO LÔ)
 ################################################################################
-print("\n--- Bắt đầu Bước 4: Trích xuất đặc trưng ---")
+print("\n--- Bắt đầu Bước 4: Trích xuất đặc trưng theo từng lô ---")
 SAMPLE_RATE, N_MELS, IMG_SIZE = 16000, 224, (224, 224)
+FEATURE_EXTRACTION_BATCH_SIZE = 1000
 
 def build_feature_extractor(input_shape):
     base_model = ResNet50V2(include_top=False, weights='imagenet', input_shape=input_shape)
@@ -127,7 +113,7 @@ FEATURE_DIM = feature_extractor.output.shape[1]
 
 def segment_cough(signal, sr, top_db):
     intervals = librosa.effects.split(signal, top_db=top_db)
-    if not intervals.any(): return signal
+    if not np.any(intervals): return signal
     max_energy, best_interval = 0, intervals[0]
     for start, end in intervals:
         energy = np.sum(signal[start:end]**2)
@@ -142,14 +128,14 @@ def extract_features_for_cough(filepath):
     else: signal = signal[:target_length]
     mel_spec = librosa.feature.melspectrogram(y=signal, sr=sr, n_mels=N_MELS)
     log_mel_spec = librosa.power_to_db(mel_spec, ref=np.max)
-    log_mel_spec = (log_mel_spec - log_mel_spec.min()) / (log_mel_spec.max() - log_mel_spec.min() + 1e-6)
-    resized_spec = tf.image.resize(np.expand_dims(log_mel_spec, -1), IMG_SIZE)
+    log_mel_spec_norm = (log_mel_spec - log_mel_spec.min()) / (log_mel_spec.max() - log_mel_spec.min() + 1e-6)
+    resized_spec = tf.image.resize(np.expand_dims(log_mel_spec_norm, -1), IMG_SIZE)
     spec_rgb = tf.image.grayscale_to_rgb(resized_spec)
     return feature_extractor.predict(np.expand_dims(spec_rgb, 0), verbose=0)[0]
 
 def extract_features_for_no_cough(filepath):
     signal, sr = librosa.load(filepath, sr=SAMPLE_RATE, duration=DURATION)
-    target_length = int(SEGMENT_DURATION if USE_SEGMENTATION else DURATION * sr)
+    target_length = int((SEGMENT_DURATION if USE_SEGMENTATION else DURATION) * sr)
     if len(signal) > target_length:
         start = np.random.randint(0, len(signal) - target_length + 1)
         signal = signal[start : start + target_length]
@@ -158,44 +144,59 @@ def extract_features_for_no_cough(filepath):
     mfccs = np.mean(librosa.feature.mfcc(y=signal, sr=sr, n_mfcc=40).T, axis=0)
     return mfccs
 
-def process_and_save_features(df, name):
-    features, labels = [], []
-    for _, row in tqdm(df.iterrows(), total=len(df), desc=f'Processing {name} set'):
-        try:
-            if row['label'] == 1:
-                feature_vector = extract_features_for_cough(row['filepath'])
-            else:
-                feature_vector_simple = extract_features_for_no_cough(row['filepath'])
-                feature_vector = np.zeros(FEATURE_DIM)
-                len_simple = len(feature_vector_simple)
-                feature_vector[:len_simple] = feature_vector_simple[:FEATURE_DIM]
-            features.append(feature_vector)
-            labels.append(row['label'])
-        except Exception as e:
-            print(f"Lỗi file {row['filepath']}: {e}")
-    features, labels = np.array(features), np.array(labels)
-    np.save(os.path.join(FINAL_OUTPUT_PATH, f'{timestamp}_{name}_features.npy'), features)
-    np.save(os.path.join(FINAL_OUTPUT_PATH, f'{timestamp}_{name}_labels.npy'), labels)
-    return features, labels
+def process_in_batches(df, name):
+    temp_dir = os.path.join(FINAL_OUTPUT_PATH, f'temp_{name}')
+    os.makedirs(temp_dir, exist_ok=True)
+    batch_num = 0
+    for i in tqdm(range(0, len(df), FEATURE_EXTRACTION_BATCH_SIZE), desc=f'Processing {name} set in batches'):
+        batch_df = df.iloc[i:i + FEATURE_EXTRACTION_BATCH_SIZE]
+        features, labels = [], []
+        for _, row in batch_df.iterrows():
+            try:
+                if row['label'] == 1:
+                    feature_vector = extract_features_for_cough(row['filepath'])
+                else:
+                    feature_vector_simple = extract_features_for_no_cough(row['filepath'])
+                    feature_vector = np.zeros(FEATURE_DIM)
+                    len_simple = len(feature_vector_simple)
+                    feature_vector[:min(len_simple, FEATURE_DIM)] = feature_vector_simple[:FEATURE_DIM]
+                features.append(feature_vector)
+                labels.append(row['label'])
+            except Exception as e:
+                print(f"Lỗi file {row['filepath']}: {e}")
+        np.save(os.path.join(temp_dir, f'features_{batch_num}.npy'), np.array(features))
+        np.save(os.path.join(temp_dir, f'labels_{batch_num}.npy'), np.array(labels))
+        batch_num += 1
+    
+    all_features = np.concatenate([np.load(os.path.join(temp_dir, f)) for f in sorted(os.listdir(temp_dir)) if 'features' in f])
+    all_labels = np.concatenate([np.load(os.path.join(temp_dir, f)) for f in sorted(os.listdir(temp_dir)) if 'labels' in f])
+    shutil.rmtree(temp_dir)
+    return all_features, all_labels
 
-X_train, y_train = process_and_save_features(train_df, "train")
-X_val, y_val = process_and_save_features(val_df, "val")
-X_test, y_test = process_and_save_features(test_df, "test")
+X_train, y_train = process_in_batches(train_df, "train")
+X_val, y_val = process_in_batches(val_df, "val")
+X_test, y_test = process_in_batches(test_df, "test")
 
 ################################################################################
-# BƯỚC 5: HUẤN LUYỆN MÔ HÌNH PHÂN LOẠI (XGBOOST)
+# BƯỚC 5 & 6: HUẤN LUYỆN VÀ ĐÁNH GIÁ MÔ HÌNH (XGBOOST)
 ################################################################################
-print("\n--- Bắt đầu Bước 5: Huấn luyện mô hình XGBoost ---")
+print("\n--- Bắt đầu Bước 5 & 6: Huấn luyện mô hình XGBoost ---")
 classifier = xgb.XGBClassifier(**XGB_PARAMS)
-classifier.fit(X_train, y_train, eval_set=[(X_val, y_val)], early_stopping_rounds=EARLY_STOPPING_ROUNDS, verbose=False)
+
+# <<< SỬA LỖI: Dùng đúng cú pháp early_stopping_rounds cho scikit-learn wrapper >>>
+classifier.fit(X_train, y_train,
+             eval_set=[(X_val, y_val)],
+             early_stopping_rounds=EARLY_STOPPING_ROUNDS,
+             verbose=False)
+
 model_path = os.path.join(FINAL_OUTPUT_PATH, f'{timestamp}_xgboost_model.joblib')
 joblib.dump(classifier, model_path)
 print(f"Đã lưu mô hình XGBoost tại: {model_path}")
 
 ################################################################################
-# BƯỚC 6: ĐÁNH GIÁ VÀ GIẢI THÍCH MÔ HÌNH
+# BƯỚC 7: ĐÁNH GIÁ VÀ GIẢI THÍCH MÔ HÌNH
 ################################################################################
-print("\n--- Bắt đầu Bước 6: Đánh giá và Giải thích mô hình ---")
+print("\n--- Bắt đầu Bước 7: Đánh giá và Giải thích mô hình ---")
 y_pred = classifier.predict(X_test)
 accuracy = np.mean(y_pred == y_test)
 print(f"Độ chính xác cuối cùng trên tập thử nghiệm: {accuracy * 100:.2f}%")
@@ -220,7 +221,7 @@ explainer = shap.TreeExplainer(classifier)
 shap_values = explainer.shap_values(X_test)
 
 plt.figure()
-shap.summary_plot(shap_values, X_test, plot_type="bar", show=False)
+shap.summary_plot(shap_values, X_test, plot_type="bar", show=False, max_display=30)
 plt.title(f'SHAP - Global Feature Importance', fontsize=12)
 plt.tight_layout()
 plt.savefig(os.path.join(FINAL_OUTPUT_PATH, f'{timestamp}_shap_summary_bar.png'))
