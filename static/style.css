@@ -409,7 +409,7 @@ main {
     bottom: -10px; 
     left: 0;
     width: 200%;
-    height: 250px; /* <-- TĂNG GIÁ TRỊ NÀY */
+    height: 450px; /* <-- TĂNG GIÁ TRỊ NÀY */
     animation: wave-move 15s linear infinite;
     z-index: 0;
 }
