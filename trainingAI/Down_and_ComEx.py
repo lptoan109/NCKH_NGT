@@ -23,10 +23,10 @@ print("-> Kết nối thành công.")
 # --- ⚙️ BƯỚC 3: CẤU HÌNH ---
 print("\nSTEP 3: Cấu hình...")
 # 1. Dán ID của THƯ MỤC trên Google Drive chứa các file nén
-FOLDER_ID = 'ID_CUA_THU_MUC_CHUA_CAC_FILE_NEN'
+FOLDER_ID = '19OcHdaHqglR75HoKgIUvUFWcKUWwPP3A'
 
 # 2. Tên của FILE NÉN ĐẦU TIÊN (ví dụ: data.7z.001)
-MAIN_ARCHIVE_FILENAME = 'ngtai_dataset.7z.001'
+MAIN_ARCHIVE_FILENAME = 'ngtai_dataset.zip.111.001'
 
 # 3. Thư mục trên Colab để chứa mọi thứ
 DESTINATION_FOLDER = '/content/ngtai_data/'
