@@ -406,10 +406,10 @@ main {
     background-position: bottom;
     background-size: contain; 
     position: absolute;
-    bottom: -10px; /* Đẩy sóng xuống một chút để đẹp hơn */
+    bottom: -10px; 
     left: 0;
-    width: 200%; /* Rộng gấp đôi để tạo hiệu ứng cuộn */
-    height: 150px; /* Chiều cao của sóng */
+    width: 200%;
+    height: 250px; /* <-- TĂNG GIÁ TRỊ NÀY */
     animation: wave-move 15s linear infinite;
     z-index: 0;
 }
