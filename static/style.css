@@ -404,7 +404,7 @@ main {
     animation: wave 10s cubic-bezier(0.36, 0.45, 0.63, 0.53) infinite;
     transform: translate3d(0, 0, 0);
 }
-/* sda */
+/* sda memaybeo */
 .wave:nth-of-type(2) {
     animation-delay: -2.5s;
     opacity: 0.7;
