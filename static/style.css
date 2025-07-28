@@ -11,7 +11,7 @@
     --danger-hover: #DC2626; /* Đỏ đậm hơn */
     --success-color: #10B981;  /* Xanh ngọc */
     
-    --background-color: #6cb5ff; /* Nền trắng xám */
+    --background-color: #cde2ff; /* Nền trắng xám */
     --card-bg: #FFFFFF;      /* Nền cho các thẻ box */
     --border-color: #E5E7EB;  /* Màu viền */
 
@@ -422,10 +422,13 @@ main {
 
 
 @keyframes wave-move {
-    0% {
-        transform: translateX(0);
-    }
-    100% {
-        transform: translateX(-50%);
-    }
+0% {
+transform: translateX(0) translateY(0);
+}
+50% {
+transform: translateX(-25%) translateY(10px); /* Di chuyển lên xuống */
+}
+100% {
+transform: translateX(-50%) translateY(0);
+}
 }
