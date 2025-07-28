@@ -398,12 +398,11 @@ main {
 
 .wave {
     background: url('/static/soundwave.png') repeat-x;
+    background-position: bottom; /* <-- THÊM DÒNG NÀY */
     position: absolute;
     bottom: 0;
-    /* Chiều rộng phải gấp đôi để tạo hiệu ứng cuộn */
     width: 200%; 
     height: 100%;
-    /* Animation mới */
     animation: wave 15s linear infinite; 
 }
 
