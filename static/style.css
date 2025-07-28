@@ -400,9 +400,9 @@ main {
     background: url('/static/soundwave.png') repeat-x;
     background-position: bottom;
     position: absolute;
-    bottom: 0;
+    bottom: -60px; /* <-- SỬA DÒNG NÀY */
     width: 200%; 
-    height: 120px; /* Đảm bảo chiều cao này khớp với .ocean */
+    height: 120px;
     animation: wave 15s linear infinite; 
 }
 
