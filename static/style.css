@@ -387,28 +387,26 @@ main {
 }
 /* --- CSS CHO HIỆU ỨNG SÓNG ÂM --- */
 .ocean {
-    height: 150px; 
+    height: 100px; /* Giảm chiều cao của vùng chứa sóng */
     width: 100%;
     position: fixed;
     bottom: 0;
     left: 0;
     z-index: -1;
-    overflow: hidden; /* Thêm dòng này */
+    overflow: hidden;
 }
 
 .wave {
     background: url('/static/soundwave.png') repeat-x;
-    background-position: bottom; /* <-- THÊM DÒNG NÀY */
+    background-position: bottom;
     position: absolute;
     bottom: 0;
     width: 200%; 
-    height: 100%;
+    height: 198px; /* Đặt chiều cao bằng chiều cao thật của ảnh */
     animation: wave 15s linear infinite; 
 }
 
-/* Xóa khối .wave:nth-of-type(2) nếu có */
-
 @keyframes wave {
     0% { transform: translateX(0); }
-    100% { transform: translateX(-50%); } /* Di chuyển 50% chiều rộng */
+    100% { transform: translateX(-50%); } 
 }
