@@ -389,28 +389,27 @@ main {
 .ocean {
     height: 150px; 
     width: 100%;
-    position: fixed;   /* <-- Thay đổi 1: Đổi thành 'fixed' */
+    position: fixed;
     bottom: 0;
     left: 0;
-    z-index: -1;       /* <-- Thay đổi 2: Đổi thành '-1' */
+    z-index: -1;
+    overflow: hidden; /* Thêm dòng này */
 }
 
 .wave {
     background: url('/static/soundwave.png') repeat-x;
     position: absolute;
     bottom: 0;
-    width: 6400px; 
+    /* Chiều rộng phải gấp đôi để tạo hiệu ứng cuộn */
+    width: 200%; 
     height: 100%;
-    animation: wave 10s cubic-bezier(0.36, 0.45, 0.63, 0.53) infinite;
-    transform: translate3d(0, 0, 0);
-}
-/* sda memayád adbeo */
-.wave:nth-of-type(2) {
-    animation-delay: -2.5s;
-    opacity: 0.7;
+    /* Animation mới */
+    animation: wave 15s linear infinite; 
 }
 
+/* Xóa khối .wave:nth-of-type(2) nếu có */
+
 @keyframes wave {
-    0% { margin-left: 0; }
-    100% { margin-left: -1600px; } 
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); } /* Di chuyển 50% chiều rộng */
 }
