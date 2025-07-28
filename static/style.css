@@ -11,7 +11,7 @@
     --danger-hover: #DC2626; /* Đỏ đậm hơn */
     --success-color: #10B981;  /* Xanh ngọc */
     
-    --background-color: #F9FAFB; /* Nền trắng xám */
+    --background-color: #6cb5ff; /* Nền trắng xám */
     --card-bg: #FFFFFF;      /* Nền cho các thẻ box */
     --border-color: #E5E7EB;  /* Màu viền */
 
@@ -409,7 +409,7 @@ main {
     bottom: -10px; 
     left: 0;
     width: 200%;
-    height: 450px; /* <-- TĂNG GIÁ TRỊ NÀY */
+    height: 1000px; /* <-- TĂNG GIÁ TRỊ NÀY */
     animation: wave-move 15s linear infinite;
     z-index: 0;
 }
