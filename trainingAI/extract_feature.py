@@ -49,7 +49,7 @@ MAIN_SPLIT_FILENAME = 'ngtai_dataset.zip.111.001'
 WORKING_DIRECTORY = '/content/ngtai_data/'
 
 # --- ⚙️ 3.2 CẤU HÌNH LƯU TRỮ VÀ XỬ LÝ ---
-FEATURE_STORAGE_FOLDER = '/content/drive/MyDrive/Tai_Lieu_NCKH/PrecomputedFeatures/'
+FEATURE_STORAGE_FOLDER = '/content/drive/MyDrive/Tai_Lieu_NCKH/newdataset/feature_hybird/'
 USE_SEGMENTATION = True
 DURATION, SEGMENT_DURATION, ENERGY_THRESHOLD_DB = 5, 2, 20
 FEATURE_EXTRACTION_BATCH_SIZE = 1000

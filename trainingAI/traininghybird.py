@@ -43,10 +43,9 @@ XGB_PARAMS = {
     'subsample': 0.8,
     'colsample_bytree': 0.8,
     'use_label_encoder': False,
-    'eval_metric': 'logloss'
+    'eval_metric': 'logloss',
+    'early_stopping_rounds': 20  # Tham số được chuyển vào đây
 }
-EARLY_STOPPING_ROUNDS = 20
-# ------------------------------------
 print("-> Cấu hình hoàn tất.")
 
 vn_timezone = pytz.timezone('Asia/Ho_Chi_Minh')
@@ -74,7 +73,6 @@ print("\nSTEP 5: Huấn luyện mô hình XGBoost...")
 classifier = xgb.XGBClassifier(**XGB_PARAMS)
 classifier.fit(X_train, y_train,
              eval_set=[(X_val, y_val)],
-             early_stopping_rounds=EARLY_STOPPING_ROUNDS,
              verbose=False)
 model_path = os.path.join(FINAL_OUTPUT_PATH, f'{timestamp}_xgboost_model.joblib')
 joblib.dump(classifier, model_path)
@@ -103,35 +101,27 @@ plt.show()
 
 print("\n--- Bắt đầu tính toán và tạo biểu đồ SHAP ---")
 explainer = shap.TreeExplainer(classifier)
-# Đối với XGBoost, shap_values sẽ trả về giá trị cho lớp dương tính (lớp 1)
-shap_values = explainer.shap_values(X_test) 
+shap_values = explainer.shap_values(X_test)
 
-# Lấy baseline (expected_value) cho lớp dương tính nếu nó trả về một mảng
 base_value = explainer.expected_value
 if isinstance(base_value, np.ndarray):
-    base_value = base_value[1] # Giả định giá trị thứ 2 là cho lớp 1
+    base_value = base_value[1]
 
-# Tạo một list tên đặc trưng giả để biểu đồ dễ nhìn hơn
 feature_names = [f'Feature_{i}' for i in range(X_test.shape[1])]
 
 plt.figure()
-# Thêm feature_names để hiển thị tên trên biểu đồ
 shap.summary_plot(shap_values, X_test, plot_type="bar", show=False, max_display=30, feature_names=feature_names)
 plt.title('SHAP - Mức độ quan trọng của các đặc trưng (Toàn cục)')
 plt.tight_layout()
 plt.savefig(os.path.join(FINAL_OUTPUT_PATH, f'{timestamp}_shap_summary_bar.png'))
 plt.show()
 
-# --- SỬA LỖI LOGIC QUAN TRỌNG ---
-# Tạo force_plot cho TOÀN BỘ tập test, không chỉ cho mẫu đầu tiên
 print("\nĐang tạo biểu đồ SHAP Force Plot cho toàn bộ tập test...")
 shap.initjs()
-# Bỏ chỉ số [0,:] để lấy toàn bộ dữ liệu
 force_plot = shap.force_plot(base_value, shap_values, X_test, feature_names=feature_names, show=False)
 shap.save_html(os.path.join(FINAL_OUTPUT_PATH, f'{timestamp}_shap_force_plot_ALL.html'), force_plot)
 print(f"Đã lưu Force Plot cho toàn bộ tập test dưới dạng file HTML.")
-# Hiển thị plot cho mẫu đầu tiên để xem trước
-display(shap.force_plot(base_value, shap_values[0,:], X_test[0,:], feature_names=feature_names))
 
+display(shap.force_plot(base_value, shap_values[0,:], X_test[0,:], feature_names=feature_names))
 
 print(f"\n--- Pipeline đã hoàn thành! Mọi kết quả đã được lưu tại {FINAL_OUTPUT_PATH} ---")
