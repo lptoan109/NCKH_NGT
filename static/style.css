@@ -238,11 +238,12 @@ main {
 /* =============================================== */
 /* --- CSS HIỆU ỨNG SÓNG ÂM KẾT HỢP --- */
 #pulse-container {
-    /* Định vị và kích thước cho khối 'nhịp đập' */
-    width: 70%;
-    max-width: 600px;
-    height: 120px;
-    margin: 60px auto 0;
+    /* Định vị tuyệt đối ở cuối của hero-section */
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%; /* Chiếm toàn bộ chiều rộng */
+    height: 150px; /* Chiều cao của sóng */
 
     /* Thuộc tính transition để 'nhịp đập' mượt mà */
     transition: transform 0.25s ease-in-out;
