@@ -28,6 +28,7 @@ body {
     background-color: var(--background-color);
     color: var(--text-dark);
     font-weight: 400;
+    padding-bottom: 120px; /* THÊM DÒNG NÀY: Tạo khoảng trống ở cuối trang */
 }
 
 h1, h2, h3, .nav-brand {
@@ -242,12 +243,20 @@ position: relative; / Cần thiết cho z-index của các phần tử con nếu
 
 /* --- CSS CHO HIỆU ỨNG SÓNG EQUALIZER --- */
 #equalizer-container {
-    display: flex;
-    justify-content: center;
-    align-items: flex-end;
-    height: 120px; /* Chiều cao tối đa của sóng */
+    position: fixed; /* Cố định vị trí theo màn hình */
+    bottom: 0;
+    left: 0;
     width: 100%;
-    margin-top: 80px;
+    z-index: 10;     /* Đặt nó LÊN TRÊN các nội dung khác */
+    background-color: var(--background-color); /* Thêm màu nền để che phần cuộn */
+
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-end;
+    height: 120px; /* Chiều cao của sóng */
+    padding: 0 10px;
+    box-sizing: border-box;
+    border-top: 1px solid var(--border-color); /* Thêm đường kẻ mỏng cho đẹp */
 }
 
 .bar {
