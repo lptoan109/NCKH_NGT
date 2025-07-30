@@ -319,4 +319,9 @@ transition: height 0.2s ease-out;
     .hamburger {
         display: block; /* Hiện nút hamburger lên */
     }
+    /* Thêm đoạn này vào trong @media (max-width: 992px) */
+    .nav-menu .btn {
+        width: 100%;
+        box-sizing: border-box; /* Quan trọng: padding sẽ nằm bên trong, không làm tràn ra ngoài */
+    }
 }
