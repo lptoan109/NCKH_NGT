@@ -229,6 +229,15 @@ position: relative; / Cần thiết cho z-index của các phần tử con nếu
 .hero-button {
     font-size: 1rem;
     padding: 16px 32px;
+    
+    /* THÊM HIỆU ỨNG TỎA SÁNG */
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.5); 
+    transition: all 0.3s ease;
+}
+
+.hero-button:hover {
+    /* Làm cho vầng sáng mạnh hơn khi di chuột vào */
+    box-shadow: 0 0 30px rgba(59, 130, 246, 0.8);
 }
 
 /* =============================================== */
