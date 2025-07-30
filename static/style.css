@@ -243,20 +243,20 @@ position: relative; / Cần thiết cho z-index của các phần tử con nếu
 
 /* --- CSS CHO HIỆU ỨNG SÓNG EQUALIZER --- */
 #equalizer-container {
-    position: fixed; /* Cố định vị trí theo màn hình */
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    z-index: 10;     /* Đặt nó LÊN TRÊN các nội dung khác */
-    background-color: var(--background-color); /* Thêm màu nền để che phần cuộn */
+position: fixed; 
+bottom: 0;
+left: 0;
+width: 100%;
+z-index: -1;     /* Đặt nó xuống DƯỚI các nội dung khác */
 
-    display: flex;
-    justify-content: space-around;
-    align-items: flex-end;
-    height: 120px; /* Chiều cao của sóng */
-    padding: 0 10px;
-    box-sizing: border-box;
-    border-top: 1px solid var(--border-color); /* Thêm đường kẻ mỏng cho đẹp */
+display: flex;
+justify-content: space-around;
+align-items: flex-end;
+height: 120px; /* Chiều cao của sóng */
+padding: 0 10px;
+box-sizing: border-box;
+/* background-color: var(--background-color);  XÓA DÒNG NÀY */
+/* border-top: 1px solid var(--border-color); XÓA DÒNG NÀY */
 }
 
 .bar {
