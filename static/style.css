@@ -262,7 +262,7 @@ box-sizing: border-box;
 .bar {
 width: 16px;
 /* Thay đổi margin để tạo khoảng cách bên phải */
-margin-right: 6px;
+margin-right: 5px;
 border-radius: 4px;
 background: linear-gradient(to top, #1E3A8A, #3B82F6, #60A5FA, #93C5FD);
 background-size: 100% 400%;
