@@ -199,12 +199,15 @@ main {
 /* --- TRANG CHỦ (HERO SECTION MỚI) --- */
 /* =============================================== */
 .hero-section {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 80px 20px;
-    text-align: center;
-    min-height: 90vh;
+display: flex;
+justify-content: center;
+align-items: center;
+padding: 80px 20px;
+text-align: center;
+min-height: 90vh;
+/* Tạo khoảng trống phía dưới cho sóng âm /
+padding-bottom: 150px;
+position: relative; / Cần thiết cho z-index của các phần tử con nếu có */
 }
 .hero-content { 
     max-width: 700px;
@@ -238,15 +241,18 @@ main {
 /* =============================================== */
 /* --- CSS HIỆU ỨNG SÓNG ÂM KẾT HỢP --- */
 #pulse-container {
-    /* Định vị tuyệt đối ở cuối của hero-section */
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%; /* Chiếm toàn bộ chiều rộng */
-    height: 150px; /* Chiều cao của sóng */
+/* Định vị cố định ở cuối viewport */
+position: fixed;
+bottom: 0;
+left: 0;
+width: 100%;
+height: 150px;
 
-    /* Thuộc tính transition để 'nhịp đập' mượt mà */
-    transition: transform 0.25s ease-in-out;
+/* Đẩy xuống dưới các phần tử khác */
+z-index: -1;
+
+/* Thuộc tính transition để 'nhịp đập' mượt mà */
+transition: transform 0.25s ease-in-out;
 }
 
 #scrolling-wave {
