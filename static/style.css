@@ -260,11 +260,19 @@ box-sizing: border-box;
 }
 
 .bar {
-    width: 10px; /* Độ rộng của mỗi cột sóng */
-    margin: 0 3px; /* Khoảng cách giữa các cột */
-    background: linear-gradient(to top, var(--primary-color), #60A5FA); /* Màu sắc chuyển màu */
-    border-radius: 4px;
+width: 14px; /* Tăng độ rộng của mỗi cột sóng /
+margin: 0 4px; / Tăng khoảng cách giữa các cột một chút */
+border-radius: 4px;
 
-    /* Hiệu ứng chuyển động mượt mà cho chiều cao */
-    transition: height 0.2s ease-out;
+/* Áp dụng gradient màu sắc */
+background: linear-gradient(to top, #1E3A8A, #3B82F6, #60A5FA, #93C5FD);
+background-size: 100% 400%; /* Cài đặt kích thước background cho animation */
+animation: gradientShift 2s infinite alternate; /* Thêm animation gradient */
+
+transition: height 0.2s ease-out;
+}
+
+@keyframes gradientShift {
+0% { background-position: 0% 100%; }
+100% { background-position: 0% 0%; }
 }
