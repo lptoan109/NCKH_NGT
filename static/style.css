@@ -236,14 +236,33 @@ main {
 /* =============================================== */
 /* --- HIỆU ỨNG SÓNG ÂM NHỊP ĐẬP --- */
 /* =============================================== */
-#soundwave-pulse {
+/* --- CSS HIỆU ỨNG SÓNG ÂM KẾT HỢP --- */
+#pulse-container {
+    /* Định vị và kích thước cho khối 'nhịp đập' */
+    width: 70%;
+    max-width: 600px;
+    height: 120px;
+    margin: 60px auto 0;
+
+    /* Thuộc tính transition để 'nhịp đập' mượt mà */
+    transition: transform 0.25s ease-in-out;
+}
+
+#scrolling-wave {
+    /* Đặt hình nền và kích thước cho sóng cuộn bên trong */
     background-image: url('/static/soundwave.png');
     background-size: contain;
-    background-repeat: no-repeat;
+    background-repeat: repeat-x;
     background-position: center;
-    width: 60%;
-    max-width: 500px;
-    height: 100px;
-    margin: 60px auto 0;
-    transition: transform 0.2s ease-in-out;
+
+    width: 200%; /* Rộng gấp đôi để cuộn */
+    height: 100%; /* Cao bằng khối cha */
+
+    /* Animation cho hiệu ứng cuộn ngang */
+    animation: scroll-wave 20s linear infinite;
+}
+
+@keyframes scroll-wave {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
 }

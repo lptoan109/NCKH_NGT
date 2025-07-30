@@ -73,7 +73,7 @@
     <script src="{{ url_for('static', filename='main.js') }}"></script>
 
     <script>
-        const waveElement = document.getElementById('soundwave-pulse');
+        const waveElement = document.getElementById('pulse-container');
         if (waveElement) {
             setInterval(() => {
                 const randomScale = 1.0 + Math.random() * 0.15; // Phóng to từ 1.0 đến 1.15
