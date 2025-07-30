@@ -291,6 +291,7 @@ transition: height 0.2s ease-out;
         align-items: stretch;
         padding: 1rem 0;
         border-top: 1px solid var(--border-color);
+        z-index: 1000;
     }
 
     /* Class này được thêm bởi JavaScript để hiện menu */
