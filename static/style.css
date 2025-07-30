@@ -266,7 +266,7 @@ transition: transform 0.25s ease-in-out;
     height: 100%; /* Cao bằng khối cha */
 
     /* Animation cho hiệu ứng cuộn ngang */
-    animation: scroll-wave 20s linear infinite;
+    animation: scroll-wave 10s linear infinite;
 }
 
 @keyframes scroll-wave {
