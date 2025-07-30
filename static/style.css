@@ -274,3 +274,48 @@ transition: height 0.2s ease-out;
 0% { background-position: 0% 100%; }
 100% { background-position: 0% 0%; }
 }
+
+/* =============================================== */
+/* --- RESPONSIVE CHO NAVBAR --- */
+/* =============================================== */
+@media (max-width: 992px) {
+    .nav-menu {
+        display: none; /* Ẩn menu đi trên mobile */
+        position: absolute;
+        top: 71px; /* Chiều cao của navbar, bạn có thể cần điều chỉnh */
+        left: 0;
+        width: 100%;
+        background-color: var(--card-bg);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        flex-direction: column;
+        align-items: stretch;
+        padding: 1rem 0;
+        border-top: 1px solid var(--border-color);
+    }
+
+    /* Class này được thêm bởi JavaScript để hiện menu */
+    .nav-menu.active {
+        display: flex; 
+    }
+
+    .nav-links, .nav-auth {
+        flex-direction: column;
+        width: 100%;
+        gap: 0;
+    }
+
+    .nav-links a, .nav-auth > a {
+        padding: 1rem 2rem;
+        text-align: left;
+    }
+    
+    .nav-auth {
+        align-items: stretch;
+        gap: 1rem;
+        padding: 1rem 2rem;
+    }
+
+    .hamburger {
+        display: block; /* Hiện nút hamburger lên */
+    }
+}
