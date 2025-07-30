@@ -14,4 +14,29 @@
         
     </div>
 </div>
+    <div id="equalizer-container"></div>
+
+    <script>
+        const equalizerContainer = document.getElementById('equalizer-container');
+        if (equalizerContainer) {
+            const NUM_BARS = 150; // Tăng số lượng cột sóng
+
+            // Tạo ra các cột sóng
+            for (let i = 0; i < NUM_BARS; i++) {
+                const bar = document.createElement('div');
+                bar.classList.add('bar');
+                equalizerContainer.appendChild(bar);
+            }
+
+            const bars = document.querySelectorAll('.bar');
+
+            // Bắt đầu animation
+            setInterval(() => {
+                bars.forEach(bar => {
+                    const randomHeight = Math.floor(Math.random() * 90) + 10;
+                    bar.style.height = `${randomHeight}%`;
+                });
+            }, 200);
+        }
+    </script>
 {% endblock %}
