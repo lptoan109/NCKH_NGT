@@ -1,81 +1,6 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@700;900&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
-
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}NGT Cough{% endblock %}</title>
-    
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@700;900&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
-    
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body>
-
-    <header>
-        <nav class="navbar-v2">
-            <a href="{{ url_for('homepage') }}" class="nav-brand">NGT Cough</a>
-
-            <div class="nav-menu" id="nav-menu">
-                <div class="nav-links">
-                    <a href="{{ url_for('homepage') }}">Trang Chủ</a>
-                    <a href="#">Giới Thiệu</a>
-                    <a href="{{ url_for('diagnose') }}">Bắt Đầu Chẩn Đoán</a>
-                    <a href="{{ url_for('contact') }}">Liên Hệ & Báo Cáo Lỗi</a>
-                </div>
-
-                <div class="nav-auth">
-                    {% if current_user.is_authenticated %}
-                        <a href="{{ url_for('logout') }}" class="btn btn-logout">Đăng Xuất</a>
-                        <a href="{{ url_for('profile') }}">
-                            {% if current_user.picture %}
-                                 <img src="{{ current_user.picture }}" alt="User Avatar" class="avatar-image-nav">
-                            {% else %}
-                                <div class="avatar-text">{{ current_user.username[0]|upper }}</div>
-                            {% endif %}
-                        </a>
-                    {% else %}
-                        <a href="{{ url_for('login') }}" class="btn btn-primary">Đăng Nhập</a>
-                        <a href="{{ url_for('register') }}" class="btn btn-secondary">Đăng Ký</a>
-                    {% endif %}
-                </div>
-            </div>
-
-            <button class="hamburger" id="hamburger">
-                &#9776;
-            </button>
-        </nav>
-    </header>
-
-    <main>
-        {# Hiển thị các thông báo flash #}
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                <div class="flash-messages">
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }}">
-                        {{ message }}
-                    </div>
-                {% endfor %}
-                </div>
-            {% endif %}
-        {% endwith %}
-
-        {# Nơi nội dung riêng của từng trang sẽ được chèn vào #}
-        {% block content %}{% endblock %}
-    </main>
-
-    <div id="equalizer-container"></div>
-
-    <script src="{{ url_for('static', filename='main.js') }}"></script>
-<!DOCTYPE html>
-<html lang="vi">
-<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}NGT Cough{% endblock %}</title>
@@ -167,32 +92,6 @@
                 });
             }, 200);
         }
-    </script>
-</body>
-</html>
-    <script>
-        const equalizerContainer = document.getElementById('equalizer-container');
-        if (equalizerContainer) {
-            const NUM_BARS = 50; // Số lượng cột sóng bạn muốn
-
-        // Bước 1: Tự động tạo ra các cột sóng
-        for (let i = 0; i < NUM_BARS; i++) {
-            const bar = document.createElement('div');
-            bar.classList.add('bar');
-            equalizerContainer.appendChild(bar);
-        }
-
-        const bars = document.querySelectorAll('.bar');
-
-        // Bước 2: Bắt đầu animation
-        setInterval(() => {
-            bars.forEach(bar => {
-                // Tạo chiều cao ngẫu nhiên từ 10% đến 100%
-                const randomHeight = Math.floor(Math.random() * 90) + 10;
-                bar.style.height = `${randomHeight}%`;
-            });
-        }, 200); // Tần suất thay đổi (200ms)
-    }
     </script>
 </body>
 </html>
