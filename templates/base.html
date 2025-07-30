@@ -71,5 +71,20 @@
     </main>
 
     <script src="{{ url_for('static', filename='main.js') }}"></script>
+
+    <script>
+        const waveElement = document.getElementById('soundwave-pulse');
+        if (waveElement) {
+            setInterval(() => {
+                const randomScale = 1.0 + Math.random() * 0.15; // Phóng to từ 1.0 đến 1.15
+                waveElement.style.transform = `scale(${randomScale})`;
+
+                setTimeout(() => {
+                    waveElement.style.transform = 'scale(1)';
+                }, 250); // Thời gian giữ trạng thái phóng to
+
+            }, 1500); // Tần suất đập (1.5 giây một lần)
+        }
+    </script>
 </body>
 </html>
