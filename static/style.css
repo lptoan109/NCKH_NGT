@@ -268,7 +268,7 @@ position: relative; / Cần thiết cho z-index của các phần tử con nếu
     mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
 }
 #scrolling-wave {
-    /* Quay lại sử dụng ảnh soundwave.png chi tiết */
+    /* Quay lại sử dụng ảnh soundwave.png chi tiết monkey*/
     background-image: url('/static/soundwave.png');
     background-repeat: repeat-x;
     background-position: bottom;
