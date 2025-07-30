@@ -73,18 +73,28 @@
     <script src="{{ url_for('static', filename='main.js') }}"></script>
 
     <script>
-        const waveElement = document.getElementById('pulse-container');
-        if (waveElement) {
-            setInterval(() => {
-                const randomScale = 1.0 + Math.random() * 0.15; // Phóng to từ 1.0 đến 1.15
-                waveElement.style.transform = `scale(${randomScale})`;
+        const equalizerContainer = document.getElementById('equalizer-container');
+        if (equalizerContainer) {
+            const NUM_BARS = 50; // Số lượng cột sóng bạn muốn
 
-                setTimeout(() => {
-                    waveElement.style.transform = 'scale(1)';
-                }, 250); // Thời gian giữ trạng thái phóng to
-
-            }, 1000); // Tần suất đập (1 giây một lần)
+        // Bước 1: Tự động tạo ra các cột sóng
+        for (let i = 0; i < NUM_BARS; i++) {
+            const bar = document.createElement('div');
+            bar.classList.add('bar');
+            equalizerContainer.appendChild(bar);
         }
+
+        const bars = document.querySelectorAll('.bar');
+
+        // Bước 2: Bắt đầu animation
+        setInterval(() => {
+            bars.forEach(bar => {
+                // Tạo chiều cao ngẫu nhiên từ 10% đến 100%
+                const randomHeight = Math.floor(Math.random() * 90) + 10;
+                bar.style.height = `${randomHeight}%`;
+            });
+        }, 200); // Tần suất thay đổi (200ms)
+    }
     </script>
 </body>
 </html>

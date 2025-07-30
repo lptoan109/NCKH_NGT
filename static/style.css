@@ -240,47 +240,22 @@ position: relative; / Cần thiết cho z-index của các phần tử con nếu
     box-shadow: 0 0 30px rgba(59, 130, 246, 0.8);
 }
 
-/* =============================================== */
-/* --- TRANG CHẨN ĐOÁN, LỊCH SỬ, PROFILE, ... --- */
-/* =============================================== */
-
-/* ... (Toàn bộ code CSS cho các trang khác của bạn giữ nguyên ở đây) ... */
-
-
-/* =============================================== */
-/* --- HIỆU ỨNG SÓNG ÂM NHỊP ĐẬP --- */
-/* =============================================== */
-/* --- CSS HIỆU ỨNG SÓNG ÂM KẾT HỢP --- */
-#pulse-container {
-    /* Thay đổi thành 'fixed' để nó luôn ở cuối màn hình */
-    position: fixed;
-    bottom: 0;
-    left: 0;
+/* --- CSS CHO HIỆU ỨNG SÓNG EQUALIZER --- */
+#equalizer-container {
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    height: 120px; /* Chiều cao tối đa của sóng */
     width: 100%;
-    height: 150px; /* Bạn có thể điều chỉnh chiều cao này */
-
-    /* Đặt z-index âm để nó nằm dưới mọi nội dung khác */
-    z-index: -1;
-
-    transition: transform 0.25s ease-in-out;
-    overflow: hidden;
-    -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
-    mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
-}
-#scrolling-wave {
-    /* Quay lại sử dụng ảnh soundwave.png chi tiết monkey*/
-    background-image: url('/static/soundwave.png');
-    background-repeat: repeat-x;
-    background-position: bottom;
-    background-size: contain;
-
-    width: 200%;
-    height: 100%;
-
-    animation: scroll-wave 9s linear infinite;
+    margin-top: 80px;
 }
 
-@keyframes scroll-wave {
-    from { transform: translateX(0); }
-    to { transform: translateX(-50%); }
+.bar {
+    width: 10px; /* Độ rộng của mỗi cột sóng */
+    margin: 0 3px; /* Khoảng cách giữa các cột */
+    background: linear-gradient(to top, var(--primary-color), #60A5FA); /* Màu sắc chuyển màu */
+    border-radius: 4px;
+
+    /* Hiệu ứng chuyển động mượt mà cho chiều cao */
+    transition: height 0.2s ease-out;
 }
