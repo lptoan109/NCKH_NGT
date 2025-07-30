@@ -260,7 +260,7 @@ box-sizing: border-box;
 }
 
 .bar {
-width: 14px;
+width: 16px;
 /* Thay đổi margin để tạo khoảng cách bên phải */
 margin-right: 6px;
 border-radius: 4px;
