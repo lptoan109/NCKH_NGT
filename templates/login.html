@@ -14,15 +14,17 @@
             <label for="password">Mật khẩu</label>
             <input type="password" id="password" name="password" required>
         </div>
-        <button type="submit" class="btn">Đăng Nhập</button>
+        <button type="submit" class="btn btn-primary">Đăng Nhập</button>
 
         <hr style="margin: 20px 0; border: 0; border-top: 1px solid #ccc;">
 
-        <a href="{{ url_for('login_google') }}" class="btn btn-google">
+        <a href="{{ url_for('login_google') }}" class="btn btn-google" style="background-color: #4285F4; width: 100%; box-sizing: border-box;">
             Đăng nhập với Google
         </a>
 
-        <p class="form-switch">Chưa có tài khoản? <a href="{{ url_for('register') }}">Đăng ký ngay</a></p>
+        <p class="form-switch" style="text-align: center; margin-top: 20px;">
+            Chưa có tài khoản? <a href="{{ url_for('register') }}">Đăng ký ngay</a>
+        </p>
     </form>
 </div>
 {% endblock %}
