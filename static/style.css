@@ -260,15 +260,13 @@ box-sizing: border-box;
 }
 
 .bar {
-width: 14px; /* Tăng độ rộng của mỗi cột sóng /
-margin: 0 4px; / Tăng khoảng cách giữa các cột một chút */
+width: 14px;
+/* Thay đổi margin để tạo khoảng cách bên phải */
+margin-right: 6px;
 border-radius: 4px;
-
-/* Áp dụng gradient màu sắc */
 background: linear-gradient(to top, #1E3A8A, #3B82F6, #60A5FA, #93C5FD);
-background-size: 100% 400%; /* Cài đặt kích thước background cho animation */
-animation: gradientShift 2s infinite alternate; /* Thêm animation gradient */
-
+background-size: 100% 400%;
+animation: gradientShift 2s infinite alternate;
 transition: height 0.2s ease-out;
 }
 
