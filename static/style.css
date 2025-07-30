@@ -211,6 +211,8 @@ position: relative; / Cần thiết cho z-index của các phần tử con nếu
 }
 .hero-content { 
     max-width: 700px;
+    position: relative; /* Thêm dòng này */
+    z-index: 1;         /* Thêm dòng này */
 }
 .hero-title {
     font-size: 3rem;
