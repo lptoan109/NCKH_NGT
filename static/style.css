@@ -241,33 +241,33 @@ position: relative; / Cần thiết cho z-index của các phần tử con nếu
 /* =============================================== */
 /* --- CSS HIỆU ỨNG SÓNG ÂM KẾT HỢP --- */
 #pulse-container {
-    /* Định vị và kích thước cho khối 'nhịp đập' */
     position: absolute;
     bottom: 0;
     left: 0;
     width: 100%;
     height: 150px;
-    
-    /* Thuộc tính transition để 'nhịp đập' mượt mà */
     transition: transform 0.25s ease-in-out;
-    overflow: hidden; /* Giấu phần sóng thừa */
+    overflow: hidden;
+
+    /* THÊM DÒNG NÀY ĐỂ LÀM MỜ 2 CẠNH */
+    -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+    mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
 }
 
 #scrolling-wave {
-    /* Đặt hình nền và kích thước cho sóng cuộn bên trong */
-    background-image: url('https://cdn.kcak11.com/codepen_assets/wave_animation/wave.svg'); /* <-- THAY ĐỔI Ở ĐÂY */
+    /* Quay lại sử dụng ảnh soundwave.png chi tiết */
+    background-image: url('/static/soundwave.png');
     background-repeat: repeat-x;
-    
-    position: absolute;
-    bottom: 0;
-    width: 6400px; /* Chiều rộng lớn để cuộn */
-    height: 100%; /* Cao bằng khối cha */
-    
-    /* Animation cho hiệu ứng cuộn ngang */
-    animation: scroll-wave 10s linear infinite; /* Tăng tốc độ lên 10s */
+    background-position: bottom;
+    background-size: contain;
+
+    width: 200%;
+    height: 100%;
+
+    animation: scroll-wave 10s linear infinite;
 }
 
 @keyframes scroll-wave {
     from { transform: translateX(0); }
-    to { transform: translateX(-1600px); } /* Di chuyển đúng bằng chiều rộng 1 ảnh SVG */
+    to { transform: translateX(-50%); }
 }
