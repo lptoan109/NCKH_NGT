@@ -268,7 +268,7 @@ position: relative; / Cần thiết cho z-index của các phần tử con nếu
     width: 200%;
     height: 100%;
 
-    animation: scroll-wave 10s linear infinite;
+    animation: scroll-wave 9s linear infinite;
 }
 
 @keyframes scroll-wave {
