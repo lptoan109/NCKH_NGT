@@ -276,7 +276,7 @@ main {
     width: 8px;   /* Hẹp hơn cho màn hình lớn có nhiều cột */
     margin: 0 2px;
     border-radius: 4px;
-    background: linear-gradient(to top, #1E3A8A, #3B82F6, #60A5FA, #93C5FD);
+    background: linear-gradient(to top, #3B82F6, #8B5CF6, #EC4899); /* Xanh -> Tím -> Hồng */
     background-size: 100% 400%;
     animation: gradientShift 2s infinite alternate;
     transition: height 0.2s ease-out;
