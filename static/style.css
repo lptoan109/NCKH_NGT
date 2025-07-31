@@ -28,7 +28,7 @@ body {
     background-color: var(--background-color);
     color: var(--text-dark);
     font-weight: 400;
-    padding-bottom: 120px; /* THÊM DÒNG NÀY: Tạo khoảng trống ở cuối trang */
+    padding-bottom: 120px; /* Tạo khoảng trống ở cuối trang cho equalizer */
 }
 
 h1, h2, h3, .nav-brand {
@@ -91,13 +91,12 @@ main {
     gap: 1rem;
 }
 
-.avatar-image-large {
-width: 150px;       /* Cố định chiều rộng */
-height: 150px;      / Cố định chiều cao /
-border-radius: 50%; / Bo thành hình tròn /
-border: 4px solid var(--card-bg);
-box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-object-fit: cover;  / QUAN TRỌNG: Cắt và thu phóng ảnh cho vừa khung */
+.avatar-image-nav, .avatar-text {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--border-color);
 }
 .avatar-text {
     background-color: var(--primary-color);
@@ -128,7 +127,7 @@ object-fit: cover;  / QUAN TRỌNG: Cắt và thu phóng ảnh cho vừa khung *
     border-radius: 8px;
     border: none;
     text-align: center;
-    transition: background-color 0.2s ease, transform 0.2s ease;
+    transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
     cursor: pointer;
 }
 .btn:hover {
@@ -201,20 +200,15 @@ object-fit: cover;  / QUAN TRỌNG: Cắt và thu phóng ảnh cho vừa khung *
 /* --- TRANG CHỦ (HERO SECTION MỚI) --- */
 /* =============================================== */
 .hero-section {
-display: flex;
-justify-content: center;
-align-items: center;
-padding: 40px 20px;
-text-align: center;
-min-height: 90vh;
-/* Tạo khoảng trống phía dưới cho sóng âm /
-padding-bottom: 150px;
-position: relative; / Cần thiết cho z-index của các phần tử con nếu có */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 40px 20px;
+    text-align: center;
+    min-height: 90vh;
 }
 .hero-content { 
     max-width: 700px;
-    position: relative; /* Thêm dòng này */
-    z-index: 1;         /* Thêm dòng này */
 }
 .hero-title {
     font-size: 3rem;
@@ -231,59 +225,75 @@ position: relative; / Cần thiết cho z-index của các phần tử con nếu
 .hero-button {
     font-size: 1rem;
     padding: 16px 32px;
-    
-    /* THÊM HIỆU ỨNG TỎA SÁNG     */
     box-shadow: 0 0 20px rgba(59, 130, 246, 0.5); 
-    transition: all 0.3s ease;
 }
 
 .hero-button:hover {
-    /* Làm cho vầng sáng mạnh hơn khi di chuột vào */
     box-shadow: 0 0 30px rgba(59, 130, 246, 0.8);
 }
 
-/* --- CSS CHO HIỆU ỨNG SÓNG EQUALIZER --- */
-#equalizer-container {
-position: fixed; 
-bottom: 0;
-left: 0;
-width: 100%;
-z-index: -1;     /* Đặt nó xuống DƯỚI các nội dung khác */
+/* =============================================== */
+/* --- TRANG PROFILE --- */
+/* =============================================== */
+.avatar-image-large, .avatar-text-large {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    border: 4px solid var(--card-bg);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    object-fit: cover;
+}
+.avatar-text-large {
+    background-color: var(--primary-color);
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 4em;
+    font-weight: bold;
+}
 
-display: flex;
-justify-content: space-around;
-align-items: flex-end;
-height: 120px; /* Chiều cao của sóng */
-padding: 0 10px;
-box-sizing: border-box;
-/* background-color: var(--background-color);  XÓA DÒNG NÀY */
-/* border-top: 1px solid var(--border-color); XÓA DÒNG NÀY */
+/* =============================================== */
+/* --- HIỆU ỨNG SÓNG EQUALIZER --- */
+/* =============================================== */
+#equalizer-container {
+    position: fixed; 
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    z-index: -1;
+
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-end;
+    height: 120px;
+    padding: 0 10px;
+    box-sizing: border-box;
 }
 
 .bar {
-width: 16px;
-/* Thay đổi margin để tạo khoảng cách bên phải */
-margin-right: 4px;
-border-radius: 4px;
-background: linear-gradient(to top, #1E3A8A, #3B82F6, #60A5FA, #93C5FD);
-background-size: 100% 400%;
-animation: gradientShift 2s infinite alternate;
-transition: height 0.2s ease-out;
+    width: 16px;
+    margin: 0 4px;
+    border-radius: 4px;
+    background: linear-gradient(to top, #1E3A8A, #3B82F6, #60A5FA, #93C5FD);
+    background-size: 100% 400%;
+    animation: gradientShift 2s infinite alternate;
+    transition: height 0.2s ease-out;
 }
 
 @keyframes gradientShift {
-0% { background-position: 0% 100%; }
-100% { background-position: 0% 0%; }
+    0% { background-position: 0% 100%; }
+    100% { background-position: 0% 0%; }
 }
 
 /* =============================================== */
-/* --- RESPONSIVE CHO NAVBAR --- */
+/* --- RESPONSIVE DESIGN --- */
 /* =============================================== */
 @media (max-width: 992px) {
     .nav-menu {
-        display: none; /* Ẩn menu đi trên mobile */
+        display: none;
         position: absolute;
-        top: 71px; /* Chiều cao của navbar, bạn có thể cần điều chỉnh */
+        top: 71px;
         left: 0;
         width: 100%;
         background-color: var(--card-bg);
@@ -295,7 +305,6 @@ transition: height 0.2s ease-out;
         z-index: 1000;
     }
 
-    /* Class này được thêm bởi JavaScript để hiện menu */
     .nav-menu.active {
         display: flex; 
     }
@@ -318,15 +327,11 @@ transition: height 0.2s ease-out;
     }
 
     .hamburger {
-        display: block; /* Hiện nút hamburger lên */
+        display: block;
     }
-    /* Thêm đoạn này vào trong @media (max-width: 992px) */
+
     .nav-menu .btn {
         width: 100%;
-        box-sizing: border-box; /* Quan trọng: padding sẽ nằm bên trong, không làm tràn ra ngoài */
+        box-sizing: border-box;
     }
-}
-.profile-card img {
-    max-width: 100%;
-    height: auto;
 }
