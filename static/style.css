@@ -305,7 +305,7 @@ main {
     0% { background-position: 0% 100%; }
     100% { background-position: 0% 0%; }
 }
-/* 
+ 
 @media (max-width: 992px) {
     .nav-menu {
         display: none;
@@ -362,4 +362,3 @@ main {
     margin: 0 2px; /
     }
 }   
-*/
