@@ -11,62 +11,27 @@
             giúp bạn hiểu rõ hơn về sức khỏe của mình.
         </p>
         <a href="{{ url_for('diagnose') }}" class="btn btn-primary hero-button">Bắt đầu Chẩn đoán ngay</a>
-        
     </div>
 </div>
-    <div id="equalizer-container"></div>
 
-    <script>
-    const equalizerContainer = document.getElementById('equalizer-container');
+<div id="equalizer-container">
+    {% for i in range(150) %} {# Tạo ra 150 cột sóng #}
+        <div class="bar"></div>
+    {% endfor %}
+</div>
+{% endblock %}
 
-    if (equalizerContainer) {
-        // Hàm chính để thiết lập và vẽ equalizer
-        function setupEqualizer() {
-            let numBars = 200; // Tăng số lượng cột cho màn hình lớn
-
-        // Kiểm tra kích thước màn hình
-        if (window.innerWidth < 768) {
-            numBars = 80; // Giảm số lượng cột cho màn hình nhỏ
-        } else if (window.innerWidth < 1200) {
-            numBars = 120; // Số lượng cột cho màn hình vừa
-        }
-
-            // Xóa các cột cũ trước khi tạo mới
-            equalizerContainer.innerHTML = ''; 
-
-            // Tạo các cột sóng mới
-            for (let i = 0; i < numBars; i++) {
-                const bar = document.createElement('div');
-                bar.classList.add('bar');
-                equalizerContainer.appendChild(bar);
-            }
-        }
-
-        // --- Phần Animation (không đổi) ---
+{% block scripts %}
+<script>
+    const bars = document.querySelectorAll('#equalizer-container .bar');
+    if (bars.length > 0) {
         function animateBars() {
-            const bars = equalizerContainer.querySelectorAll('.bar');
-            if (bars.length === 0) return;
-
             bars.forEach(bar => {
                 const randomHeight = Math.floor(Math.random() * 90) + 10;
                 bar.style.height = `${randomHeight}%`;
             });
         }
-
-        // --- Phần Xử lý Sự kiện ---
-        let resizeTimer;
-        // Lắng nghe sự kiện thay đổi kích thước cửa sổ
-        window.addEventListener('resize', () => {
-            // Hủy bỏ bộ đếm thời gian cũ
-            clearTimeout(resizeTimer);
-            // Đặt bộ đếm thời gian mới, chỉ chạy hàm setup lại sau khi người dùng ngừng thay đổi kích thước 250ms
-            resizeTimer = setTimeout(setupEqualizer, 250);
-        });
-
-        // Chạy lần đầu khi tải trang
-        setupEqualizer();
-        // Bắt đầu animation
         setInterval(animateBars, 200);
     }
-    </script>
+</script>
 {% endblock %}
