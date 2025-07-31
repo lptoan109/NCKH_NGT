@@ -23,14 +23,18 @@
         </div>
     </div>
 
-    <div class="results-content">
-        <p id="result-message">Đang phân tích... Vui lòng chờ trong giây lát.</p>
-
-        <div id="result-player" style="display: none; margin-top: 20px;">
-            <audio controls></audio>
-            <a href="{{ url_for('history') }}" class="btn-history-link" style="display: block; margin-top: 15px;">
-            Xem chi tiết trong Lịch sử
-            </a>
+    <div id="results-panel" style="display: none;">
+        <div class="diagnose-header">
+            <h2>Kết quả Phân tích</h2>
+        </div>
+        <div class="results-content">
+            <p id="result-message">Đang phân tích... Vui lòng chờ trong giây lát.</p>
+            <div id="result-player" style="display: none; margin-top: 20px;">
+                <audio controls src=""></audio>
+                <a href="{{ url_for('history') }}" class="btn-history-link" style="display: block; margin-top: 15px;">
+                    Xem chi tiết trong Lịch sử
+                </a>
+            </div>
         </div>
     </div>
 </div>
