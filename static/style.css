@@ -91,15 +91,13 @@ main {
     gap: 1rem;
 }
 
-.avatar-image-large, .avatar-text-large {
-    width: 150px;
-    height: 150px;
-    border-radius: 50%;
-    border: 4px solid var(--card-bg);
-    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-    
-    /* DÒNG QUAN TRỌNG NHẤT */
-    object-fit: cover; /* Giúp ảnh tự co lại và lấp đầy khung tròn */
+.avatar-image-large {
+width: 150px;       /* Cố định chiều rộng */
+height: 150px;      / Cố định chiều cao /
+border-radius: 50%; / Bo thành hình tròn /
+border: 4px solid var(--card-bg);
+box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+object-fit: cover;  / QUAN TRỌNG: Cắt và thu phóng ảnh cho vừa khung */
 }
 .avatar-text {
     background-color: var(--primary-color);
