@@ -159,8 +159,8 @@ transform: scale(1.05);
 
 /* Thêm icon thùng rác (bạn có thể cần import font awesome hoặc dùng svg inline) */
 .btn-delete::before {
-content: "\f2ed"; / Mã icon thùng rác từ Font Awesome (ví dụ) /
-font-family: 'Font Awesome 5 Free'; / Đảm bảo bạn đã import font này */
+/* content: "\f2ed"; XÓA DÒNG NÀY */
+font-family: 'Font Awesome 5 Free';
 font-weight: 900;
 margin-right: 5px;
 }
