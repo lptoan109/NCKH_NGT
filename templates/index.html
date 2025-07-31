@@ -18,35 +18,55 @@
 
     <script>
     const equalizerContainer = document.getElementById('equalizer-container');
+
     if (equalizerContainer) {
-        let numBars = 150; // Mặc định cho màn hình lớn
+        // Hàm chính để thiết lập và vẽ equalizer
+        function setupEqualizer() {
+            let numBars = 150; // Mặc định cho màn hình lớn
 
-        // Kiểm tra kích thước màn hình
-        if (window.innerWidth < 768) {
-            numBars = 50; // Giảm số lượng cột cho màn hình nhỏ
-        } else if (window.innerWidth < 1200) {
-            numBars = 100; // Số lượng cột cho màn hình vừa
+            // Kiểm tra kích thước màn hình hiện tại
+            if (window.innerWidth < 768) {
+                numBars = 50; // Số lượng cột cho màn hình nhỏ
+            } else if (window.innerWidth < 1200) {
+                numBars = 100; // Số lượng cột cho màn hình vừa
+            }
+
+            // Xóa các cột cũ trước khi tạo mới
+            equalizerContainer.innerHTML = ''; 
+
+            // Tạo các cột sóng mới
+            for (let i = 0; i < numBars; i++) {
+                const bar = document.createElement('div');
+                bar.classList.add('bar');
+                equalizerContainer.appendChild(bar);
+            }
         }
 
-        // Xóa các cột cũ (nếu có) trước khi tạo mới
-        equalizerContainer.innerHTML = '';
+        // --- Phần Animation (không đổi) ---
+        function animateBars() {
+            const bars = equalizerContainer.querySelectorAll('.bar');
+            if (bars.length === 0) return;
 
-        // Tạo các cột sóng
-        for (let i = 0; i < numBars; i++) {
-            const bar = document.createElement('div');
-            bar.classList.add('bar');
-            equalizerContainer.appendChild(bar);
-        }
-
-        const bars = document.querySelectorAll('.bar');
-
-        // Bắt đầu animation
-        setInterval(() => {
             bars.forEach(bar => {
                 const randomHeight = Math.floor(Math.random() * 90) + 10;
                 bar.style.height = `${randomHeight}%`;
             });
-        }, 200);
+        }
+
+        // --- Phần Xử lý Sự kiện ---
+        let resizeTimer;
+        // Lắng nghe sự kiện thay đổi kích thước cửa sổ
+        window.addEventListener('resize', () => {
+            // Hủy bỏ bộ đếm thời gian cũ
+            clearTimeout(resizeTimer);
+            // Đặt bộ đếm thời gian mới, chỉ chạy hàm setup lại sau khi người dùng ngừng thay đổi kích thước 250ms
+            resizeTimer = setTimeout(setupEqualizer, 250);
+        });
+
+        // Chạy lần đầu khi tải trang
+        setupEqualizer();
+        // Bắt đầu animation
+        setInterval(animateBars, 200);
     }
     </script>
 {% endblock %}
