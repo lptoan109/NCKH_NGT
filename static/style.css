@@ -91,12 +91,15 @@ main {
     gap: 1rem;
 }
 
-.avatar-image-nav, .avatar-text {
-    width: 40px;
-    height: 40px;
+.avatar-image-large, .avatar-text-large {
+    width: 150px;
+    height: 150px;
     border-radius: 50%;
-    object-fit: cover;
-    border: 2px solid var(--border-color);
+    border: 4px solid var(--card-bg);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    
+    /* DÒNG QUAN TRỌNG NHẤT */
+    object-fit: cover; /* Giúp ảnh tự co lại và lấp đầy khung tròn */
 }
 .avatar-text {
     background-color: var(--primary-color);
