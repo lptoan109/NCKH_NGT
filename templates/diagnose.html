@@ -31,9 +31,10 @@
             <p id="result-message">Đang phân tích... Vui lòng chờ trong giây lát.</p>
             <div id="result-player" style="display: none; margin-top: 20px;">
                 <audio controls src=""></audio>
-                <a href="{{ url_for('history') }}" class="btn-history-link" style="display: block; margin-top: 15px;">
-                    Xem chi tiết trong Lịch sử
-                </a>
+                <div class="result-actions" style="margin-top: 20px; display: flex; justify-content: center; gap: 1rem;">
+                    <button id="diagnose-again-button" class="btn btn-secondary">Chẩn đoán lại</button>
+                    <a href="{{ url_for('history') }}" class="btn btn-primary">Xem lịch sử</a>
+                </div>
             </div>
         </div>
     </div>

@@ -7,10 +7,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const resultMessage = document.getElementById('result-message');
     const resultPlayerContainer = document.getElementById('result-player');
     const audioPlayer = resultPlayerContainer ? resultPlayerContainer.querySelector('audio') : null;
+    const diagnoseAgainButton = document.getElementById('diagnose-again-button'); // Nút mới
 
     // Thoát nếu không tìm thấy các phần tử cần thiết
-    if (!recordButton || !timerElement || !recordingPanel || !resultsPanel || !audioPlayer) {
-        console.error("Một hoặc nhiều phần tử không được tìm thấy trên trang.");
+    if (!recordButton || !timerElement || !recordingPanel || !resultsPanel || !audioPlayer || !diagnoseAgainButton) {
         return; 
     }
 
@@ -53,6 +53,15 @@ document.addEventListener('DOMContentLoaded', () => {
             recordButton.classList.remove('is-recording');
             stopTimer();
         }
+    };
+
+    // --- LOGIC CHO NÚT MỚI ---
+    diagnoseAgainButton.onclick = () => {
+        // Ẩn panel kết quả và hiện lại panel ghi âm
+        resultsPanel.style.display = 'none';
+        recordingPanel.style.display = 'block';
+        // Reset lại timer
+        timerElement.textContent = '00:00';
     };
 
     function startTimer() {
