@@ -306,11 +306,19 @@ main {
     100% { background-position: 0% 0%; }
 }
  
+/* =============================================== */
+/* --- RESPONSIVE DESIGN --- */
+/* =============================================== */
 @media (max-width: 992px) {
+    /* --- Navbar --- */
+    .hamburger {
+        display: block; /* Hiện nút hamburger */
+    }
+
     .nav-menu {
-        display: none;
+        display: none; /* Ẩn menu đi mặc định */
         position: absolute;
-        top: 71px;
+        top: 71px; /* Vị trí dưới navbar (bằng chiều cao navbar) */
         left: 0;
         width: 100%;
         background-color: var(--card-bg);
@@ -323,7 +331,7 @@ main {
     }
 
     .nav-menu.active {
-        display: flex; 
+        display: flex; /* Hiện menu khi nhấn hamburger */
     }
 
     .nav-links, .nav-auth {
@@ -332,33 +340,41 @@ main {
         gap: 0;
     }
 
-    .nav-links a, .nav-auth > a {
+    .nav-links a {
         padding: 1rem 2rem;
         text-align: left;
     }
-    
+
     .nav-auth {
-        align-items: stretch;
-        gap: 1rem;
-        padding: 1rem 2rem;
+        padding: 1rem 2rem; /* Padding cho khu vực chứa nút */
+        gap: 0.5rem; /* Khoảng cách giữa các nút */
+        box-sizing: border-box;
     }
 
-    .hamburger {
-        display: block;
-    }
-
-    .nav-menu .btn {
+    .nav-auth .btn {
         width: 100%;
-        box-sizing: border-box; /* THÊM DÒNG NÀY */
+        box-sizing: border-box; /* Quan trọng: Đảm bảo padding không làm tràn nút */
     }
 
-    
-    #equalizer-container {
-    height: 80px; / Giảm chiều cao của sóng trên mobile 
+    /* --- Các layout khác --- */
+    .diagnose-container {
+        grid-template-columns: 1fr;
     }
+}
 
-    .bar {
-    width: 8px; 
-    margin: 0 2px; /
+@media (max-width: 768px) {
+    main { padding: 10px; }
+    .page-container, .history-container, .form-container {
+        margin: 20px 10px;
+        padding: 20px;
     }
-}   
+    .hero-title { font-size: 2.25rem; }
+    .hero-subtitle { font-size: 1rem; }
+    .recording-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 20px;
+    }
+    .item-player audio { width: 100%; }
+    .profile-card { flex-direction: column; align-items: center; text-align: center; }
+}
