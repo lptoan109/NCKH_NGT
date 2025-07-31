@@ -328,3 +328,7 @@ transition: height 0.2s ease-out;
         box-sizing: border-box; /* Quan trọng: padding sẽ nằm bên trong, không làm tràn ra ngoài */
     }
 }
+.profile-card img {
+    max-width: 100%;
+    height: auto;
+}
