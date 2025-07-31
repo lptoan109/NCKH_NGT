@@ -22,14 +22,14 @@
     if (equalizerContainer) {
         // Hàm chính để thiết lập và vẽ equalizer
         function setupEqualizer() {
-            let numBars = 150; // Mặc định cho màn hình lớn
+            let numBars = 200; // Tăng số lượng cột cho màn hình lớn
 
-            // Kiểm tra kích thước màn hình hiện tại
-            if (window.innerWidth < 768) {
-                numBars = 50; // Số lượng cột cho màn hình nhỏ
-            } else if (window.innerWidth < 1200) {
-                numBars = 100; // Số lượng cột cho màn hình vừa
-            }
+        // Kiểm tra kích thước màn hình
+        if (window.innerWidth < 768) {
+            numBars = 80; // Giảm số lượng cột cho màn hình nhỏ
+        } else if (window.innerWidth < 1200) {
+            numBars = 120; // Số lượng cột cho màn hình vừa
+        }
 
             // Xóa các cột cũ trước khi tạo mới
             equalizerContainer.innerHTML = ''; 

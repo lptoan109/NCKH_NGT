@@ -272,8 +272,8 @@ main {
 }
 
 .bar {
-    width: 16px;
-    margin: 0 4px;
+    width: 12px;
+    margin: 0 3px;
     border-radius: 4px;
     background: linear-gradient(to top, #1E3A8A, #3B82F6, #60A5FA, #93C5FD);
     background-size: 100% 400%;
