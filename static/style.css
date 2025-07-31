@@ -472,3 +472,84 @@ main {
     text-align: center;
     min-height: 200px;
 }
+
+/* =============================================== */
+/* --- TRANG LỊCH SỬ (THIẾT KẾ BẢNG MỚI) --- */
+/* =============================================== */
+
+.table-responsive {
+    width: 100%;
+    overflow-x: auto; /* Thêm thanh cuộn ngang nếu cần trên màn hình rất nhỏ */
+}
+
+.history-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 2rem;
+}
+
+.history-table th,
+.history-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.history-table thead th {
+    background-color: var(--background-color);
+    font-family: var(--font-heading);
+    color: var(--text-dark);
+    font-weight: 600;
+}
+
+.history-table tbody tr:hover {
+    background-color: var(--background-color);
+}
+
+.history-table audio {
+    width: 250px;
+    height: 40px;
+}
+
+/* --- Responsive cho Bảng trên Mobile --- */
+@media (max-width: 768px) {
+    .history-table thead {
+        display: none; /* Ẩn tiêu đề cột */
+    }
+
+    .history-table, .history-table tbody, .history-table tr, .history-table td {
+        display: block;
+        width: 100%;
+    }
+
+    .history-table tr {
+        margin-bottom: 1rem;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+    }
+
+    .history-table td {
+        text-align: right; /* Căn phải nội dung */
+        padding-left: 50%; /* Tạo không gian cho tiêu đề giả */
+        position: relative;
+        border-bottom: 1px dashed var(--border-color);
+    }
+
+    .history-table td:last-child {
+        border-bottom: none;
+    }
+
+    .history-table td::before {
+        content: attr(data-label); /* Lấy nội dung từ data-label */
+        position: absolute;
+        left: 15px;
+        width: calc(50% - 30px);
+        text-align: left;
+        font-weight: 600;
+        color: var(--text-dark);
+    }
+
+    .history-table audio {
+        width: 100%;
+    }
+}

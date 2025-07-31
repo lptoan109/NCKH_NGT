@@ -7,38 +7,52 @@
     <h2>Lịch sử các bản ghi âm của bạn</h2>
 
     {% if recordings %}
-        <ul class="recording-list">
-            {% for recording in recordings %}
-                <li class="recording-item">
-                    <div class="item-info">
-                        <strong>Tên file:</strong> {{ recording.filename }} <br>
-                        <strong>Ngày ghi:</strong> {{ recording.timestamp.strftime('%H:%M:%S ngày %d-%m-%Y') }}
-                    </div>
-                    <div class="item-player">
-                        <audio controls src="{{ url_for('static', filename='uploads/' + recording.filename) }}"></audio>
-                    </div>
-                    <div class="item-actions">
-                        <form action="{{ url_for('delete_recording', recording_id=recording.id) }}" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn xóa bản ghi này không?');">
-                            <button type="submit" class="btn-delete">Xóa</button>
-                        </form>
-                    </div>
-                </li>
-            {% endfor %}
-        </ul>
+        <div class="table-responsive">
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>Tên file</th>
+                        <th>Ngày Ghi</th>
+                        <th>Phát lại</th>
+                        <th>Hành động</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for recording in recordings %}
+                    <tr>
+                        <td data-label="Tên file">{{ recording.filename }}</td>
+                        <td data-label="Ngày Ghi">{{ recording.timestamp.strftime('%d-%m-%Y') }}</td>
+                        <td data-label="Phát lại">
+                            <audio controls src="{{ url_for('static', filename='uploads/' + recording.filename) }}"></audio>
+                        </td>
+                        <td data-label="Hành động">
+                            <form action="{{ url_for('delete_recording', recording_id=recording.id) }}" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn xóa bản ghi này không?');">
+                                <button type="submit" class="btn-delete">Xóa</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     {% else %}
         <p>Bạn chưa có bản ghi âm nào.</p>
     {% endif %}
 
+    {% if pagination and pagination.pages > 1 %}
     <div class="pagination-nav">
         {% if pagination.has_prev %}
             <a href="{{ url_for('history', page=pagination.prev_num) }}" class="btn btn-secondary">&laquo; Trang Trước</a>
-        {% endif %}
+        {% else %}
+            <span></span> {% endif %}
         
-        <span>Trang {{ pagination.page }} của {{ pagination.pages }}.</span>
+        <span>Trang {{ pagination.page }} / {{ pagination.pages }}</span>
         
         {% if pagination.has_next %}
             <a href="{{ url_for('history', page=pagination.next_num) }}" class="btn btn-secondary">Trang Sau &raquo;</a>
-        {% endif %}
+        {% else %}
+            <span></span> {% endif %}
     </div>
-    </div>
+    {% endif %}
+</div>
 {% endblock %}
