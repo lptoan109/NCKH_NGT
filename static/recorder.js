@@ -89,8 +89,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (result.success) {
                 console.log('Tải lên thành công:', result.filename);
-                // Sau này, bạn sẽ hiển thị kết quả chẩn đoán thật ở đây
-                resultsPanel.querySelector('.results-content p').textContent = 'Phân tích thành công! Kết quả sẽ sớm được hiển thị.';
+    
+                // Cập nhật lại thông báo
+                document.getElementById('result-message').textContent = 'Phân tích thành công!';
+
+                // Lấy các phần tử mới
+                const resultPlayer = document.getElementById('result-player');
+                const audioPlayer = resultPlayer.querySelector('audio');
+
+                // Tạo đường dẫn đến file âm thanh vừa tải lên
+                const audioUrl = `/static/uploads/${result.filename}`;
+                
+                // Gán đường dẫn cho trình phát nhạc và hiển thị nó
+                audioPlayer.src = audioUrl;
+                resultPlayer.style.display = 'block';
             } else {
                 resultsPanel.querySelector('.results-content p').textContent = 'Đã có lỗi xảy ra khi tải file lên.';
             }
