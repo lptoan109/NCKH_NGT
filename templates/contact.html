@@ -3,48 +3,34 @@
 {% block title %}Liên Hệ - NGT Cough{% endblock %}
 
 {% block content %}
-<div class="page-container">
-    <h2>Liên Hệ & Báo Cáo Lỗi</h2>
-    <p>Vui lòng sử dụng biểu mẫu bên dưới để gửi câu hỏi, góp ý hoặc báo cáo lỗi. Chúng tôi rất trân trọng mọi phản hồi từ bạn.</p>
+<div class="form-container">
+    <form class="auth-form" method="POST">
+        <h2>Liên Hệ & Báo Cáo Lỗi</h2>
+        <p style="text-align: center; color: var(--text-light); margin-top: -15px; margin-bottom: 30px;">
+            Chúng tôi rất trân trọng mọi phản hồi từ bạn để cải thiện sản phẩm.
+        </p>
 
-    <hr class="divider">
-
-    <form class="contact-form" action="{{ url_for('contact') }}" method="POST">
-        
-        <div class="form-group-grid">
-            <div class="form-group">
-                <label for="ho_ten">Họ và tên</label>
-                <input type="text" id="ho_ten" name="ho_ten" required>
-            </div>
-
-            <div class="form-group">
-                <label for="dia_chi">Địa chỉ (Không bắt buộc)</label>
-                <input type="text" id="dia_chi" name="dia_chi">
-            </div>
-
-            <div class="form-group">
-                <label for="email">Email</label>
-                <input type="email" id="email" name="email" required>
-            </div>
-
-            <div class="form-group">
-                <label for="dien_thoai">Điện thoại (Không bắt buộc)</label>
-                <input type="text" id="dien_thoai" name="dien_thoai">
-            </div>
+        <div class="form-group">
+            <label for="name">Tên của bạn</label>
+            <input type="text" id="name" name="name" required>
         </div>
 
         <div class="form-group">
-            <label for="tieu_de">Tiêu đề</label>
-            <input type="text" id="tieu_de" name="tieu_de" required>
+            <label for="email">Email liên hệ</label>
+            <input type="email" id="email" name="email" required>
         </div>
 
         <div class="form-group">
-            <label for="noi_dung">Nội dung</label>
-            <textarea id="noi_dung" name="noi_dung" rows="6" required></textarea>
+            <label for="subject">Tiêu đề</label>
+            <input type="text" id="subject" name="subject" required>
+        </div>
+
+        <div class="form-group">
+            <label for="message">Nội dung</label>
+            <textarea id="message" name="message" rows="5" required></textarea>
         </div>
         
-        <button type="submit" class="btn">Gửi Tin Nhắn</button>
+        <button type="submit" class="btn btn-primary">Gửi Tin Nhắn</button>
     </form>
-
 </div>
 {% endblock %}
