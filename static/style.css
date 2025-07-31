@@ -271,9 +271,10 @@ main {
     box-sizing: border-box;
 }
 
+/* --- Style MẶC ĐỊNH cho màn hình LỚN (> 1200px) --- */
 .bar {
-    width: 12px;
-    margin: 0 3px;
+    width: 8px;   /* Hẹp hơn cho màn hình lớn có nhiều cột */
+    margin: 0 2px;
     border-radius: 4px;
     background: linear-gradient(to top, #1E3A8A, #3B82F6, #60A5FA, #93C5FD);
     background-size: 100% 400%;
@@ -281,14 +282,30 @@ main {
     transition: height 0.2s ease-out;
 }
 
+/* --- Style cho màn hình VỪA (< 1200px) --- */
+@media (max-width: 1200px) {
+    .bar {
+        width: 10px;
+        margin: 0 3px;
+    }
+}
+
+/* --- Style cho màn hình NHỎ (< 768px) --- */
+@media (max-width: 768px) {
+    #equalizer-container {
+        height: 80px;
+    }
+    .bar {
+        width: 12px;
+        margin: 0 3px;
+    }
+}
+
 @keyframes gradientShift {
     0% { background-position: 0% 100%; }
     100% { background-position: 0% 0%; }
 }
-
-/* =============================================== */
-/* --- RESPONSIVE DESIGN --- */
-/* =============================================== */
+/* 
 @media (max-width: 992px) {
     .nav-menu {
         display: none;
@@ -337,11 +354,12 @@ main {
 
     
     #equalizer-container {
-    height: 80px; / Giảm chiều cao của sóng trên mobile */
+    height: 80px; / Giảm chiều cao của sóng trên mobile 
     }
 
     .bar {
     width: 8px; 
     margin: 0 2px; /
     }
-}
+}   
+*/
