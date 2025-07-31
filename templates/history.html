@@ -27,7 +27,9 @@
                         </td>
                         <td data-label="Hành động">
                             <form action="{{ url_for('delete_recording', recording_id=recording.id) }}" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn xóa bản ghi này không?');">
-                                <button type="submit" class="btn-delete">Xóa</button>
+                                <button type="submit" class="btn-delete">
+                                    <i class="fas fa-trash-alt"></i> Xóa
+                                </button>
                             </form>
                         </td>
                     </tr>
