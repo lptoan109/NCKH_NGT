@@ -334,4 +334,14 @@ main {
         width: 100%;
         box-sizing: border-box;
     }
+
+    
+    #equalizer-container {
+    height: 80px; / Giảm chiều cao của sóng trên mobile */
+    }
+
+    .bar {
+    width: 8px; 
+    margin: 0 2px; /
+    }
 }
