@@ -141,7 +141,29 @@ main {
 .btn-secondary { background-color: var(--secondary-color); }
 .btn-secondary:hover { background-color: var(--secondary-hover); }
 
-.btn-logout, .btn-delete { background-color: var(--danger-color); }
+.btn-logout, .btn-delete {
+background-color: var(--danger-color);
+color: white;
+border: none;
+padding: 8px 12px;
+border-radius: 6px;
+cursor: pointer;
+font-size: 0.9em;
+transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.btn-delete:hover {
+background-color: var(--danger-hover);
+transform: scale(1.05);
+}
+
+/* Thêm icon thùng rác (bạn có thể cần import font awesome hoặc dùng svg inline) */
+.btn-delete::before {
+content: "\f2ed"; / Mã icon thùng rác từ Font Awesome (ví dụ) /
+font-family: 'Font Awesome 5 Free'; / Đảm bảo bạn đã import font này */
+font-weight: 900;
+margin-right: 5px;
+}
 .btn-logout:hover, .btn-delete:hover { background-color: var(--danger-hover); }
 
 /* --- CÁC LOẠI BOX/CARD --- */
