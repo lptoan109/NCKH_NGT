@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     // Lấy các phần tử DOM
     const recordButton = document.getElementById('record-button');
+    // ... (lấy các phần tử khác như cũ)
     const timerElement = document.getElementById('timer');
     const recordingPanel = document.getElementById('recording-panel');
     const resultsPanel = document.getElementById('results-panel');
@@ -10,10 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const diagnoseAgainButton = document.getElementById('diagnose-again-button');
     const instructionsElement = document.querySelector('.diagnose-instructions');
 
-    // Thoát nếu không tìm thấy các phần tử cần thiết
-    if (!recordButton || !timerElement || !recordingPanel || !resultsPanel || !audioPlayer || !diagnoseAgainButton) {
-        return; 
-    }
+    if (!recordButton) return;
 
     let mediaRecorder;
     let audioChunks = [];
@@ -21,8 +19,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let seconds = 0;
     let isRecording = false;
 
-    // SỬA Ở ĐÂY: Dùng addEventListener thay cho .onclick
-    recordButton.addEventListener('click', async () => {
+    // --- TÁCH LOGIC GHI ÂM RA MỘT HÀM RIÊNG ---
+    const handleRecord = async () => {
         if (!isRecording) {
             // --- BẮT ĐẦU GHI ÂM ---
             try {
@@ -33,20 +31,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 recordButton.classList.add('is-recording');
                 startTimer();
 
-                mediaRecorder.ondataavailable = event => {
-                    audioChunks.push(event.data);
-                };
-
+                mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
                 mediaRecorder.onstop = () => {
                     const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
                     uploadAudio(audioBlob);
                     audioChunks = [];
                 };
-
             } catch (error) {
-                console.error("Lỗi khi truy cập micro:", error);
+                console.error("Lỗi micro:", error);
                 if (instructionsElement) {
-                    instructionsElement.textContent = 'Lỗi: Không thể truy cập micro. Vui lòng kiểm tra lại quyền trong cài đặt trình duyệt của bạn.';
+                    instructionsElement.textContent = 'Lỗi: Không thể truy cập micro. Vui lòng kiểm tra quyền trong cài đặt trình duyệt.';
                     instructionsElement.style.color = 'var(--danger-color)';
                 }
             }
@@ -57,9 +51,22 @@ document.addEventListener('DOMContentLoaded', () => {
             recordButton.classList.remove('is-recording');
             stopTimer();
         }
+    };
+
+    // --- LẮNG NGHE CẢ SỰ KIỆN "CLICK" VÀ "TOUCH" ---
+    recordButton.addEventListener('click', handleRecord);
+    recordButton.addEventListener('touchstart', (e) => {
+        e.preventDefault(); // Ngăn trình duyệt tự động tạo ra một sự kiện 'click' nữa
+        handleRecord();
     });
 
-    // SỬA Ở ĐÂY: Dùng addEventListener thay cho .onclick
+    // ... (các hàm còn lại giữ nguyên) ...
+    diagnoseAgainButton.addEventListener('click', () => { /* ... */ });
+    function startTimer() { /* ... */ }
+    function stopTimer() { /* ... */ }
+    async function uploadAudio(audioBlob) { /* ... */ }
+
+    // Dán lại các hàm đầy đủ từ phiên bản trước
     diagnoseAgainButton.addEventListener('click', () => {
         resultsPanel.style.display = 'none';
         recordingPanel.style.display = 'block';
@@ -69,8 +76,6 @@ document.addEventListener('DOMContentLoaded', () => {
             instructionsElement.style.color = 'var(--text-light)';
         }
     });
-
-    // Các hàm còn lại giữ nguyên
     function startTimer() {
         seconds = 0;
         timerElement.textContent = '00:00';
@@ -81,27 +86,19 @@ document.addEventListener('DOMContentLoaded', () => {
             timerElement.textContent = `${mins}:${secs}`;
         }, 1000);
     }
-
     function stopTimer() {
         clearInterval(timerInterval);
     }
-
     async function uploadAudio(audioBlob) {
         recordingPanel.style.display = 'none';
         resultsPanel.style.display = 'block';
         resultMessage.textContent = 'Đang phân tích... Vui lòng chờ trong giây lát.';
         resultPlayerContainer.style.display = 'none';
-
         const formData = new FormData();
         formData.append('audio_data', audioBlob, 'recording.wav');
-
         try {
-            const response = await fetch('/upload_audio', {
-                method: 'POST',
-                body: formData
-            });
+            const response = await fetch('/upload_audio', { method: 'POST', body: formData });
             const result = await response.json();
-
             if (result.success) {
                 resultMessage.textContent = 'Phân tích thành công!';
                 const audioUrl = `/static/uploads/${result.filename}`;
