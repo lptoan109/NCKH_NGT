@@ -7,7 +7,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const resultMessage = document.getElementById('result-message');
     const resultPlayerContainer = document.getElementById('result-player');
     const audioPlayer = resultPlayerContainer ? resultPlayerContainer.querySelector('audio') : null;
-    const diagnoseAgainButton = document.getElementById('diagnose-again-button'); // Nút mới
+    const diagnoseAgainButton = document.getElementById('diagnose-again-button');
+    const instructionsElement = document.querySelector('.diagnose-instructions'); // Thêm dòng này
 
     // Thoát nếu không tìm thấy các phần tử cần thiết
     if (!recordButton || !timerElement || !recordingPanel || !resultsPanel || !audioPlayer || !diagnoseAgainButton) {
@@ -44,7 +45,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             } catch (error) {
                 console.error("Lỗi khi truy cập micro:", error);
-                alert("Không thể truy cập micro. Vui lòng cấp quyền và thử lại.");
+                // Hiển thị lỗi ngay trên giao diện
+                if (instructionsElement) {
+                    instructionsElement.textContent = 'Lỗi: Không thể truy cập micro. Vui lòng kiểm tra lại quyền trong cài đặt trình duyệt của bạn.';
+                    instructionsElement.style.color = 'var(--danger-color)';
+                }
             }
         } else {
             // --- DỪNG GHI ÂM ---
@@ -55,15 +60,23 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // --- LOGIC CHO NÚT MỚI ---
+    // ... (các hàm còn lại giữ nguyên không đổi) ...
     diagnoseAgainButton.onclick = () => {
-        // Ẩn panel kết quả và hiện lại panel ghi âm
         resultsPanel.style.display = 'none';
         recordingPanel.style.display = 'block';
-        // Reset lại timer
         timerElement.textContent = '00:00';
+        // Reset lại nội dung hướng dẫn
+        if (instructionsElement) {
+            instructionsElement.textContent = 'Hãy đưa micro gần miệng và ho một cách tự nhiên. Nhấn nút bên dưới để bắt đầu.';
+            instructionsElement.style.color = 'var(--text-light)';
+        }
     };
 
+    function startTimer() { /*...*/ }
+    function stopTimer() { /*...*/ }
+    async function uploadAudio(audioBlob) { /*...*/ }
+
+    // Dán lại các hàm startTimer, stopTimer, uploadAudio đầy đủ từ phiên bản trước
     function startTimer() {
         seconds = 0;
         timerElement.textContent = '00:00';
@@ -80,7 +93,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function uploadAudio(audioBlob) {
-        // Chuyển đổi giao diện
         recordingPanel.style.display = 'none';
         resultsPanel.style.display = 'block';
         resultMessage.textContent = 'Đang phân tích... Vui lòng chờ trong giây lát.';
