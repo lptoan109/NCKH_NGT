@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const resultPlayerContainer = document.getElementById('result-player');
     const audioPlayer = resultPlayerContainer ? resultPlayerContainer.querySelector('audio') : null;
     const diagnoseAgainButton = document.getElementById('diagnose-again-button');
-    const instructionsElement = document.querySelector('.diagnose-instructions'); // Thêm dòng này
+    const instructionsElement = document.querySelector('.diagnose-instructions');
 
     // Thoát nếu không tìm thấy các phần tử cần thiết
     if (!recordButton || !timerElement || !recordingPanel || !resultsPanel || !audioPlayer || !diagnoseAgainButton) {
@@ -21,8 +21,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let seconds = 0;
     let isRecording = false;
 
-    // Gán sự kiện click cho nút ghi âm
-    recordButton.onclick = async () => {
+    // SỬA Ở ĐÂY: Dùng addEventListener thay cho .onclick
+    recordButton.addEventListener('click', async () => {
         if (!isRecording) {
             // --- BẮT ĐẦU GHI ÂM ---
             try {
@@ -45,7 +45,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             } catch (error) {
                 console.error("Lỗi khi truy cập micro:", error);
-                // Hiển thị lỗi ngay trên giao diện
                 if (instructionsElement) {
                     instructionsElement.textContent = 'Lỗi: Không thể truy cập micro. Vui lòng kiểm tra lại quyền trong cài đặt trình duyệt của bạn.';
                     instructionsElement.style.color = 'var(--danger-color)';
@@ -58,25 +57,20 @@ document.addEventListener('DOMContentLoaded', () => {
             recordButton.classList.remove('is-recording');
             stopTimer();
         }
-    };
+    });
 
-    // ... (các hàm còn lại giữ nguyên không đổi) ...
-    diagnoseAgainButton.onclick = () => {
+    // SỬA Ở ĐÂY: Dùng addEventListener thay cho .onclick
+    diagnoseAgainButton.addEventListener('click', () => {
         resultsPanel.style.display = 'none';
         recordingPanel.style.display = 'block';
         timerElement.textContent = '00:00';
-        // Reset lại nội dung hướng dẫn
         if (instructionsElement) {
             instructionsElement.textContent = 'Hãy đưa micro gần miệng và ho một cách tự nhiên. Nhấn nút bên dưới để bắt đầu.';
             instructionsElement.style.color = 'var(--text-light)';
         }
-    };
+    });
 
-    function startTimer() { /*...*/ }
-    function stopTimer() { /*...*/ }
-    async function uploadAudio(audioBlob) { /*...*/ }
-
-    // Dán lại các hàm startTimer, stopTimer, uploadAudio đầy đủ từ phiên bản trước
+    // Các hàm còn lại giữ nguyên
     function startTimer() {
         seconds = 0;
         timerElement.textContent = '00:00';
