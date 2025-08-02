@@ -4,28 +4,43 @@
 
 {% block content %}
 <div class="diagnose-container">
-    <div class="recording-panel">
-        <a href="{{ url_for('history') }}" class="history-btn" style="text-decoration: none;">Lịch sử ghi âm</a>
-        
+    <div id="recording-panel">
+        <div class="diagnose-header">
+            <h2>Bắt đầu Ghi âm</h2>
+            <a href="{{ url_for('history') }}" class="btn-history-link">Xem lịch sử</a>
+        </div>
+        <p class="diagnose-instructions">
+            Hãy đưa micro gần miệng và ho một cách tự nhiên. Nhấn nút bên dưới để bắt đầu.
+        </p>
         <div class="recorder">
-            <div class="record-btn-container">
-                <button id="record-btn" class="record-btn">
-                    <span class="icon">🎤</span>
-                    <span class="text">GHI ÂM</span>
-                </button>
-            </div>
-            <div class="timeline">
-                <span id="timer">00:00</span>
-                </div>
+            <button id="record-button" class="record-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-mic-fill" viewBox="0 0 16 16">
+                    <path d="M5 3a3 3 0 0 1 6 0v5a3 3 0 0 1-6 0V3z"/>
+                    <path d="M3.5 6.5A.5.5 0 0 1 4 7v1a4 4 0 0 0 8 0V7a.5.5 0 0 1 1 0v1a5 5 0 0 1-4.5 4.975V15h3a.5.5 0 0 1 0 1h-7a.5.5 0 0 1 0-1h3v-2.025A5 5 0 0 1 3 8V7a.5.5 0 0 1 .5-.5z"/>
+                </svg>
+            </button>
+            <div id="timer" class="timeline">00:00</div>
         </div>
     </div>
 
-    <div class="results-panel">
-        <h3>KẾT QUẢ CHẨN ĐOÁN</h3>
+    <div id="results-panel" style="display: none;">
+        <div class="diagnose-header">
+            <h2>Kết quả Phân tích</h2>
+        </div>
         <div class="results-content">
-            <p>Sau khi ghi âm và phân tích, kết quả sẽ được hiển thị tại đây.</p>
+            <p id="result-message">Đang phân tích... Vui lòng chờ trong giây lát.</p>
+            <div id="result-player" style="display: none; margin-top: 20px;">
+                <audio controls src=""></audio>
+                <div class="result-actions" style="margin-top: 20px; display: flex; justify-content: center; gap: 1rem;">
+                    <button id="diagnose-again-button" class="btn btn-secondary">Chẩn đoán lại</button>
+                    <a href="{{ url_for('history') }}" class="btn btn-primary">Xem lịch sử</a>
+                </div>
+            </div>
         </div>
     </div>
 </div>
-<script src="{{ url_for('static', filename='recorder.js') }}"></script>
+{% endblock %}
+
+{% block scripts %}
+    <script src="{{ url_for('static', filename='recorder.js') }}"></script>
 {% endblock %}
