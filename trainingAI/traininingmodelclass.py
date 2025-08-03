@@ -240,7 +240,6 @@ for epoch in range(start_epoch, CONFIG.EPOCHS):
     if early_stopper.early_stop: print("Early stopping triggered!"); break
 print("\nHoàn tất quá trình huấn luyện.")
 
-
 # ======================================================================================
 # BLOCK 6: PHÂN TÍCH TOÀN DIỆN VÀ BÁO CÁO KẾT QUẢ (PHIÊN BẢN CUỐI CÙNG)
 # ======================================================================================
