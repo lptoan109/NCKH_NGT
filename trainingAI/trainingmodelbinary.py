@@ -57,7 +57,7 @@ class CONFIG:
     BATCH_SIZE = 16
     
     # --- Cấu hình Chống Overfitting ---
-    EARLY_STOPPING_PATIENCE = 5
+    EARLY_STOPPING_PATIENCE = 10
 
     # --- Cấu hình Dữ liệu & Tiền xử lý ---
     DATA_PATH = "/content/data/"
@@ -97,7 +97,7 @@ print("Hoàn tất Block 1.")
 
 
 # ======================================================================================
-# BLOCK 2: CÁC HÀM TIỀN XỬ LÝ ÂM THANH (KHÔNG THAY ĐỔI)
+# BLOCK 2: CÁC HÀM TIỀN XỬ LÝ ÂM THANH 
 # ======================================================================================
 print("\nBLOCK 2: KHỞI TẠO CÁC HÀM TIỀN XỬ LÝ ÂM THANH...")
 def preprocess_audio(file_path):
@@ -144,7 +144,6 @@ positive_class_name = next((name for name in class_names if 'cough' in name.lowe
 assert positive_class_name is not None, "Lỗi: Không tìm thấy thư mục cho lớp 'ho' (cần chứa từ 'cough')."
 positive_class_idx = class_to_idx[positive_class_name]
 print(f"Lớp dương tính (ho) được xác định là: '{positive_class_name}' (index: {positive_class_idx})")
-
 
 for class_name in class_names:
     class_dir = os.path.join(CONFIG.DATA_PATH, class_name)
@@ -269,7 +268,7 @@ print("\nHoàn tất quá trình huấn luyện.")
 
 
 # ======================================================================================
-# BLOCK 6: PHÂN TÍCH VÀ BÁO CÁO (BỔ SUNG XAI CHO LỚP "HO")
+# BLOCK 6: PHÂN TÍCH VÀ BÁO CÁO 
 # ======================================================================================
 print("\nBLOCK 6: BẮT ĐẦU ĐÁNH GIÁ VÀ TẠO BÁO CÁO HOÀN CHỈNH...")
 
