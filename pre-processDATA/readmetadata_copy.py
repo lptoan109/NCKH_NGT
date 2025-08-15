@@ -1,120 +1,149 @@
 import pandas as pd
-import openpyxl
-from openpyxl.styles import PatternFill
 import os
 import shutil
+from pathlib import Path
 
-# --- CẤU HÌNH ---
-# !!! Vui lòng thay đổi các giá trị dưới đây cho phù hợp !!!
+# ==============================================================================
+# --- PHẦN CẤU HÌNH ---
+# Thay đổi các giá trị dưới đây để điều khiển script.
+# ==============================================================================
 
-# 1. Đường dẫn đến file Excel chứa thông tin âm thanh
-EXCEL_FILE_PATH = r'F:\Toàn-Khang_NCKH\ngtai_dataset\The UK Covid-19\metadatabinary.xlsx'
+# 1. CÁC CÔNG TẮC CHỨC NĂNG (True: Bật, False: Tắt)
 
-# 2. Đường dẫn đến file Excel ĐẦU RA (đã được tô màu)
-#    Script sẽ không ghi đè lên file gốc của bạn.
-OUTPUT_EXCEL_PATH = r'F:\Toàn-Khang_NCKH\ngtai_dataset\The UK Covid-19\metadatabinary_PROCESSED.xlsx'
+# --- Chế độ tìm kiếm file ---
+# True: Dành cho bộ dữ liệu như 'TB Screen Dataset'. Script sẽ tìm TẤT CẢ các file có tên BẮT ĐẦU bằng ID trong cột ID_COLUMN.
+# False: Dành cho bộ dữ liệu như 'UK Covid-19'. Script sẽ đọc tên file đầy đủ từ các cột trong AUDIO_COLUMNS.
+FIND_FILES_BY_ID_PREFIX = True
 
-# 3. Tên thư mục chứa các file âm thanh GỐC
-SOURCE_AUDIO_FOLDER = r'F:\Toàn-Khang_NCKH\ngtai_dataset\The UK Covid-19 zip\audio'
+PROCESS_MULTIPLE_SOURCES = True  # True nếu bạn có nhiều thư mục nguồn. False nếu chỉ có một.
+RENAME_FILES = True              # True để đổi tên file thành 'ID_ten_file_goc.wav'.
+                                 # (Công tắc này không có tác dụng khi FIND_FILES_BY_ID_PREFIX = True)
 
-# 4. Tên thư mục ĐÍCH chính để chứa các thư mục con
-DESTINATION_FOLDER = r'F:\Toàn-Khang_NCKH\ngtai_dataset\datasetbinary'
+# 2. CẤU HÌNH ĐƯỜNG DẪN
+EXCEL_FILE_PATH = Path(r'F:\NCKH_Toàn_Khang\TBSCREENDATASET\TBscreen_Dataset\Metadata.xlsx')
+DESTINATION_FOLDER = Path(r'E:\Toàn-Khang_NCKH\ngtai_dataset\datasetbinary')
 
-# ---------------------------------------------------------
+# --- Cấu hình thư mục nguồn ---
+SOURCE_AUDIO_FOLDERS = [
+    Path(r'F:\NCKH_Toàn_Khang\TBSCREENDATASET\TBscreen_Dataset\Forced_coughs\Audio_files'),
+    Path(r'F:\NCKH_Toàn_Khang\TBSCREENDATASET\TBscreen_Dataset\Passive_coughs\Audio_files'),
+]
 
-def process_audio_files_and_highlight(excel_path, output_excel_path, source_folder, dest_folder):
-    """
-    Đọc file Excel, tạo thư mục con, sao chép/đổi tên file, và tô màu
-    các ô đã xử lý thành công.
-    """
-    # Kiểm tra sự tồn tại của file Excel
-    try:
-        wb = openpyxl.load_workbook(excel_path)
-        print(f"Đã mở file Excel: '{excel_path}'")
-    except FileNotFoundError:
-        print(f"Lỗi: Không tìm thấy file Excel tại '{excel_path}'.")
-        return
+# 3. CẤU HÌNH EXCEL
+SHEETS_TO_PROCESS = ['tuberculosis']
 
-    # Định nghĩa màu để tô (xanh lá cây nhạt)
-    highlight_fill = PatternFill(start_color="C6EFCE", end_color="C6EFCE", fill_type="solid")
+# --- Tên các cột trong file Excel ---
+ID_COLUMN = 'subject'
+# (Danh sách này chỉ được sử dụng khi FIND_FILES_BY_ID_PREFIX = False)
+AUDIO_COLUMNS = ['cough_file_name', 'three_cough_file_name']
+
+# ==============================================================================
+# --- LOGIC CHÍNH CỦA SCRIPT ---
+# (Bạn không cần sửa đổi phần dưới này)
+# ==============================================================================
+
+def find_source_file(filename, source_folders):
+    """Tìm kiếm một file có tên chính xác trong danh sách các thư mục nguồn."""
+    for folder in source_folders:
+        source_path = folder / filename
+        if source_path.exists():
+            return source_path
+    return None
+
+def process_files(config):
+    """Đọc file Excel, tạo thư mục con và sao chép file dựa trên cấu hình."""
+    source_folders_to_search = config['SOURCE_AUDIO_FOLDERS']
+    if not config['PROCESS_MULTIPLE_SOURCES']:
+        source_folders_to_search = [config['SOURCE_AUDIO_FOLDERS'][0]]
     
-    # Tạo thư mục đích chính nếu chưa có
-    os.makedirs(dest_folder, exist_ok=True)
+    print("--- Bắt đầu quá trình xử lý ---")
+    print(f"File Excel nguồn: {config['EXCEL_FILE_PATH']}")
+    print(f"Thư mục đích: {config['DESTINATION_FOLDER']}")
+    if config['FIND_FILES_BY_ID_PREFIX']:
+        print(">> CHẾ ĐỘ: Tìm file theo tiền tố ID (TB Screen Dataset).")
+    else:
+        print(">> CHẾ ĐỘ: Tìm file theo tên đầy đủ (UK Covid-19).")
+        print(f"   Đổi tên file: {'Bật' if config['RENAME_FILES'] else 'Tắt'}")
+    
+    config['DESTINATION_FOLDER'].mkdir(parents=True, exist_ok=True)
 
-    sheet_names = ['asthma', 'covid', 'healthy']
     total_files_copied = 0
     total_files_not_found = 0
 
-    # Lặp qua từng sheet
-    for sheet_name in sheet_names:
-        if sheet_name not in wb.sheetnames:
-            print(f"Cảnh báo: Không tìm thấy sheet '{sheet_name}' trong file Excel. Bỏ qua.")
-            continue
-            
-        ws = wb[sheet_name]
-        print(f"\n--- Đang xử lý sheet: '{sheet_name}' ---")
-
-        # Tạo thư mục con tương ứng với tên sheet
-        sheet_specific_folder = os.path.join(dest_folder, sheet_name)
-        os.makedirs(sheet_specific_folder, exist_ok=True)
-
-        # Tìm chỉ số cột (column index) dựa trên tên tiêu đề
-        header = [cell.value for cell in ws[1]]
+    for sheet_name in config['SHEETS_TO_PROCESS']:
         try:
-            id_col_idx = header.index('participant_identifier')
-            cough_col_idx = header.index('cough_file_name')
-            three_cough_col_idx = header.index('three_cough_file_name')
-        except ValueError as e:
-            print(f"Lỗi: Thiếu cột trong sheet '{sheet_name}'. Chi tiết: {e}")
+            df = pd.read_excel(config['EXCEL_FILE_PATH'], sheet_name=sheet_name)
+            print(f"\n--- Đang xử lý sheet: '{sheet_name}' ({len(df)} hàng) ---")
+        except Exception as e:
+            print(f"\nCảnh báo: Không thể đọc sheet '{sheet_name}'. Lỗi: {e}. Bỏ qua.")
             continue
-
-        # Lặp qua từng hàng (bắt đầu từ hàng 2 để bỏ qua tiêu đề)
-        for row in ws.iter_rows(min_row=2):
-            participant_id = row[id_col_idx].value
             
-            # Xử lý 2 cột filename
-            file_cells_to_check = [row[cough_col_idx], row[three_cough_col_idx]]
+        sheet_specific_folder = config['DESTINATION_FOLDER'] / sheet_name
+        sheet_specific_folder.mkdir(exist_ok=True)
 
-            for file_cell in file_cells_to_check:
-                original_filename = file_cell.value
-                
-                if not original_filename or not isinstance(original_filename, str):
-                    continue
+        for index, row in df.iterrows():
+            participant_id = row.get(config['ID_COLUMN'])
+            if pd.isna(participant_id) or not isinstance(participant_id, str):
+                continue
+            
+            # --- LOGIC ĐIỀU KHIỂN BỞI CÔNG TẮC ---
+            if config['FIND_FILES_BY_ID_PREFIX']:
+                # CHẾ ĐỘ 1: Tìm tất cả file bắt đầu bằng ID
+                files_found_for_id = 0
+                for folder in source_folders_to_search:
+                    if not folder.is_dir(): continue
+                    for source_file_path in folder.iterdir():
+                        if source_file_path.is_file() and source_file_path.name.startswith(participant_id):
+                            destination_file_path = sheet_specific_folder / source_file_path.name
+                            try:
+                                shutil.copy2(source_file_path, destination_file_path)
+                                total_files_copied += 1
+                                files_found_for_id += 1
+                            except Exception as e:
+                                print(f"  [LỖI SAO CHÉP] {source_file_path.name}: {e}")
+                if files_found_for_id == 0:
+                    print(f"  [LỖI TÌM KIẾM] Không tìm thấy file nào cho ID '{participant_id}'")
+                    total_files_not_found +=1 # Đếm là không tìm thấy nếu không có file nào cho ID
 
-                source_file_path = os.path.join(source_folder, original_filename)
+            else:
+                # CHẾ ĐỘ 2: Tìm file theo tên đầy đủ trong các cột
+                for audio_col in config['AUDIO_COLUMNS']:
+                    original_filename = row.get(audio_col)
+                    if pd.isna(original_filename) or not isinstance(original_filename, str):
+                        continue
 
-                if os.path.exists(source_file_path):
-                    new_filename = f"{participant_id}_{original_filename}"
-                    destination_file_path = os.path.join(sheet_specific_folder, new_filename)
-                    
-                    shutil.copy2(source_file_path, destination_file_path)
-                    
-                    # *** TÍNH NĂNG MỚI: TÔ MÀU Ô ĐÃ XỬ LÝ ***
-                    file_cell.fill = highlight_fill
+                    source_file_path = find_source_file(original_filename, source_folders_to_search)
 
-                    print(f"  [OK] Đã xử lý '{original_filename}' và tô màu ô.")
-                    total_files_copied += 1
-                else:
-                    print(f"  [LỖI] Không tìm thấy file '{original_filename}' trong '{source_folder}'")
-                    total_files_not_found += 1
+                    if source_file_path:
+                        if config['RENAME_FILES']:
+                            new_filename = f"{participant_id}_{original_filename}"
+                        else:
+                            new_filename = original_filename
+                        destination_file_path = sheet_specific_folder / new_filename
+                        try:
+                            shutil.copy2(source_file_path, destination_file_path)
+                            total_files_copied += 1
+                        except Exception as e:
+                            print(f"  [LỖI SAO CHÉP] {original_filename}: {e}")
+                    else:
+                        print(f"  [LỖI TÌM KIẾM] Không tìm thấy file '{original_filename}'")
+                        total_files_not_found += 1
     
-    # Lưu các thay đổi (tô màu) vào một file Excel MỚI
-    try:
-        wb.save(output_excel_path)
-        print(f"\n--- HOÀN TẤT ---")
-        print(f"Tổng số file đã sao chép: {total_files_copied}")
-        print(f"Tổng số file không tìm thấy: {total_files_not_found}")
-        print(f"File Excel đã tô màu được lưu tại: '{output_excel_path}'")
-        print(f"Các file âm thanh đã xử lý được lưu trong '{dest_folder}'")
-    except Exception as e:
-        print(f"Lỗi khi lưu file Excel: {e}")
+    print(f"\n--- HOÀN TẤT ---")
+    print(f"Tổng số file đã sao chép: {total_files_copied}")
+    print(f"Tổng số file không tìm thấy (hoặc ID không có file): {total_files_not_found}")
+    print(f"Các file âm thanh đã xử lý được lưu trong '{config['DESTINATION_FOLDER']}'")
 
-
-# Chạy hàm chính
 if __name__ == "__main__":
-    process_audio_files_and_highlight(
-        EXCEL_FILE_PATH,
-        OUTPUT_EXCEL_PATH,
-        SOURCE_AUDIO_FOLDER,
-        DESTINATION_FOLDER
-    )
+    config_settings = {
+        'PROCESS_MULTIPLE_SOURCES': PROCESS_MULTIPLE_SOURCES,
+        'RENAME_FILES': RENAME_FILES,
+        'FIND_FILES_BY_ID_PREFIX': FIND_FILES_BY_ID_PREFIX,
+        'EXCEL_FILE_PATH': EXCEL_FILE_PATH,
+        'DESTINATION_FOLDER': DESTINATION_FOLDER,
+        'SOURCE_AUDIO_FOLDERS': SOURCE_AUDIO_FOLDERS,
+        'SHEETS_TO_PROCESS': SHEETS_TO_PROCESS,
+        'ID_COLUMN': ID_COLUMN,
+        'AUDIO_COLUMNS': AUDIO_COLUMNS
+    }
+    process_files(config_settings)
