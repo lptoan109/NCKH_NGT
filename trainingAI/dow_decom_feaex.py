@@ -1,13 +1,14 @@
 # ======================================================================================
-# PHIÊN BẢN SCRIPT CUỐI CÙNG - SỬ DỤNG ASTEROID-FILTERBANKS
+# PHIÊN BẢN SCRIPT TỐI ƯU - SỬ DỤNG TORCHAUDIO & LỌC NHIỄU
 # ======================================================================================
 
 # ======================================================================================
-# BLOCK 1: CÀI ĐẶT, IMPORT VÀ CẤU HÌNH (Sửa lỗi Import lần cuối)
+# BLOCK 1: CÀI ĐẶT, IMPORT VÀ CẤU HÌNH
 # ======================================================================================
 print("BLOCK 1: CÀI ĐẶT, IMPORT VÀ CẤU HÌNH...")
 
-!pip install kaggle librosa tqdm pandas torch noisereduce asteroid-filterbanks pytorch-lightning -q
+# Cài đặt các thư viện cần thiết
+!pip install kaggle librosa tqdm pandas torch torchaudio noisereduce -q
 
 from google.colab import drive
 import os
@@ -17,8 +18,8 @@ import numpy as np
 from tqdm.auto import tqdm
 import sys
 import torch
-# <<< THAY ĐỔI Ở ĐÂY: Import lớp Conv1DEncoder >>>
-from asteroid_filterbanks.enc_dec import Conv1DEncoder
+import torchaudio # <<< THAY ĐỔI: Sử dụng torchaudio
+import torchaudio.transforms as T # <<< THAY ĐỔI: Import transforms
 import noisereduce as nr
 
 # --- CẤU HÌNH TOÀN BỘ PIPELINE ---
@@ -29,7 +30,7 @@ class CONFIG:
     KAGGLE_API_COMMAND = "kaggle datasets download -d lptoan/ngt-ai-dataset"
     FIRST_ARCHIVE_FILE_NAME = "ngt-ai-dataset.zip"
     KAGGLE_USERNAME = "lptoan"
-    DATASET_ID = "ngt-ai-asteroid-features"
+    DATASET_ID = "ngt-ai-torchaudio-features" # <<< THAY ĐỔI >>> Đặt tên mới
     VALID_AUDIO_EXTENSIONS = (".wav", ".flac", ".mp3", ".m4a")
     # ---------------------------------------------------
     DRIVE_MOUNT_PATH = "/content/drive"
@@ -49,7 +50,6 @@ else:
 # ======================================================================================
 # BLOCK 2: TẢI VÀ GIẢI NÉN DATASET
 # ======================================================================================
-# (Giữ nguyên không đổi)
 print("\nBLOCK 2: TẢI VÀ GIẢI NÉN DATASET...")
 DATA_FOLDER = "kaggle_data"
 os.makedirs(DATA_FOLDER, exist_ok=True)
@@ -72,25 +72,28 @@ print("\nHoàn tất toàn bộ quá trình tải và giải nén!")
 
 
 # ======================================================================================
-# BLOCK 3: TRÍCH XUẤT ĐẶC TRƯNG NÂNG CAO (SỬ DỤNG ASTEROID)
+# BLOCK 3: TRÍCH XUẤT ĐẶC TRƯNG VỚI LỌC NHIỄU VÀ TORCHAUDIO
 # ======================================================================================
-print("\nBLOCK 3: TRÍCH XUẤT ĐẶC TRƯNG NÂNG CAO...")
+print("\nBLOCK 3: TRÍCH XUẤT ĐẶC TRƯNG...")
 
-# --- Cấu hình cho bộ lọc và âm thanh ---
+# --- Cấu hình cho Mel Spectrogram ---
 SAMPLE_RATE = 16000
-OUT_CHANNELS = 128
-FILTER_KERNEL_SIZE = 251
-STRIDE = 160
+N_FFT = 2048
+HOP_LENGTH = 512
+N_MELS = 128
 
 FEATURE_FOLDER = "feature_spectrograms"
 os.makedirs(FEATURE_FOLDER, exist_ok=True)
 
-# <<< THAY ĐỔI Ở ĐÂY: Khởi tạo mô hình Conv1DEncoder >>>
-filterbank_model = Conv1DEncoder(
-    out_channels=OUT_CHANNELS, kernel_size=FILTER_KERNEL_SIZE, stride=STRIDE, sample_rate=SAMPLE_RATE
+# <<< THAY ĐỔI >>> Khởi tạo lớp MelSpectrogram của torchaudio
+# Lớp này hoạt động như một tầng mạng neural, có thể chạy trên GPU
+mel_spectrogram_transform = T.MelSpectrogram(
+    sample_rate=SAMPLE_RATE,
+    n_fft=N_FFT,
+    hop_length=HOP_LENGTH,
+    n_mels=N_MELS
 )
-filterbank_model.eval()
-print("Đã khởi tạo mô hình Asteroid Conv1DEncoder.")
+print("Đã khởi tạo lớp trích xuất đặc trưng của torchaudio.")
 
 # --- Tìm tất cả các file âm thanh ---
 audio_files = []
@@ -104,7 +107,7 @@ if not audio_files:
     sys.exit("Dừng script vì không có dữ liệu để xử lý.")
 else:
     print(f"Tìm thấy {len(audio_files)} file âm thanh. Bắt đầu xử lý...")
-    for audio_path in tqdm(audio_files, desc="Trích xuất đặc trưng Asteroid"):
+    for audio_path in tqdm(audio_files, desc="Trích xuất đặc trưng"):
         try:
             # 1. Tải file âm thanh
             y, sr = librosa.load(audio_path, sr=SAMPLE_RATE, mono=True)
@@ -112,17 +115,16 @@ else:
             # 2. Lọc nhiễu
             y_clean = nr.reduce_noise(y=y, sr=sr)
             
-            # 3. Trích xuất đặc trưng bằng Asteroid
-            audio_tensor = torch.tensor(y_clean, dtype=torch.float32).unsqueeze(0).unsqueeze(0)
+            # 3. Trích xuất đặc trưng bằng torchaudio
+            audio_tensor = torch.tensor(y_clean, dtype=torch.float32)
             
-            with torch.no_grad():
-                spectrogram_tensor = filterbank_model(audio_tensor)
+            mel_spectrogram = mel_spectrogram_transform(audio_tensor)
             
-            # Chuyển sang thang đo dB (tương tự Log-Mel)
-            db_spectrogram_tensor = 20 * torch.log10(torch.abs(spectrogram_tensor) + 1e-6)
+            # Chuyển sang thang đo dB (Log-Mel)
+            log_mel_spectrogram = T.AmplitudeToDB()(mel_spectrogram)
             
             # 4. Lưu kết quả
-            spectrogram_numpy = db_spectrogram_tensor.squeeze().numpy()
+            spectrogram_numpy = log_mel_spectrogram.squeeze().numpy()
             
             relative_path = os.path.relpath(audio_path, DATA_FOLDER)
             base_name = os.path.splitext(relative_path)[0].replace(os.sep, '_')
@@ -136,7 +138,6 @@ else:
 # ======================================================================================
 # BLOCK 4: NÉN VÀ TẢI ĐẶC TRƯNG LÊN KAGGLE
 # ======================================================================================
-# (Giữ nguyên không đổi)
 print("\nBLOCK 4: NÉN 'ULTRA' VÀ TẢI ĐẶC TRƯNG LÊN KAGGLE...")
 KAGGLE_UPLOAD_FOLDER = "kaggle_upload"
 os.makedirs(KAGGLE_UPLOAD_FOLDER, exist_ok=True)
@@ -146,7 +147,7 @@ print(f"Bắt đầu nén thư mục '{FEATURE_FOLDER}' ở chế độ Ultra...
 !7z a -mx=9 {output_7z_path} ./{FEATURE_FOLDER}/
 print(f"Đã nén thành công, file lưu tại: {output_7z_path}")
 metadata = {
-    "title": f"Asteroid Features ({CONFIG.DATASET_ID})", # Sửa tên cho phù hợp
+    "title": f"Torchaudio Features ({CONFIG.DATASET_ID})",
     "id": f"{CONFIG.KAGGLE_USERNAME}/{CONFIG.DATASET_ID}",
     "licenses": [{"name": "CC0-1.0"}]
 }
@@ -156,7 +157,7 @@ with open(metadata_path, 'w') as f:
 print("Tạo file metadata.json thành công.")
 if CONFIG.UPDATE_EXISTING_DATASET:
     print("\nChế độ: CẬP NHẬT. Bắt đầu tải lên phiên bản mới...")
-    !kaggle datasets version -p "{KAGGLE_UPLOAD_FOLDER}" -m "Updated with Asteroid learnable features" --dir-mode zip
+    !kaggle datasets version -p "{KAGGLE_UPLOAD_FOLDER}" -m "Updated with torchaudio features" --dir-mode zip
     print(f"\nHoàn tất! Kiểm tra phiên bản mới tại: https://www.kaggle.com/{CONFIG.KAGGLE_USERNAME}/{CONFIG.DATASET_ID}")
 else:
     print("\nChế độ: TẠO MỚI. Bắt đầu tải dataset mới lên...")
