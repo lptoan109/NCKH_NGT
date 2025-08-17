@@ -111,21 +111,21 @@ else:
         try:
             # 1. Tải file âm thanh
             y, sr = librosa.load(audio_path, sr=SAMPLE_RATE, mono=True)
-            
+
             # 2. Lọc nhiễu
             y_clean = nr.reduce_noise(y=y, sr=sr)
-            
+
             # 3. Trích xuất đặc trưng bằng torchaudio
             audio_tensor = torch.tensor(y_clean, dtype=torch.float32)
-            
+
             mel_spectrogram = mel_spectrogram_transform(audio_tensor)
-            
+
             # Chuyển sang thang đo dB (Log-Mel)
             log_mel_spectrogram = T.AmplitudeToDB()(mel_spectrogram)
-            
+
             # 4. Lưu kết quả
             spectrogram_numpy = log_mel_spectrogram.squeeze().numpy()
-            
+
             relative_path = os.path.relpath(audio_path, DATA_FOLDER)
             base_name = os.path.splitext(relative_path)[0].replace(os.sep, '_')
             numpy_path = os.path.join(FEATURE_FOLDER, f"{base_name}.npy")
