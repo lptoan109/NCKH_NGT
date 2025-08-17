@@ -88,9 +88,9 @@ def highlight_matching_ids(disease_file, sound_file, output_file):
 
 # --- Cấu hình tên file ---
 # !!! QUAN TRỌNG: Hãy thay đổi tên file dưới đây cho phù hợp với bạn !!!
-DISEASE_EXCEL_FILE = r'F:\Toàn-Khang_NCKH\ngtai_dataset\The UK Covid-19\participant_metadata.xlsx'
-SOUND_EXCEL_FILE = r'F:\Toàn-Khang_NCKH\ngtai_dataset\audio_metadata.xlsx'
-OUTPUT_EXCEL_FILE = r'F:\Toàn-Khang_NCKH\ngtai_dataset\audio_metadata_highlighted.xlsx'
+DISEASE_EXCEL_FILE = r'H:\Toàn-Khang_NCKH\ngtai_dataset\The UK Covid-19\participant_metadata.xlsx'
+SOUND_EXCEL_FILE = r'H:\Toàn-Khang_NCKH\ngtai_dataset\The UK Covid-19\audio_metadata.xlsx'
+OUTPUT_EXCEL_FILE = r'H:\Toàn-Khang_NCKH\ngtai_dataset\The UK Covid-19\audio_metadata_highlighted.xlsx'
 
 # --- Chạy hàm chính ---
 if __name__ == "__main__":

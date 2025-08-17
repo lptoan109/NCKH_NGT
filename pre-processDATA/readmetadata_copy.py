@@ -13,27 +13,27 @@ from pathlib import Path
 # --- Chế độ tìm kiếm file ---
 # True: Dành cho bộ dữ liệu như 'TB Screen Dataset'. Script sẽ tìm TẤT CẢ các file có tên BẮT ĐẦU bằng ID trong cột ID_COLUMN.
 # False: Dành cho bộ dữ liệu như 'UK Covid-19'. Script sẽ đọc tên file đầy đủ từ các cột trong AUDIO_COLUMNS.
-FIND_FILES_BY_ID_PREFIX = True
+FIND_FILES_BY_ID_PREFIX = False
 
-PROCESS_MULTIPLE_SOURCES = True  # True nếu bạn có nhiều thư mục nguồn. False nếu chỉ có một.
+PROCESS_MULTIPLE_SOURCES = False  # True nếu bạn có nhiều thư mục nguồn. False nếu chỉ có một.
 RENAME_FILES = True              # True để đổi tên file thành 'ID_ten_file_goc.wav'.
                                  # (Công tắc này không có tác dụng khi FIND_FILES_BY_ID_PREFIX = True)
 
 # 2. CẤU HÌNH ĐƯỜNG DẪN
-EXCEL_FILE_PATH = Path(r'F:\NCKH_Toàn_Khang\TBSCREENDATASET\TBscreen_Dataset\Metadata.xlsx')
-DESTINATION_FOLDER = Path(r'E:\Toàn-Khang_NCKH\ngtai_dataset\datasetbinary')
+EXCEL_FILE_PATH = Path(r'H:\Toàn-Khang_NCKH\ngtai_dataset\The UK Covid-19\audio_metadata.xlsx')
+DESTINATION_FOLDER = Path(r'H:\Toàn-Khang_NCKH\ngtai_dataset\dataset_unhealthy')
 
 # --- Cấu hình thư mục nguồn ---
 SOURCE_AUDIO_FOLDERS = [
-    Path(r'F:\NCKH_Toàn_Khang\TBSCREENDATASET\TBscreen_Dataset\Forced_coughs\Audio_files'),
+    Path(r'H:\Toàn-Khang_NCKH\ngtai_dataset\The UK Covid-19 zip\audio'),
     Path(r'F:\NCKH_Toàn_Khang\TBSCREENDATASET\TBscreen_Dataset\Passive_coughs\Audio_files'),
 ]
 
 # 3. CẤU HÌNH EXCEL
-SHEETS_TO_PROCESS = ['tuberculosis']
+SHEETS_TO_PROCESS = ['healthy', 'covid']
 
 # --- Tên các cột trong file Excel ---
-ID_COLUMN = 'subject'
+ID_COLUMN = 'participant_identifier'
 # (Danh sách này chỉ được sử dụng khi FIND_FILES_BY_ID_PREFIX = False)
 AUDIO_COLUMNS = ['cough_file_name', 'three_cough_file_name']
 
