@@ -15,7 +15,7 @@ def analyze_audio_directory(root_folder):
         pandas.DataFrame: Một DataFrame chứa thông tin thống kê.
     """
     audio_data = []
-    supported_formats = ['.wav', '.mp3', '.m4a', '.flac', '.ogg', '.aac']
+    supported_formats = ['.wav']
 
     print(f"Bắt đầu quét thư mục: {root_folder}\n...")
 
@@ -64,10 +64,10 @@ def analyze_audio_directory(root_folder):
 if __name__ == "__main__":
     # THAY ĐỔI ĐƯỜNG DẪN NÀY
     # Thay 'D:/path/to/your/audio_folder' bằng đường dẫn thực tế của bạn
-    main_folder_path = r'H:\Toàn-Khang_NCKH\ngtai_dataset\dataset-unhealthy'
+    main_folder_path = r'H:\Toàn-Khang_NCKH\ngtai_dataset\dataset_unhealthy'
 
     # Tên file Excel đầu ra
-    output_excel_file = r'H:\Toàn-Khang_NCKH\ngtai_dataset\metadata.xlsx'
+    output_excel_file = r'H:\Toàn-Khang_NCKH\ngtai_dataset\newmetadata.xlsx'
 
     # Gọi hàm để phân tích
     df_results = analyze_audio_directory(main_folder_path)
