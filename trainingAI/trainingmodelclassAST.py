@@ -4,7 +4,7 @@
 print("BLOCK 1: CÀI ĐẶT, IMPORT VÀ CẤU HÌNH...")
 
 # Cài đặt các thư viện cần thiết
-!pip install -q timm torch torchaudio scikit-learn pandas matplotlib seaborn librosa pydub pytz reportlab grad-cam transformers noisereduce huggingface_hub
+!pip install -q timm torch resampy torchaudio scikit-learn pandas matplotlib seaborn librosa pydub pytz reportlab grad-cam transformers noisereduce huggingface_hub
 
 # --- Imports ---
 import os
