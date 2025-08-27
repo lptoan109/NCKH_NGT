@@ -1,0 +1,599 @@
+# =============================================================================
+# PHẦN 0: CÀI ĐẶT & CẤU HÌNH (SETUP & CONFIGURATION)
+# =============================================================================
+
+# 0.1. Cài đặt các thư viện cần thiết
+!pip install -q fpdf2 noisereduce librosa tensorflow scikit-learn matplotlib seaborn pytz
+
+# 0.2. Import thư viện
+import os
+import glob
+import random
+import datetime
+import pytz
+import shutil
+import numpy as np
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+import matplotlib.font_manager as fm
+from fpdf import FPDF
+from tqdm.notebook import tqdm
+from google.colab import drive
+import librosa
+import noisereduce as nr
+import tensorflow as tf
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Input, Dense, Dropout, GlobalAveragePooling2D
+from tensorflow.keras.applications import EfficientNetB0, ResNet50V2, MobileNetV2
+from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.utils.class_weight import compute_class_weight
+from sklearn.metrics import classification_report, confusion_matrix
+
+# 0.3. Kết nối Google Drive
+drive.mount('/content/drive')
+
+# 0.4. Thiết lập SEED để đảm bảo kết quả tái lặp
+SEED = 42
+def set_seed(seed_value):
+    """Cố định seed cho các thư viện để đảm bảo kết quả nhất quán."""
+    os.environ['PYTHONHASHSEED'] = str(seed_value)
+    os.environ['TF_DETERMINISTIC_OPS'] = '1'
+    random.seed(seed_value)
+    np.random.seed(seed_value)
+    tf.random.set_seed(seed_value)
+set_seed(SEED)
+
+# 0.5. Thiết lập phông chữ tiếng Việt cho Matplotlib
+font_path = '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf'
+plt.rcParams['font.family'] = 'DejaVu Sans'
+
+# 0.6. Cấu hình các đường dẫn và tham số
+BASE_DRIVE_PATH = "/content/drive/MyDrive/Tai_Lieu_NCKH"
+RAW_DATA_PATH = os.path.join(BASE_DRIVE_PATH, "dataset_cough")
+PROCESSED_DATA_PATH = os.path.join(BASE_DRIVE_PATH, "extra_feature_data") # Lưu file riêng lẻ
+
+vn_timezone = pytz.timezone('Asia/Ho_Chi_Minh')
+run_timestamp = datetime.datetime.now(vn_timezone).strftime("%Y-%m-%d_%H-%M-%S")
+OUTPUT_PATH = os.path.join(BASE_DRIVE_PATH, "covid-asthma", f"run_{run_timestamp}")
+
+os.makedirs(PROCESSED_DATA_PATH, exist_ok=True)
+os.makedirs(OUTPUT_PATH, exist_ok=True)
+print(f"Dữ liệu thô tại: {RAW_DATA_PATH}")
+print(f"Dữ liệu đã xử lý sẽ được lưu tại: {PROCESSED_DATA_PATH}")
+print(f"Tất cả kết quả sẽ được lưu tại: {OUTPUT_PATH}")
+
+# Lựa chọn các lớp để huấn luyện
+CLASSES_TO_TRAIN = ['covid', 'asthma']
+
+# Danh sách tất cả các lớp có thể có trong dữ liệu để mã hóa nhãn nhất quán
+ALL_CLASSES = ['healthy', 'asthma', 'covid', 'tuberculosis']
+
+PREPROCESS_DATA = True
+USE_DATA_AUGMENTATION = False # Đặt là True để kiểm tra logic
+USE_FOCAL_LOSS = True
+
+SAMPLE_RATE = 16000
+N_MELS = 128
+N_FFT = 2048
+HOP_LENGTH = 512
+SILENCE_THRESHOLD_DB = 20
+TEST_SPLIT_RATIO = 0.15
+VALID_SPLIT_RATIO = 0.15 # Tỷ lệ validation lấy từ tập train
+MODEL_ID = f'ResNet50V2_{"_".join(CLASSES_TO_TRAIN)}'
+IMG_SIZE = (128, 157) # Sẽ được cập nhật tự động
+INPUT_SHAPE = (IMG_SIZE[0], IMG_SIZE[1], 3) # Sẽ được cập nhật tự động
+EPOCHS = 50
+BATCH_SIZE = 32
+LEARNING_RATE = 1e-4
+EARLY_STOPPING_PATIENCE = 10
+
+# =============================================================================
+# PHẦN 1: TIỀN XỬ LÝ (CHỈ CHẠY 1 LẦN, LƯU FILE RIÊNG LẺ)
+# =============================================================================
+
+def preprocess_single_file(filepath, max_length):
+    """Xử lý một file âm thanh và trả về spectrogram."""
+    try:
+        y, sr = librosa.load(filepath, sr=SAMPLE_RATE)
+        y_reduced_noise = nr.reduce_noise(y=y, sr=sr, stationary=True)
+        y_trimmed, _ = librosa.effects.trim(y_reduced_noise, top_db=SILENCE_THRESHOLD_DB)
+        if len(y_trimmed) < max_length:
+            y_trimmed = np.pad(y_trimmed, (0, max_length - len(y_trimmed)), 'constant')
+        y_trimmed = y_trimmed[:max_length]
+        y_normalized = librosa.util.normalize(y_trimmed)
+        mel_spec = librosa.feature.melspectrogram(y=y_normalized, sr=sr, n_mels=N_MELS, n_fft=N_FFT, hop_length=HOP_LENGTH)
+        mel_spec_db = librosa.power_to_db(mel_spec, ref=np.max)
+        return mel_spec_db
+    except Exception as e:
+        print(f"Lỗi khi xử lý file {filepath}: {e}")
+        return None
+
+def run_preprocessing_pipeline():
+    """Chạy toàn bộ quy trình tiền xử lý một lần, lưu từng file riêng lẻ."""
+    print("Bắt đầu quy trình tiền xử lý...")
+    all_raw_filepaths = glob.glob(os.path.join(RAW_DATA_PATH, '*', '*.wav'))
+    if not all_raw_filepaths:
+        print(f"CẢNH BÁO: Không tìm thấy file .wav nào trong {RAW_DATA_PATH}. Hãy kiểm tra lại đường dẫn.")
+        return
+
+    print("Đang quét để tìm độ dài file âm thanh tối đa...")
+    max_length = 0
+    for filepath in tqdm(all_raw_filepaths, desc="Scanning file lengths"):
+        try:
+            y, sr = librosa.load(filepath, sr=SAMPLE_RATE)
+            y_trimmed, _ = librosa.effects.trim(y, top_db=SILENCE_THRESHOLD_DB)
+            if len(y_trimmed) > max_length:
+                max_length = len(y_trimmed)
+        except Exception:
+            continue
+    print(f"Độ dài tối đa tìm thấy (số mẫu): {max_length}.")
+
+    np.save(os.path.join(PROCESSED_DATA_PATH, 'max_length.npy'), max_length)
+
+    print("Đang xử lý và lưu từng file riêng lẻ...")
+    for filepath in tqdm(all_raw_filepaths, desc="Processing and Saving Files"):
+        class_name = os.path.basename(os.path.dirname(filepath))
+        filename = os.path.basename(filepath).replace('.wav', '.npy')
+        
+        output_dir = os.path.join(PROCESSED_DATA_PATH, class_name)
+        os.makedirs(output_dir, exist_ok=True)
+        output_path = os.path.join(output_dir, filename)
+
+        if not os.path.exists(output_path):
+            spectrogram = preprocess_single_file(filepath, max_length)
+            if spectrogram is not None:
+                np.save(output_path, spectrogram)
+    print("Hoàn tất tiền xử lý!")
+
+if PREPROCESS_DATA:
+    run_preprocessing_pipeline()
+else:
+    print("Bỏ qua bước tiền xử lý.")
+
+# =============================================================================
+# PHẦN 1.5: TẢI DỮ LIỆU LINH HOẠT VÀ TĂNG TỐC
+# =============================================================================
+print(f"Bắt đầu chuẩn bị dữ liệu cho các lớp: {', '.join(CLASSES_TO_TRAIN)}")
+
+# Bước 1: Sao chép dữ liệu cần thiết từ Drive sang Colab local storage để tăng tốc
+LOCAL_DATA_PATH = "/content/local_processed_data"
+if os.path.exists(LOCAL_DATA_PATH):
+    shutil.rmtree(LOCAL_DATA_PATH)
+os.makedirs(LOCAL_DATA_PATH, exist_ok=True)
+
+all_files_to_load = []
+print("Đang sao chép file từ Google Drive sang Colab local storage...")
+for class_name in tqdm(CLASSES_TO_TRAIN, desc="Copying classes"):
+    source_dir = os.path.join(PROCESSED_DATA_PATH, class_name)
+    destination_dir = os.path.join(LOCAL_DATA_PATH, class_name)
+    if os.path.exists(source_dir):
+        shutil.copytree(source_dir, destination_dir)
+        files = glob.glob(os.path.join(destination_dir, '*.npy'))
+        for f in files:
+            all_files_to_load.append({'filepath': f, 'label': class_name})
+    else:
+        print(f"CẢNH BÁO: Không tìm thấy thư mục dữ liệu đã xử lý cho lớp '{class_name}' tại {source_dir}")
+print("Sao chép hoàn tất!")
+
+# Bước 2: Tải dữ liệu từ ổ cứng cục bộ và thực hiện patient-aware split
+def get_patient_id(filepath, class_name):
+    filename = os.path.basename(filepath)
+    if class_name.lower() in ['asthma', 'covid', 'healthy']:
+        return filename.split('_')[0]
+    elif class_name.lower() == 'tuberculosis':
+        return '_'.join(filename.split('_')[:-1]).replace('.npy', '')
+    else:
+        return filename.split('_')[0]
+
+all_data_df = pd.DataFrame(all_files_to_load)
+all_data_df['patient_id'] = all_data_df.apply(lambda row: get_patient_id(row['filepath'], row['label']), axis=1)
+
+train_patients, val_patients, test_patients = [], [], []
+for class_name in CLASSES_TO_TRAIN:
+    class_patients = all_data_df[all_data_df['label'] == class_name]['patient_id'].unique()
+    np.random.shuffle(class_patients)
+    
+    n_test = int(len(class_patients) * TEST_SPLIT_RATIO)
+    # Chia validation từ phần còn lại (train_val)
+    remaining_patients = len(class_patients) - n_test
+    n_val = int(remaining_patients * VALID_SPLIT_RATIO)
+
+    test_patients.extend(class_patients[:n_test])
+    val_patients.extend(class_patients[n_test : n_test + n_val])
+    train_patients.extend(class_patients[n_test + n_val :])
+
+train_df = all_data_df[all_data_df['patient_id'].isin(train_patients)]
+val_df = all_data_df[all_data_df['patient_id'].isin(val_patients)]
+test_df = all_data_df[all_data_df['patient_id'].isin(test_patients)]
+
+def load_data_from_df(df):
+    X, y = [], []
+    for _, row in df.iterrows():
+        spec = np.load(row['filepath'])
+        X.append(spec)
+        y.append(row['label'])
+    return np.array(X), np.array(y)
+
+print("Đang tải dữ liệu vào bộ nhớ...")
+X_train, y_train = load_data_from_df(train_df)
+X_val, y_val = load_data_from_df(val_df)
+X_test, y_test = load_data_from_df(test_df)
+
+# Cập nhật IMG_SIZE và INPUT_SHAPE từ dữ liệu thực tế
+if X_train.shape[0] > 0:
+    IMG_SIZE = (X_train.shape[1], X_train.shape[2])
+    INPUT_SHAPE = (IMG_SIZE[0], IMG_SIZE[1], 3)
+
+# Bước 3: Mã hóa nhãn và chuẩn hóa dữ liệu
+le = LabelEncoder().fit(ALL_CLASSES)
+y_train_encoded = le.transform(y_train)
+y_val_encoded = le.transform(y_val)
+y_test_encoded = le.transform(y_test)
+
+num_classes_trained = len(CLASSES_TO_TRAIN)
+y_train_onehot = tf.keras.utils.to_categorical(y_train_encoded, num_classes=len(ALL_CLASSES))
+y_val_onehot = tf.keras.utils.to_categorical(y_val_encoded, num_classes=len(ALL_CLASSES))
+y_test_onehot = tf.keras.utils.to_categorical(y_test_encoded, num_classes=len(ALL_CLASSES))
+
+X_train = np.stack([X_train]*3, axis=-1)
+X_val = np.stack([X_val]*3, axis=-1)
+X_test = np.stack([X_test]*3, axis=-1)
+
+scaler = StandardScaler()
+X_train_flat = X_train.reshape(X_train.shape[0], -1)
+X_train_scaled = scaler.fit_transform(X_train_flat)
+X_train = X_train_scaled.reshape(X_train.shape)
+X_val_flat = X_val.reshape(X_val.shape[0], -1)
+X_val_scaled = scaler.transform(X_val_flat)
+X_val = X_val_scaled.reshape(X_val.shape)
+X_test_flat = X_test.reshape(X_test.shape[0], -1)
+X_test_scaled = scaler.transform(X_test_flat)
+X_test = X_test_scaled.reshape(X_test.shape)
+print(f"Shapes for training: X_train={X_train.shape}, y_train={y_train_onehot.shape}")
+
+# =============================================================================
+# PHẦN 2: XÂY DỰNG & HUẤN LUYỆN MÔ HÌNH
+# =============================================================================
+
+def focal_loss(gamma=2.0, alpha=0.25):
+    def focal_loss_fixed(y_true, y_pred):
+        # Lọc ra các nhãn hợp lệ cho lần huấn luyện này
+        active_indices = [le.transform([c])[0] for c in CLASSES_TO_TRAIN]
+        y_true_filtered = tf.gather(y_true, active_indices, axis=-1)
+        y_pred_filtered = tf.gather(y_pred, active_indices, axis=-1)
+
+        y_true_filtered = tf.cast(y_true_filtered, tf.float32)
+        y_pred_filtered = tf.clip_by_value(y_pred_filtered, 1e-7, 1.0 - 1e-7)
+        
+        cross_entropy = -y_true_filtered * tf.math.log(y_pred_filtered)
+        focal_term = alpha * tf.pow(1.0 - y_pred_filtered, gamma)
+        loss = focal_term * cross_entropy
+        return tf.reduce_sum(loss, axis=-1)
+    return focal_loss_fixed
+
+def create_model(input_shape, num_classes):
+    base_model = ResNet50V2(weights='imagenet', include_top=False, input_shape=input_shape)
+    base_model.trainable = True
+    inputs = Input(shape=input_shape)
+    x = base_model(inputs, training=True)
+    x = GlobalAveragePooling2D()(x)
+    x = Dropout(0.5)(x)
+    outputs = Dense(num_classes, activation='softmax')(x)
+    model = Model(inputs, outputs)
+    return model
+
+def spec_augment(spectrogram, time_masking_para=40, frequency_masking_para=15,
+                 num_time_masks=1, num_freq_masks=1):
+    """Áp dụng SpecAugment cho một spectrogram."""
+    spectrogram_aug = spectrogram
+    # Frequency Masking
+    for _ in range(num_freq_masks):
+        freq_max = tf.shape(spectrogram_aug)[0]
+        f = tf.random.uniform(shape=(), minval=0, maxval=frequency_masking_para, dtype=tf.int32)
+        f0 = tf.random.uniform(shape=(), minval=0, maxval=freq_max - f, dtype=tf.int32)
+        mask = tf.concat([
+            tf.ones(shape=(f0, tf.shape(spectrogram_aug)[1], tf.shape(spectrogram_aug)[2])),
+            tf.zeros(shape=(f, tf.shape(spectrogram_aug)[1], tf.shape(spectrogram_aug)[2])),
+            tf.ones(shape=(freq_max - f0 - f, tf.shape(spectrogram_aug)[1], tf.shape(spectrogram_aug)[2]))], axis=0)
+        spectrogram_aug = spectrogram_aug * mask
+    # Time Masking
+    for _ in range(num_time_masks):
+        time_max = tf.shape(spectrogram_aug)[1]
+        t = tf.random.uniform(shape=(), minval=0, maxval=time_masking_para, dtype=tf.int32)
+        t0 = tf.random.uniform(shape=(), minval=0, maxval=time_max - t, dtype=tf.int32)
+        mask = tf.concat([
+            tf.ones(shape=(tf.shape(spectrogram_aug)[0], t0, tf.shape(spectrogram_aug)[2])),
+            tf.zeros(shape=(tf.shape(spectrogram_aug)[0], t, tf.shape(spectrogram_aug)[2])),
+            tf.ones(shape=(tf.shape(spectrogram_aug)[0], time_max - t0 - t, tf.shape(spectrogram_aug)[2]))], axis=1)
+        spectrogram_aug = spectrogram_aug * mask
+    return spectrogram_aug
+
+# Lớp đầu ra của mô hình tương ứng với TẤT CẢ các lớp để đảm bảo nhất quán
+model = create_model(INPUT_SHAPE, len(ALL_CLASSES))
+model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=LEARNING_RATE), 
+              loss='categorical_crossentropy' if not USE_FOCAL_LOSS else focal_loss(), 
+              metrics=['accuracy'])
+model.summary()
+
+class_weights = None
+if not USE_FOCAL_LOSS:
+    class_weights_values = compute_class_weight('balanced', classes=np.unique(y_train_encoded), y=y_train_encoded)
+    class_weights = dict(zip(np.unique(y_train_encoded), class_weights_values))
+    print("Class Weights:", class_weights)
+
+model_checkpoint_path = os.path.join(OUTPUT_PATH, f'{MODEL_ID}_best_model_{run_timestamp}.h5')
+checkpoint = ModelCheckpoint(filepath=model_checkpoint_path, monitor='val_loss', save_best_only=True, verbose=1)
+early_stopping = EarlyStopping(monitor='val_loss', patience=EARLY_STOPPING_PATIENCE, restore_best_weights=True, verbose=1)
+
+# Xây dựng pipeline dữ liệu với logic Data Augmentation đã được sửa
+train_ds = tf.data.Dataset.from_tensor_slices((X_train, y_train_onehot))
+val_ds = tf.data.Dataset.from_tensor_slices((X_val, y_val_onehot))
+
+def augment_fn(image, label):
+    image = spec_augment(image)
+    return image, label
+
+train_ds = train_ds.shuffle(len(X_train)).batch(BATCH_SIZE)
+
+if USE_DATA_AUGMENTATION:
+    print("Áp dụng SpecAugment cho tập huấn luyện.")
+    train_ds = train_ds.map(augment_fn, num_parallel_calls=tf.data.AUTOTUNE)
+
+train_ds = train_ds.prefetch(tf.data.AUTOTUNE)
+val_ds = val_ds.batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
+
+print("Bắt đầu huấn luyện mô hình...")
+history = model.fit(train_ds, epochs=EPOCHS, validation_data=val_ds, callbacks=[checkpoint, early_stopping], class_weight=class_weights)
+
+# =============================================================================
+# PHẦN 3: ĐÁNH GIÁ & BÁO CÁO
+# =============================================================================
+
+print("Đang đánh giá mô hình trên tập test...")
+model.load_weights(model_checkpoint_path)
+
+test_ds = tf.data.Dataset.from_tensor_slices((X_test, y_test_onehot)).batch(BATCH_SIZE)
+loss, accuracy = model.evaluate(test_ds, verbose=0)
+print(f"Test Loss: {loss:.4f}")
+print(f"Test Accuracy: {accuracy:.4f}")
+
+y_pred_probs = model.predict(X_test)
+y_pred_encoded = np.argmax(y_pred_probs, axis=1)
+
+trained_class_indices = np.unique(np.concatenate((y_train_encoded, y_val_encoded, y_test_encoded)))
+target_names_trained = le.inverse_transform(trained_class_indices)
+
+report = classification_report(y_test_encoded, y_pred_encoded, target_names=target_names_trained, labels=trained_class_indices)
+print("\nClassification Report:\n", report)
+
+report_figs_path = os.path.join(OUTPUT_PATH, "report_figures")
+os.makedirs(report_figs_path, exist_ok=True)
+
+plt.figure(figsize=(8, 6))
+plt.plot(history.history['accuracy'], label='Training Accuracy')
+plt.plot(history.history['val_accuracy'], label='Validation Accuracy')
+plt.title('Biểu đồ Training và Validation Accuracy')
+plt.xlabel('Epoch')
+plt.ylabel('Accuracy')
+plt.legend(loc='lower right')
+accuracy_plot_path = os.path.join(report_figs_path, f'accuracy_plot_{run_timestamp}.png')
+plt.savefig(accuracy_plot_path)
+plt.close()
+
+plt.figure(figsize=(8, 6))
+plt.plot(history.history['loss'], label='Training Loss')
+plt.plot(history.history['val_loss'], label='Validation Loss')
+plt.title('Biểu đồ Training và Validation Loss')
+plt.xlabel('Epoch')
+plt.ylabel('Loss')
+plt.legend(loc='upper right')
+loss_plot_path = os.path.join(report_figs_path, f'loss_plot_{run_timestamp}.png')
+plt.savefig(loss_plot_path)
+plt.close()
+
+cm = confusion_matrix(y_test_encoded, y_pred_encoded, labels=trained_class_indices)
+plt.figure(figsize=(10, 8))
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=target_names_trained, yticklabels=target_names_trained)
+plt.title('Ma trận nhầm lẫn')
+plt.ylabel('Nhãn thật')
+plt.xlabel('Nhãn dự đoán')
+cm_plot_path = os.path.join(report_figs_path, f'confusion_matrix_{run_timestamp}.png')
+plt.savefig(cm_plot_path)
+plt.close()
+
+def get_grad_cam(model, img_array, last_conv_layer_name, pred_index=None):
+    grad_model = Model([model.inputs], [model.get_layer(last_conv_layer_name).output, model.output])
+    with tf.GradientTape() as tape:
+        last_conv_layer_output, preds = grad_model(img_array)
+        if pred_index is None:
+            pred_index = tf.argmax(preds[0])
+        class_channel = preds[:, pred_index]
+    grads = tape.gradient(class_channel, last_conv_layer_output)
+    pooled_grads = tf.reduce_mean(grads, axis=(0, 1, 2))
+    last_conv_layer_output = last_conv_layer_output[0]
+    heatmap = last_conv_layer_output @ pooled_grads[..., tf.newaxis]
+    heatmap = tf.squeeze(heatmap)
+    heatmap = tf.maximum(heatmap, 0) / tf.math.reduce_max(heatmap)
+    return heatmap.numpy()
+
+def overlay_grad_cam(spec, heatmap, alpha=0.6):
+    heatmap_resized = tf.image.resize(heatmap[..., np.newaxis], (spec.shape[0], spec.shape[1]))
+    heatmap_resized = np.uint8(255 * heatmap_resized)
+    jet = plt.cm.get_cmap("jet")
+    jet_colors = jet(np.arange(256))[:, :3]
+    jet_heatmap = jet_colors[heatmap_resized.squeeze()]
+    spec_display = np.stack([spec]*3, axis=-1)
+    spec_display = (spec_display - spec_display.min()) / (spec_display.max() - spec_display.min())
+    superimposed_img = jet_heatmap * alpha + spec_display
+    superimposed_img = np.clip(superimposed_img, 0, 1)
+    return superimposed_img
+
+last_conv_layer_name = None
+for layer in reversed(model.layers):
+    if isinstance(layer, tf.keras.layers.GlobalAveragePooling2D):
+        pooling_index = model.layers.index(layer)
+        last_conv_layer_name = model.layers[pooling_index - 1].name
+        break
+if last_conv_layer_name is None:
+    raise ValueError("Không thể tự động tìm thấy lớp phù hợp cho Grad-CAM.")
+print(f"Đã tự động xác định lớp Grad-CAM: {last_conv_layer_name}")
+
+gradcam_path = os.path.join(report_figs_path, "grad_cam")
+os.makedirs(gradcam_path, exist_ok=True)
+print("Tạo hình ảnh Grad-CAM...")
+results_list = []
+for i in range(len(y_test_encoded)):
+    true_label_encoded = y_test_encoded[i]
+    pred_label_encoded = y_pred_encoded[i]
+    confidence = y_pred_probs[i][pred_label_encoded]
+    is_correct = (true_label_encoded == pred_label_encoded)
+    results_list.append({'index': i, 'true_label': true_label_encoded, 'pred_label': pred_label_encoded, 'confidence': confidence, 'is_correct': is_correct})
+results_df = pd.DataFrame(results_list)
+
+for class_index, class_name in zip(trained_class_indices, target_names_trained):
+    correct_samples = results_df[(results_df['is_correct'] == True) & (results_df['true_label'] == class_index)].nlargest(3, 'confidence')
+    incorrect_samples = results_df[(results_df['is_correct'] == False) & (results_df['true_label'] == class_index)].nlargest(3, 'confidence')
+    for _, row in correct_samples.iterrows():
+        idx = int(row['index'])
+        img_array, spec = X_test[idx][np.newaxis, ...], X_test[idx, :, :, 0]
+        heatmap = get_grad_cam(model, img_array, last_conv_layer_name, pred_index=class_index)
+        overlay = overlay_grad_cam(spec, heatmap)
+        plt.imshow(overlay)
+        plt.title(f"Đúng: {class_name}, Tin cậy: {row['confidence']:.2f}")
+        plt.axis('off')
+        plt.savefig(os.path.join(gradcam_path, f"correct_{class_name}_{idx}_{run_timestamp}.png"))
+        plt.close()
+    for _, row in incorrect_samples.iterrows():
+        idx = int(row['index'])
+        pred_class_name = le.inverse_transform([int(row['pred_label'])])[0]
+        img_array, spec = X_test[idx][np.newaxis, ...], X_test[idx, :, :, 0]
+        heatmap = get_grad_cam(model, img_array, last_conv_layer_name, pred_index=class_index)
+        overlay = overlay_grad_cam(spec, heatmap)
+        plt.imshow(overlay)
+        plt.title(f"Thật: {class_name}, Sai -> {pred_class_name}, Tin cậy: {row['confidence']:.2f}")
+        plt.axis('off')
+        plt.savefig(os.path.join(gradcam_path, f"incorrect_{class_name}_as_{pred_class_name}_{idx}_{run_timestamp}.png"))
+        plt.close()
+
+correct_heatmaps = {label: [] for label in target_names_trained}
+incorrect_heatmaps = {label: [] for label in target_names_trained}
+
+for i, row in tqdm(results_df.iterrows(), total=len(results_df), desc="Calculating Avg Grad-CAMs"):
+    idx = int(row['index'])
+    true_label_index = int(row['true_label'])
+    class_name = le.inverse_transform([true_label_index])[0]
+    img_array = X_test[idx][np.newaxis, ...]
+    heatmap = get_grad_cam(model, img_array, last_conv_layer_name, pred_index=true_label_index)
+    if row['is_correct']:
+        if class_name in correct_heatmaps:
+             correct_heatmaps[class_name].append(heatmap)
+    else:
+        if class_name in incorrect_heatmaps:
+            incorrect_heatmaps[class_name].append(heatmap)
+
+for class_name in target_names_trained:
+    if correct_heatmaps[class_name]:
+        avg_heatmap_correct = np.mean(correct_heatmaps[class_name], axis=0)
+        overlay = overlay_grad_cam(np.zeros(IMG_SIZE), avg_heatmap_correct)
+        plt.imshow(overlay)
+        plt.title(f"Grad-CAM TB - Đúng cho lớp {class_name}")
+        plt.axis('off')
+        plt.savefig(os.path.join(gradcam_path, f"avg_correct_{class_name}_{run_timestamp}.png"))
+        plt.close()
+    if incorrect_heatmaps[class_name]:
+        avg_heatmap_incorrect = np.mean(incorrect_heatmaps[class_name], axis=0)
+        overlay = overlay_grad_cam(np.zeros(IMG_SIZE), avg_heatmap_incorrect)
+        plt.imshow(overlay)
+        plt.title(f"Grad-CAM TB - Sai cho lớp {class_name}")
+        plt.axis('off')
+        plt.savefig(os.path.join(gradcam_path, f"avg_incorrect_{class_name}_{run_timestamp}.png"))
+        plt.close()
+
+# =============================================================================
+# PHẦN 4: TỔNG HỢP BÁO CÁO PDF
+# =============================================================================
+class PDFReport(FPDF):
+    def header(self):
+        self.add_font('DejaVu', '', font_path, uni=True)
+        self.set_font('DejaVu', '', 12)
+        self.cell(0, 10, 'BÁO CÁO KẾT QUẢ HUẤN LUYỆN MÔ HÌNH AI', 0, 1, 'C')
+        self.ln(10)
+    def footer(self):
+        self.set_y(-15)
+        self.set_font('DejaVu', '', 8)
+        self.cell(0, 10, f'Trang {self.page_no()}', 0, 0, 'C')
+    def chapter_title(self, title):
+        self.set_font('DejaVu', '', 12)
+        self.cell(0, 10, title, 0, 1, 'L')
+        self.ln(5)
+    def chapter_body(self, content):
+        self.set_font('DejaVu', '', 10)
+        self.multi_cell(0, 5, content)
+        self.ln()
+    def add_image_section(self, title, img_path):
+        self.chapter_title(title)
+        if os.path.exists(img_path):
+            self.image(img_path, x=None, y=None, w=180)
+            self.ln(5)
+        else:
+            self.chapter_body(f"Không tìm thấy hình ảnh: {img_path}")
+
+print("Tạo báo cáo PDF...")
+pdf = PDFReport()
+pdf.add_page()
+pdf.chapter_title("1. Tóm tắt cấu hình")
+config_summary = f"""
+- Model ID: {MODEL_ID}
+- SEED: {SEED}
+- Thời gian chạy: {run_timestamp}
+- Các lớp huấn luyện: {', '.join(CLASSES_TO_TRAIN)}
+- Tỷ lệ chia Test/Validation: {TEST_SPLIT_RATIO}/{VALID_SPLIT_RATIO}
+- Epochs: {EPOCHS} (Dừng sớm tại epoch: {len(history.history['loss'])})
+- Batch Size: {BATCH_SIZE}
+- Learning Rate: {LEARNING_RATE}
+- Hàm Loss: {'Focal Loss' if USE_FOCAL_LOSS else 'Categorical Crossentropy'}
+- Tăng cường dữ liệu: {'Có (SpecAugment)' if USE_DATA_AUGMENTATION else 'Không'}
+- Kích thước Input: {INPUT_SHAPE}
+"""
+pdf.chapter_body(config_summary)
+pdf.add_image_section("2. Biểu đồ Accuracy", accuracy_plot_path)
+pdf.add_image_section("3. Biểu đồ Loss", loss_plot_path)
+pdf.chapter_title("4. Kết quả đánh giá trên tập Test")
+test_results = f"Test Loss: {loss:.4f}\nTest Accuracy: {accuracy:.4f}"
+pdf.chapter_body(test_results)
+pdf.chapter_body("Báo cáo phân loại chi tiết:")
+pdf.set_font('Courier', '', 8)
+pdf.chapter_body(report)
+pdf.set_font('DejaVu', '', 10)
+pdf.add_image_section("Ma trận nhầm lẫn:", cm_plot_path)
+
+pdf.add_page()
+pdf.chapter_title("5. Phân tích Grad-CAM")
+for class_name in target_names_trained:
+    pdf.chapter_body(f"Lớp: {class_name}")
+    correct_imgs = sorted(glob.glob(os.path.join(gradcam_path, f"correct_{class_name}_*_{run_timestamp}.png")))
+    incorrect_imgs = sorted(glob.glob(os.path.join(gradcam_path, f"incorrect_{class_name}_*_{run_timestamp}.png")))
+    
+    x_pos, y_pos = pdf.get_x(), pdf.get_y()
+    for i, img_path in enumerate(correct_imgs[:3]):
+        pdf.image(img_path, x=x_pos + i * 60, y=y_pos, w=55)
+    if correct_imgs: y_pos += 45
+    for i, img_path in enumerate(incorrect_imgs[:3]):
+        pdf.image(img_path, x=x_pos + i * 60, y=y_pos, w=55)
+    if incorrect_imgs: y_pos += 45
+    pdf.set_y(y_pos)
+    
+    avg_correct_path = os.path.join(gradcam_path, f"avg_correct_{class_name}_{run_timestamp}.png")
+    avg_incorrect_path = os.path.join(gradcam_path, f"avg_incorrect_{class_name}_{run_timestamp}.png")
+    if os.path.exists(avg_correct_path):
+        pdf.image(avg_correct_path, w=80)
+    if os.path.exists(avg_incorrect_path):
+        pdf.image(avg_incorrect_path, w=80)
+    pdf.ln(10)
+
+report_filename = f"report_{MODEL_ID}_{run_timestamp}.pdf"
+report_filepath = os.path.join(OUTPUT_PATH, report_filename)
+pdf.output(report_filepath)
+print(f"Hoàn tất! Báo cáo đã được lưu tại: {report_filepath}")
