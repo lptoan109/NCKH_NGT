@@ -7,7 +7,6 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from flask_bcrypt import Bcrypt
 from flask_mail import Mail, Message
-
 from authlib.integrations.flask_client import OAuth
 from werkzeug.utils import secure_filename
 
@@ -167,18 +166,11 @@ def contact():
 @app.route('/history')
 @login_required
 def history():
-    # Lấy số trang từ URL, ví dụ: /history?page=2. Mặc định là trang 1.
     page = request.args.get('page', 1, type=int)
-    
-    # Sử dụng .paginate() thay vì .all()
-    # per_page=10 có nghĩa là mỗi trang sẽ hiển thị 10 bản ghi.
     pagination = Recording.query.filter_by(user_id=current_user.id)\
-                                .order_by(Recording.timestamp.desc())\
-                                .paginate(page=page, per_page=10, error_out=False)
-    
-    # pagination.items chứa danh sách các bản ghi của trang hiện tại
+                                 .order_by(Recording.timestamp.desc())\
+                                 .paginate(page=page, per_page=10, error_out=False)
     recordings = pagination.items
-    
     return render_template('history.html', recordings=recordings, pagination=pagination)
 
 @app.route('/delete_recording/<int:recording_id>', methods=['POST'])
@@ -230,7 +222,6 @@ def upload_audio():
     if not audio_file:
         return {"error": "No audio file"}, 400
     
-    # Sửa thành
     upload_folder = os.path.join(app.root_path, 'static', 'uploads')
     os.makedirs(upload_folder, exist_ok=True)
 
@@ -248,5 +239,5 @@ def upload_audio():
 # --- 4. CHẠY ỨNG DỤNG ---
 if __name__ == '__main__':
     with app.app_context():
-        db.create_all() # Tự động tạo file database nếu chưa có khi chạy local
+        db.create_all()
     app.run(debug=True)
