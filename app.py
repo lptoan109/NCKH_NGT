@@ -68,7 +68,7 @@ def load_user(user_id):
 
 @app.route('/')
 def homepage():
-    return "<h1>Code da duoc cap nhat - Version 2</h1>"
+    return render_template('index.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
