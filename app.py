@@ -40,8 +40,8 @@ oauth = OAuth(app)
 # !!! THAY THẾ BẰNG CLIENT ID VÀ SECRET ĐÚNG TỪ "Web client 1" !!!
 google = oauth.register(
     name='google',
-    client_id='564904327189-agsii5kfkht070218tsjqu8amnstc7o1.apps.googleusercontent.com', # <-- GIÁ TRỊ ĐÚNG
-    client_secret='GOCSPX-xxxxxxxxxxxxxxxxxxxxxxxxxx', # <-- THAY BẰNG MÃ BÍ MẬT ĐÚNG CỦA BẠN
+    client_id='564904327189-4gsii5kfkht070218tsjqu8amnstc7o1.apps.googleusercontent.com', # <-- GIÁ TRỊ ĐÚNG
+    client_secret='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', # <-- THAY BẰNG MÃ BÍ MẬT ĐÚNG CỦA BẠN
     server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
     client_kwargs={'scope': 'openid email profile'}
 )
