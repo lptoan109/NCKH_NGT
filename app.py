@@ -37,10 +37,11 @@ login_manager.login_view = 'login'
 oauth = OAuth(app)
 
 # --- Cấu hình Google Login ---
+# !!! THAY THẾ BẰNG CLIENT ID VÀ SECRET ĐÚNG TỪ "Web client 1" !!!
 google = oauth.register(
     name='google',
-    client_id='564904327189-4gsii5kfkht070218tsjqu8amnstc7o1.apps.googleusercontent.com',
-    client_secret='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',
+    client_id='564904327189-agsii5kfkht070218tsjqu8amnstc7o1.apps.googleusercontent.com', # <-- GIÁ TRỊ ĐÚNG
+    client_secret='GOCSPX-xxxxxxxxxxxxxxxxxxxxxxxxxx', # <-- THAY BẰNG MÃ BÍ MẬT ĐÚNG CỦA BẠN
     server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
     client_kwargs={'scope': 'openid email profile'}
 )
@@ -116,7 +117,7 @@ def logout():
 
 @app.route('/login/google')
 def login_google():
-    # Xóa dòng code cũ đi và thay bằng dòng này
+    # Sửa cứng URI để đảm bảo luôn đúng trên PythonAnywhere
     redirect_uri = 'http://ngt.pythonanywhere.com/authorize'
     return google.authorize_redirect(redirect_uri)
 
@@ -169,8 +170,8 @@ def contact():
 def history():
     page = request.args.get('page', 1, type=int)
     pagination = Recording.query.filter_by(user_id=current_user.id)\
-                                 .order_by(Recording.timestamp.desc())\
-                                 .paginate(page=page, per_page=10, error_out=False)
+                                .order_by(Recording.timestamp.desc())\
+                                .paginate(page=page, per_page=10, error_out=False)
     recordings = pagination.items
     return render_template('history.html', recordings=recordings, pagination=pagination)
 
