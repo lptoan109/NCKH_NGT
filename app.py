@@ -138,7 +138,7 @@ def authorize():
     return redirect(url_for('diagnose'))
 
 @app.route('/diagnose')
-@login_required
+# Xóa @login_required ở đây
 def diagnose():
     return render_template('diagnose.html')
 
@@ -218,25 +218,39 @@ def edit_profile():
     return render_template('edit_profile.html')
 
 @app.route('/upload_audio', methods=['POST'])
-@login_required
+# Xóa @login_required ở đây
 def upload_audio():
-    audio_file = request.files.get('audio_data')
-    if not audio_file:
-        return {"error": "No audio file"}, 400
-    
-    upload_folder = os.path.join(app.root_path, 'static', 'uploads')
-    os.makedirs(upload_folder, exist_ok=True)
+    audio_file = request.files.get('audio_data')
+    if not audio_file:
+        return {"error": "No audio file"}, 400
+    
+    upload_folder = os.path.join(app.root_path, 'static', 'uploads')
+    os.makedirs(upload_folder, exist_ok=True)
 
-    timestamp_str = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    filename = secure_filename(f"user_{current_user.id}_{timestamp_str}.wav")
-    filepath = os.path.join(upload_folder, filename)
-    audio_file.save(filepath)
-    
-    new_recording = Recording(filename=filename, user_id=current_user.id)
-    db.session.add(new_recording)
-    db.session.commit()
-    
-    return {"success": True, "filename": filename}
+    # Tạo một tên file tạm thời không phụ thuộc vào user
+    timestamp_str = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    
+    # Kiểm tra nếu người dùng đã đăng nhập
+    if current_user.is_authenticated:
+        # Nếu đã đăng nhập, tạo tên file và lưu vào lịch sử như cũ
+        filename = secure_filename(f"user_{current_user.id}_{timestamp_str}.wav")
+        filepath = os.path.join(upload_folder, filename)
+        audio_file.save(filepath)
+        
+        new_recording = Recording(filename=filename, user_id=current_user.id)
+        db.session.add(new_recording)
+        db.session.commit()
+    else:
+        # Nếu là khách, tạo tên file tạm và không lưu vào database
+        filename = secure_filename(f"guest_{timestamp_str}.wav")
+        filepath = os.path.join(upload_folder, filename)
+        audio_file.save(filepath)
+    
+    # --- TẠI ĐÂY BẠN SẼ GỌI MODEL AI ĐỂ XỬ LÝ FILE "filepath" ---
+    # ai_result = your_ai_function(filepath)
+    
+    # Trả về kết quả chẩn đoán (ví dụ)
+    return {"success": True, "filename": filename, "diagnosis_result": "Đây là kết quả AI..."}
 
 # --- 4. CHẠY ỨNG DỤNG ---
 if __name__ == '__main__':
