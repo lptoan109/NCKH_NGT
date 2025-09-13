@@ -8,8 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;900&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-
+    
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
@@ -27,27 +26,35 @@
                     <a href="{{ url_for('diagnose') }}">Bắt Đầu Chẩn Đoán</a>
                     <a href="{{ url_for('contact') }}">Liên Hệ & Báo Cáo Lỗi</a>
                 </div>
-
-                <div class="nav-auth">
-                    {% if current_user.is_authenticated %}
-                        <a href="{{ url_for('logout') }}" class="btn btn-logout">Đăng Xuất</a>
-                        <a href="{{ url_for('profile') }}">
-                            {% if current_user.picture %}
-                                 <img src="{{ current_user.picture }}" alt="User Avatar" class="avatar-image-nav">
-                            {% else %}
-                                <div class="avatar-text">{{ current_user.username[0]|upper }}</div>
-                            {% endif %}
-                        </a>
-                    {% else %}
-                        <a href="{{ url_for('login') }}" class="btn btn-primary">Đăng Nhập</a>
-                        <a href="{{ url_for('register') }}" class="btn btn-secondary">Đăng Ký</a>
-                    {% endif %}
-                </div>
             </div>
 
-            <button class="hamburger" id="hamburger">
-                &#9776;
-            </button>
+            <div class="nav-auth">
+                <div class="theme-picker">
+                    <button id="theme-picker-toggle" title="Chọn giao diện">🎨</button>
+                    <div id="theme-picker-options" class="hidden">
+                        <button class="theme-swatch" data-theme-name="default" style="background-color: #F9FAFB;"></button>
+                        <button class="theme-swatch" data-theme-name="dark" style="background-color: #111827;"></button>
+                        <button class="theme-swatch" data-theme-name="ocean" style="background-color: #f0f8ff;"></button>
+                        <button class="theme-swatch" data-theme-name="forest" style="background-color: #f0fff0;"></button>
+                    </div>
+                </div>
+                
+                {% if current_user.is_authenticated %}
+                    <a href="{{ url_for('profile') }}">
+                        {% if current_user.picture %}
+                            <img src="{{ current_user.picture }}" alt="User Avatar" class="avatar-image-nav">
+                        {% else %}
+                            <div class="avatar-text">{{ current_user.username[0]|upper }}</div>
+                        {% endif %}
+                    </a>
+                    <a href="{{ url_for('logout') }}" class="btn btn-logout">Đăng Xuất</a>
+                {% else %}
+                    <a href="{{ url_for('login') }}" class="btn btn-primary">Đăng Nhập</a>
+                    <a href="{{ url_for('register') }}" class="btn btn-secondary">Đăng Ký</a>
+                {% endif %}
+            </div>
+
+            <button class="hamburger" id="hamburger">&#9776;</button>
         </nav>
     </header>
 
@@ -68,12 +75,14 @@
         {# Nơi nội dung riêng của từng trang sẽ được chèn vào #}
         {% block content %}{% endblock %}
     </main>
+    
+    {# Hiệu ứng sóng Equalizer (nếu có, bạn có thể đặt nó ở đây) #}
+    {% block equalizer %}{% endblock %}
 
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 
-    <script src="{{ url_for('static', filename='main.js') }}"></script>
-
+    {# Nơi chèn các script riêng của từng trang #}
     {% block scripts %}{% endblock %}
-
     
 </body>
 </html>
