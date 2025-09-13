@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+
+{% block title %}Giới Thiệu - NGT Cough{% endblock %}
+
+{% block content %}
+<style>
+    .about-container {
+         max-width: 800px;
+         margin: 40px auto;
+         padding: 20px 40px;
+         background-color: var(--background-darker);
+         border-radius: 12px;
+         color: var(--text-light);
+         line-height: 1.8;
+    }
+    .about-container h2 {
+         color: var(--primary-color);
+         text-align: center;
+         margin-bottom: 30px;
+    }
+    .about-section {
+         margin-bottom: 30px;
+    }
+    .about-section h3 {
+         border-bottom: 2px solid var(--primary-color-muted);
+         padding-bottom: 10px;
+         margin-bottom: 15px;
+    }
+    .disclaimer {
+         background-color: #f8d7da;
+         color: #721c24;
+         padding: 15px;
+         border-radius: 8px;
+         border-left: 5px solid #f5c6cb;
+    }
+</style>
+
+<div class="about-container">
+    <h2>Giới Thiệu Về Dự Án NGT Cough</h2>
+
+    <div class="about-section">
+         <h3>Mục Tiêu & Sứ Mệnh</h3>
+         <p>
+             NGT Cough ra đời với sứ mệnh ứng dụng công nghệ Trí tuệ nhân tạo (AI) để cung cấp một công cụ sàng lọc sức khỏe ban đầu thông qua việc phân tích âm thanh tiếng ho. Chúng tôi mong muốn giúp mọi người có cái nhìn sơ bộ về tình trạng sức khỏe của mình một cách nhanh chóng, tiện lợi và hoàn toàn miễn phí.
+         </p>
+    </div>
+
+    <div class="about-section">
+         <h3>Công Nghệ Cốt Lõi</h3>
+         <p>
+             Hệ thống của chúng tôi được xây dựng dựa trên các mô hình học máy (Machine Learning) tiên tiến. Khi bạn tải lên một bản ghi âm tiếng ho, AI sẽ phân tích các đặc trưng âm học như tần số, cường độ và các mẫu âm thanh độc nhất để đưa ra dự đoán về các bệnh lý hô hấp có thể liên quan.
+         </p>
+    </div>
+
+    <div class="about-section">
+         <h3>Đội Ngũ Phát Triển</h3>
+         <p>
+             Dự án NGT Cough được xây dựng và phát triển bởi nhóm khoa học kĩ thuật của Toàn và Khang, người có đam mê với công nghệ và mong muốn tạo ra các sản phẩm hữu ích cho cộng đồng.
+         </p>
+    </div>
+
+    <div class="about-section">
+         <h3>Lưu Ý Quan Trọng</h3>
+         <div class="disclaimer">
+             <strong>Tuyên bố miễn trừ trách nhiệm:</strong> Các kết quả chẩn đoán từ NGT Cough chỉ mang tính chất tham khảo và sàng lọc ban đầu. Ứng dụng này không thể thay thế cho việc chẩn đoán, tư vấn và điều trị y tế chuyên nghiệp từ các bác sĩ. Vui lòng đến gặp bác sĩ để có kết luận chính xác nhất về tình trạng sức khỏe của bạn.
+         </div>
+    </div>
+</div>
+{% endblock %}
