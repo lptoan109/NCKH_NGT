@@ -1,10 +1,7 @@
-// Đợi cho toàn bộ tài liệu HTML được tải xong trước khi chạy script
 document.addEventListener('DOMContentLoaded', () => {
-
     // --- LOGIC CHO MENU DI ĐỘNG (HAMBURGER) ---
     const hamburger = document.getElementById('hamburger');
     const navMenu = document.getElementById('nav-menu');
-
     if (hamburger && navMenu) {
         hamburger.addEventListener('click', () => {
             navMenu.classList.toggle('active');
@@ -17,7 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const themePickerOptions = document.getElementById('theme-picker-options');
     const themeSwatches = document.querySelectorAll('.theme-swatch');
 
-    // 1. Áp dụng theme đã lưu từ lần truy cập trước
+    // 1. Áp dụng theme đã lưu khi tải trang
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme) {
         body.dataset.theme = savedTheme;
@@ -26,7 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 2. Xử lý việc bật/tắt menu chọn màu
     if (themePickerToggle && themePickerOptions) {
         themePickerToggle.addEventListener('click', (event) => {
-            event.stopPropagation(); // Ngăn sự kiện click lan ra ngoài
+            event.stopPropagation();
             themePickerOptions.classList.toggle('hidden');
         });
     }
@@ -36,10 +33,10 @@ document.addEventListener('DOMContentLoaded', () => {
         themeSwatches.forEach(swatch => {
             swatch.addEventListener('click', () => {
                 const themeName = swatch.dataset.themeName;
-                body.dataset.theme = themeName; // Áp dụng theme mới
-                localStorage.setItem('theme', themeName); // Lưu lựa chọn vào bộ nhớ
+                body.dataset.theme = themeName;
+                localStorage.setItem('theme', themeName);
                 if (themePickerOptions) {
-                    themePickerOptions.classList.add('hidden'); // Ẩn menu đi sau khi chọn
+                    themePickerOptions.classList.add('hidden');
                 }
             });
         });
@@ -52,4 +49,20 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // --- LOGIC CHO HIỆU ỨNG EQUALIZER ---
+    const equalizer = document.getElementById('equalizer-container');
+    if (equalizer) {
+        const bars = 50; // Số lượng cột sóng
+        for (let i = 0; i < bars; i++) {
+            const bar = document.createElement('div');
+            bar.classList.add('bar');
+            equalizer.appendChild(bar);
+        }
+
+        setInterval(() => {
+            document.querySelectorAll('.bar').forEach(bar => {
+                bar.style.height = `${Math.random() * 80 + 5}%`;
+            });
+        }, 150);
+    }
 });

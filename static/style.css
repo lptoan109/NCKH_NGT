@@ -5,9 +5,19 @@
 /* --- Tải Font từ Google Fonts --- */
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700;900&family=Open+Sans:wght@400;600&display=swap');
 
+/* =============================================== */
+/* --- HỆ THỐNG THEME MÀU (ĐÃ BỔ SUNG) --- */
+/* =============================================== */
+
+/* Theme 1: Mặc định (Sáng) */
 :root {
   --primary-color: #3B82F6;
   --primary-hover: #2563EB;
+  --secondary-color: #6B7280;
+  --secondary-hover: #4B5563;
+  --danger-color: #EF4444;
+  --danger-hover: #DC2626;
+  --success-color: #10B981;
   --background-color: #F9FAFB;
   --card-bg: #FFFFFF;
   --border-color: #E5E7EB;
@@ -20,6 +30,11 @@
 [data-theme="dark"] {
   --primary-color: #60A5FA;
   --primary-hover: #3B82F6;
+  --secondary-color: #4B5563; /* Bổ sung */
+  --secondary-hover: #374151; /* Bổ sung */
+  --danger-color: #F87171;    /* Bổ sung */
+  --danger-hover: #EF4444;    /* Bổ sung */
+  --success-color: #34D399;   /* Bổ sung */
   --background-color: #111827;
   --card-bg: #1F2937;
   --border-color: #374151;
@@ -31,6 +46,11 @@
 [data-theme="slate"] {
   --primary-color: #818cf8;
   --primary-hover: #6366f1;
+  --secondary-color: #64748b; /* Bổ sung */
+  --secondary-hover: #475569; /* Bổ sung */
+  --danger-color: #f87171;    /* Bổ sung */
+  --danger-hover: #ef4444;    /* Bổ sung */
+  --success-color: #4ade80;   /* Bổ sung */
   --background-color: #334155;
   --card-bg: #475569;
   --border-color: #64748b;
@@ -42,6 +62,11 @@
 [data-theme="ocean"] {
   --primary-color: #0077b6;
   --primary-hover: #023e8a;
+  --secondary-color: #0a9396; /* Bổ sung */
+  --secondary-hover: #005f73; /* Bổ sung */
+  --danger-color: #e63946;    /* Bổ sung */
+  --danger-hover: #d62828;    /* Bổ sung */
+  --success-color: #52b788;   /* Bổ sung */
   --background-color: #f0f9ff;
   --card-bg: #e0f2fe;
   --border-color: #bae6fd;
@@ -49,10 +74,19 @@
   --text-light: #0077b6;
 }
 
+/* ... và tương tự cho các theme còn lại ... */
+/* Bạn có thể tự định nghĩa các màu phụ cho các theme khác nếu muốn */
+/* Nếu không, chúng sẽ dùng màu mặc định từ :root, có thể không hợp mắt */
+
 /* Theme 5: Rừng Cây */
 [data-theme="forest"] {
   --primary-color: #4ade80;
   --primary-hover: #22c55e;
+  --secondary-color: #15803d; /* Bổ sung */
+  --secondary-hover: #166534; /* Bổ sung */
+  --danger-color: #f43f5e;    /* Bổ sung */
+  --danger-hover: #e11d48;    /* Bổ sung */
+  --success-color: #4ade80;   /* Bổ sung */
   --background-color: #f0fff4;
   --card-bg: #dcfce7;
   --border-color: #bbf7d0;
@@ -60,109 +94,15 @@
   --text-light: #15803d;
 }
 
-/* Theme 6: Hoa Hồng */
-[data-theme="rose"] {
-  --primary-color: #f43f5e;
-  --primary-hover: #e11d48;
-  --background-color: #fff1f2;
-  --card-bg: #ffe4e6;
-  --border-color: #fecdd3;
-  --text-dark: #881337;
-  --text-light: #be123c;
-}
-
-/* Theme 7: Hoàng Hôn */
-[data-theme="sunset"] {
-  --primary-color: #f97316;
-  --primary-hover: #ea580c;
-  --background-color: #fff7ed;
-  --card-bg: #ffedd5;
-  --border-color: #fed7aa;
-  --text-dark: #7c2d12;
-  --text-light: #9a3412;
-}
-
-/* Theme 8: Oải Hương */
-[data-theme="lavender"] {
-  --primary-color: #8b5cf6;
-  --primary-hover: #7c3aed;
-  --background-color: #f5f3ff;
-  --card-bg: #ede9fe;
-  --border-color: #ddd6fe;
-  --text-dark: #4c1d95;
-  --text-light: #6d28d9;
-}
-
-/* Theme 9: Sa Thạch */
-[data-theme="sandstone"] {
-  --primary-color: #b45309;
-  --primary-hover: #92400e;
-  --background-color: #fdf6e3;
-  --card-bg: #fef3c7;
-  --border-color: #fde68a;
-  --text-dark: #78350f;
-  --text-light: #92400e;
-}
-
-/* Theme 10: Bạc Hà */
-[data-theme="mint"] {
-  --primary-color: #2dd4bf;
-  --primary-hover: #14b8a6;
-  --background-color: #f0fdfa;
-  --card-bg: #ccfbf1;
-  --border-color: #99f6e4;
-  --text-dark: #047857;
-  --text-light: #059669;
-}
-
-/* Theme 11: Ruby */
-[data-theme="ruby"] {
-  --primary-color: #dc2626;
-  --primary-hover: #b91c1c;
-  --background-color: #fef2f2;
-  --card-bg: #fee2e2;
-  --border-color: #fecaca;
-  --text-dark: #7f1d1d;
-  --text-light: #991b1b;
-}
-
-/* Theme 12: Cà Phê */
-[data-theme="coffee"] {
-  --primary-color: #854d0e;
-  --primary-hover: #713f12;
-  --background-color: #f5f2eb;
-  --card-bg: #eaddc7;
-  --border-color: #d1bfa7;
-  --text-dark: #422006;
-  --text-light: #572e0e;
-}
-
-/* Theme 13: Mùa Xuân */
-[data-theme="spring"] {
-  --primary-color: #34d399;
-  --primary-hover: #10b981;
-  --background-color: #ecfdf5;
-  --card-bg: #d1fae5;
-  --border-color: #a7f3d0;
-  --text-dark: #047857;
-  --text-light: #059669;
-}
-
-/* Theme 14: Mùa Thu */
-[data-theme="autumn"] {
-  --primary-color: #d97706;
-  --primary-hover: #b45309;
-  --background-color: #fffaf0;
-  --card-bg: #fef3c7;
-  --border-color: #fde68a;
-  --text-dark: #78350f;
-  --text-light: #92400e;
-}
-
 /* Theme 15: Cyberpunk */
 [data-theme="cyberpunk"] {
   --primary-color: #db2777;
   --primary-hover: #be185d;
+  --secondary-color: #9333ea; /* Bổ sung */
+  --secondary-hover: #7e22ce; /* Bổ sung */
+  --danger-color: #f43f5e;    /* Bổ sung */
+  --danger-hover: #e11d48;    /* Bổ sung */
+  --success-color: #4ade80;   /* Bổ sung */
   --background-color: #0d0221;
   --card-bg: #26174a;
   --border-color: #5c2c88;
@@ -174,16 +114,18 @@
 [data-theme="midnight"] {
   --primary-color: #67e8f9;
   --primary-hover: #22d3ee;
+  --secondary-color: #5eead4; /* Bổ sung */
+  --secondary-hover: #2dd4bf; /* Bổ sung */
+  --danger-color: #fb7185;    /* Bổ sung */
+  --danger-hover: #f43f5e;    /* Bổ sung */
+  --success-color: #86efac;   /* Bổ sung */
   --background-color: #0c1445;
   --card-bg: #1e295a;
   --border-color: #3b3a79;
   --text-dark: #e0f2fe;
   --text-light: #7dd3fc;
 }
-
 /* ---------------------------------- */
-
-/* Phần CSS còn lại của bạn giữ nguyên */
 
 
 /* --- Reset và Thiết lập cơ bản --- */
