@@ -117,8 +117,8 @@ def logout():
 
 @app.route('/login/google')
 def login_google():
-    # Sửa cứng URI để đảm bảo luôn đúng trên PythonAnywhere
-    redirect_uri = 'http://ngt.pythonanywhere.com/authorize'
+    # Sửa http thành https ở dòng dưới
+    redirect_uri = 'https://ngt.pythonanywhere.com/authorize'
     return google.authorize_redirect(redirect_uri)
 
 @app.route('/authorize')
