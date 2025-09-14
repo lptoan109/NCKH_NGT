@@ -6,17 +6,14 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700;900&family=Open+Sans:wght@400;600&display=swap');
 
 /* =============================================== */
-/* --- HỆ THỐNG THEME MÀU (ĐÃ BỔ SUNG) --- */
+/* --- HỆ THỐNG THEME MÀU (16 THEMES) --- */
 /* =============================================== */
 
 /* Theme 1: Mặc định (Sáng) */
 :root {
-  --primary-color: #3B82F6;
-  --primary-hover: #2563EB;
-  --secondary-color: #6B7280;
-  --secondary-hover: #4B5563;
-  --danger-color: #EF4444;
-  --danger-hover: #DC2626;
+  --primary-color: #3B82F6; --primary-hover: #2563EB;
+  --secondary-color: #6B7280; --secondary-hover: #4B5563;
+  --danger-color: #EF4444; --danger-hover: #DC2626;
   --success-color: #10B981;
   --background-color: #F9FAFB;
   --card-bg: #FFFFFF;
@@ -28,104 +25,153 @@
 
 /* Theme 2: Tối */
 [data-theme="dark"] {
-  --primary-color: #60A5FA;
-  --primary-hover: #3B82F6;
-  --secondary-color: #4B5563; /* Bổ sung */
-  --secondary-hover: #374151; /* Bổ sung */
-  --danger-color: #F87171;    /* Bổ sung */
-  --danger-hover: #EF4444;    /* Bổ sung */
-  --success-color: #34D399;   /* Bổ sung */
-  --background-color: #111827;
-  --card-bg: #1F2937;
-  --border-color: #374151;
-  --text-dark: #F9FAFB;
-  --text-light: #9CA3AF;
+  --primary-color: #60A5FA; --primary-hover: #3B82F6;
+  --secondary-color: #4B5563; --secondary-hover: #374151;
+  --danger-color: #F87171; --danger-hover: #EF4444;
+  --success-color: #34D399;
+  --background-color: #111827; --card-bg: #1F2937;
+  --border-color: #374151; --text-dark: #F9FAFB; --text-light: #9CA3AF;
 }
 
 /* Theme 3: Xám Xanh */
 [data-theme="slate"] {
-  --primary-color: #818cf8;
-  --primary-hover: #6366f1;
-  --secondary-color: #64748b; /* Bổ sung */
-  --secondary-hover: #475569; /* Bổ sung */
-  --danger-color: #f87171;    /* Bổ sung */
-  --danger-hover: #ef4444;    /* Bổ sung */
-  --success-color: #4ade80;   /* Bổ sung */
-  --background-color: #334155;
-  --card-bg: #475569;
-  --border-color: #64748b;
-  --text-dark: #e2e8f0;
-  --text-light: #94a3b8;
+  --primary-color: #818cf8; --primary-hover: #6366f1;
+  --secondary-color: #64748b; --secondary-hover: #475569;
+  --danger-color: #f87171; --danger-hover: #ef4444;
+  --success-color: #4ade80;
+  --background-color: #334155; --card-bg: #475569;
+  --border-color: #64748b; --text-dark: #e2e8f0; --text-light: #94a3b8;
 }
 
 /* Theme 4: Đại dương */
 [data-theme="ocean"] {
-  --primary-color: #0077b6;
-  --primary-hover: #023e8a;
-  --secondary-color: #0a9396; /* Bổ sung */
-  --secondary-hover: #005f73; /* Bổ sung */
-  --danger-color: #e63946;    /* Bổ sung */
-  --danger-hover: #d62828;    /* Bổ sung */
-  --success-color: #52b788;   /* Bổ sung */
-  --background-color: #f0f9ff;
-  --card-bg: #e0f2fe;
-  --border-color: #bae6fd;
-  --text-dark: #03045e;
-  --text-light: #0077b6;
+  --primary-color: #0077b6; --primary-hover: #023e8a;
+  --secondary-color: #0a9396; --secondary-hover: #005f73;
+  --danger-color: #e63946; --danger-hover: #d62828;
+  --success-color: #52b788;
+  --background-color: #f0f9ff; --card-bg: #e0f2fe;
+  --border-color: #bae6fd; --text-dark: #03045e; --text-light: #0077b6;
 }
-
-/* ... và tương tự cho các theme còn lại ... */
-/* Bạn có thể tự định nghĩa các màu phụ cho các theme khác nếu muốn */
-/* Nếu không, chúng sẽ dùng màu mặc định từ :root, có thể không hợp mắt */
 
 /* Theme 5: Rừng Cây */
 [data-theme="forest"] {
-  --primary-color: #4ade80;
-  --primary-hover: #22c55e;
-  --secondary-color: #15803d; /* Bổ sung */
-  --secondary-hover: #166534; /* Bổ sung */
-  --danger-color: #f43f5e;    /* Bổ sung */
-  --danger-hover: #e11d48;    /* Bổ sung */
-  --success-color: #4ade80;   /* Bổ sung */
-  --background-color: #f0fff4;
-  --card-bg: #dcfce7;
-  --border-color: #bbf7d0;
-  --text-dark: #14532d;
-  --text-light: #15803d;
+  --primary-color: #4ade80; --primary-hover: #22c55e;
+  --secondary-color: #15803d; --secondary-hover: #166534;
+  --danger-color: #f43f5e; --danger-hover: #e11d48;
+  --success-color: #4ade80;
+  --background-color: #f0fff4; --card-bg: #dcfce7;
+  --border-color: #bbf7d0; --text-dark: #14532d; --text-light: #15803d;
+}
+
+/* Theme 6: Hoa Hồng */
+[data-theme="rose"] {
+  --primary-color: #f43f5e; --primary-hover: #e11d48;
+  --secondary-color: #be123c; --secondary-hover: #9f1239;
+  --danger-color: #f43f5e; --danger-hover: #e11d48;
+  --success-color: #34d399;
+  --background-color: #fff1f2; --card-bg: #ffe4e6;
+  --border-color: #fecdd3; --text-dark: #881337; --text-light: #be123c;
+}
+
+/* Theme 7: Hoàng Hôn */
+[data-theme="sunset"] {
+  --primary-color: #f97316; --primary-hover: #ea580c;
+  --secondary-color: #9a3412; --secondary-hover: #7c2d12;
+  --danger-color: #ef4444; --danger-hover: #dc2626;
+  --success-color: #10b981;
+  --background-color: #fff7ed; --card-bg: #ffedd5;
+  --border-color: #fed7aa; --text-dark: #7c2d12; --text-light: #9a3412;
+}
+
+/* Theme 8: Oải Hương */
+[data-theme="lavender"] {
+  --primary-color: #8b5cf6; --primary-hover: #7c3aed;
+  --secondary-color: #6d28d9; --secondary-hover: #5b21b6;
+  --danger-color: #e11d48; --danger-hover: #be1239;
+  --success-color: #34d399;
+  --background-color: #f5f3ff; --card-bg: #ede9fe;
+  --border-color: #ddd6fe; --text-dark: #4c1d95; --text-light: #6d28d9;
+}
+
+/* Theme 9: Sa Thạch */
+[data-theme="sandstone"] {
+  --primary-color: #b45309; --primary-hover: #92400e;
+  --secondary-color: #92400e; --secondary-hover: #78350f;
+  --danger-color: #dc2626; --danger-hover: #b91c1c;
+  --success-color: #16a34a;
+  --background-color: #fdf6e3; --card-bg: #fef3c7;
+  --border-color: #fde68a; --text-dark: #78350f; --text-light: #92400e;
+}
+
+/* Theme 10: Bạc Hà */
+[data-theme="mint"] {
+  --primary-color: #2dd4bf; --primary-hover: #14b8a6;
+  --secondary-color: #0d9488; --secondary-hover: #0f766e;
+  --danger-color: #f43f5e; --danger-hover: #e11d48;
+  --success-color: #2dd4bf;
+  --background-color: #f0fdfa; --card-bg: #ccfbf1;
+  --border-color: #99f6e4; --text-dark: #047857; --text-light: #059669;
+}
+
+/* Theme 11: Ruby */
+[data-theme="ruby"] {
+  --primary-color: #dc2626; --primary-hover: #b91c1c;
+  --secondary-color: #991b1b; --secondary-hover: #7f1d1d;
+  --danger-color: #dc2626; --danger-hover: #b91c1c;
+  --success-color: #16a34a;
+  --background-color: #fef2f2; --card-bg: #fee2e2;
+  --border-color: #fecaca; --text-dark: #7f1d1d; --text-light: #991b1b;
+}
+
+/* Theme 12: Cà Phê */
+[data-theme="coffee"] {
+  --primary-color: #854d0e; --primary-hover: #713f12;
+  --secondary-color: #713f12; --secondary-hover: #422006;
+  --danger-color: #b91c1c; --danger-hover: #991b1b;
+  --success-color: #15803d;
+  --background-color: #f5f2eb; --card-bg: #eaddc7;
+  --border-color: #d1bfa7; --text-dark: #422006; --text-light: #572e0e;
+}
+
+/* Theme 13: Mùa Xuân */
+[data-theme="spring"] {
+  --primary-color: #34d399; --primary-hover: #10b981;
+  --secondary-color: #059669; --secondary-hover: #047857;
+  --danger-color: #ef4444; --danger-hover: #dc2626;
+  --success-color: #34d399;
+  --background-color: #ecfdf5; --card-bg: #d1fae5;
+  --border-color: #a7f3d0; --text-dark: #047857; --text-light: #059669;
+}
+
+/* Theme 14: Mùa Thu */
+[data-theme="autumn"] {
+  --primary-color: #d97706; --primary-hover: #b45309;
+  --secondary-color: #92400e; --secondary-hover: #78350f;
+  --danger-color: #be123c; --danger-hover: #9f1239;
+  --success-color: #15803d;
+  --background-color: #fffaf0; --card-bg: #fef3c7;
+  --border-color: #fde68a; --text-dark: #78350f; --text-light: #92400e;
 }
 
 /* Theme 15: Cyberpunk */
 [data-theme="cyberpunk"] {
-  --primary-color: #db2777;
-  --primary-hover: #be185d;
-  --secondary-color: #9333ea; /* Bổ sung */
-  --secondary-hover: #7e22ce; /* Bổ sung */
-  --danger-color: #f43f5e;    /* Bổ sung */
-  --danger-hover: #e11d48;    /* Bổ sung */
-  --success-color: #4ade80;   /* Bổ sung */
-  --background-color: #0d0221;
-  --card-bg: #26174a;
-  --border-color: #5c2c88;
-  --text-dark: #f0abfc;
-  --text-light: #c084fc;
+  --primary-color: #db2777; --primary-hover: #be185d;
+  --secondary-color: #9333ea; --secondary-hover: #7e22ce;
+  --danger-color: #f43f5e; --danger-hover: #e11d48;
+  --success-color: #4ade80;
+  --background-color: #0d0221; --card-bg: #26174a;
+  --border-color: #5c2c88; --text-dark: #f0abfc; --text-light: #c084fc;
 }
 
 /* Theme 16: Đêm Khuya */
 [data-theme="midnight"] {
-  --primary-color: #67e8f9;
-  --primary-hover: #22d3ee;
-  --secondary-color: #5eead4; /* Bổ sung */
-  --secondary-hover: #2dd4bf; /* Bổ sung */
-  --danger-color: #fb7185;    /* Bổ sung */
-  --danger-hover: #f43f5e;    /* Bổ sung */
-  --success-color: #86efac;   /* Bổ sung */
-  --background-color: #0c1445;
-  --card-bg: #1e295a;
-  --border-color: #3b3a79;
-  --text-dark: #e0f2fe;
-  --text-light: #7dd3fc;
+  --primary-color: #67e8f9; --primary-hover: #22d3ee;
+  --secondary-color: #5eead4; --secondary-hover: #2dd4bf;
+  --danger-color: #fb7185; --danger-hover: #f43f5e;
+  --success-color: #86efac;
+  --background-color: #0c1445; --card-bg: #1e295a;
+  --border-color: #3b3a79; --text-dark: #e0f2fe; --text-light: #7dd3fc;
 }
-/* ---------------------------------- */
 
 
 /* --- Reset và Thiết lập cơ bản --- */

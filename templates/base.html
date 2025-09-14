@@ -51,8 +51,10 @@
                 {% if current_user.is_authenticated %}
                     <a href="{{ url_for('profile') }}">
                         {% if current_user.picture %}
-                            <img src="{{ url_for('static', filename=current_user.picture.split('/')[-1]) }}" alt="User Avatar" class="avatar-image-nav">
+                            {# Dùng trực tiếp đường dẫn đã lưu trong database #}
+                            <img src="{{ current_user.picture }}" alt="User Avatar" class="avatar-image-nav">
                         {% else %}
+                            {# Nếu không có ảnh, hiển thị chữ cái đầu #}
                             <div class="avatar-text">{{ current_user.username[0]|upper }}</div>
                         {% endif %}
                     </a>
