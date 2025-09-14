@@ -13,10 +13,7 @@
         </div>
 
         <div class="form-group">
-            <div style="display: flex; justify-content: space-between; align-items: baseline;">
-                <label for="password">Mật khẩu</label>
-                <a href="{{ url_for('forgot_password') }}" class="forgot-password-link">Quên mật khẩu?</a>
-            </div>
+            <label for="password">Mật khẩu</label>
             <input type="password" id="password" name="password" required>
         </div>
 
@@ -33,6 +30,8 @@
 
         <p class="form-switch">
             Chưa có tài khoản? <a href="{{ url_for('register') }}">Đăng ký ngay</a>
+            <br>
+            <a href="{{ url_for('forgot_password') }}" class="forgot-password-link">Quên mật khẩu?</a>
         </p>
     </form>
 </div>
