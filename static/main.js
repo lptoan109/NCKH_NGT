@@ -66,26 +66,23 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 150);
     }
 
-    // --- LOGIC MỚI CHO HIỆN/ẨN MẬT KHẨU ---
-    const togglePassword = document.getElementById('togglePassword');
-    const passwordInput = document.getElementById('password');
+    // --- LOGIC MỚI CHO HIỆN/ẨN MẬT KHẨU (PHIÊN BẢN NÂNG CẤP) ---
+    // Tìm tất cả các icon con mắt
+    const togglePasswordIcons = document.querySelectorAll('.toggle-password-icon');
 
-    if (togglePassword && passwordInput) {
-        togglePassword.addEventListener('click', function () {
-            // Chuyển đổi thuộc tính 'type' của ô input
+    // Lặp qua từng icon và gán sự kiện click
+    togglePasswordIcons.forEach(icon => {
+        icon.addEventListener('click', function () {
+            // Tìm ô input ngay phía trước icon
+            const passwordInput = this.previousElementSibling; 
+            
+            // Chuyển đổi type của input
             const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
             passwordInput.setAttribute('type', type);
-
-            // Cập nhật lại icon cho đúng
-            if (type === 'password') {
-                // Nếu đang là dạng password, hiển thị icon con mắt
-                this.classList.remove('fa-eye-slash');
-                this.classList.add('fa-eye');
-            } else {
-                // Nếu đang là dạng text, hiển thị icon con mắt gạch chéo
-                this.classList.remove('fa-eye');
-                this.classList.add('fa-eye-slash');
-            }
+            
+            // Chuyển đổi class của icon (từ fa-eye sang fa-eye-slash và ngược lại)
+            this.classList.toggle('fa-eye-slash');
+            this.classList.toggle('fa-eye');
         });
-    }
+    });
 });

@@ -400,21 +400,18 @@ main {
     position: relative; /* Tạo một hệ quy chiếu cho icon */
 }
 
-/* Định vị và tạo kiểu cho icon con mắt */
-#togglePassword {
+.toggle-password-icon {
     position: absolute;
     top: 50%;
-    right: 15px; /* Khoảng cách từ lề phải */
-    transform: translateY(-50%); /* Căn giữa theo chiều dọc */
+    right: 15px;
+    transform: translateY(-50%);
     cursor: pointer;
     color: var(--text-light);
 }
 
-/* Đổi màu khi hover */
-#togglePassword:hover {
+.toggle-password-icon:hover {
     color: var(--text-dark);
 }
-
 /* --- THÔNG BÁO FLASH --- */
 .flash-messages {
     max-width: 1200px;
