@@ -65,4 +65,19 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }, 150);
     }
+
+    // --- LOGIC MỚI CHO HIỆN/ẨN MẬT KHẨU ---
+    const togglePassword = document.getElementById('togglePassword');
+    const passwordInput = document.getElementById('password');
+
+    if (togglePassword && passwordInput) {
+        togglePassword.addEventListener('click', function () {
+            // Chuyển đổi thuộc tính 'type' của ô input
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            
+            // Chuyển đổi icon con mắt
+            this.classList.toggle('fa-eye-slash');
+        });
+    }
 });

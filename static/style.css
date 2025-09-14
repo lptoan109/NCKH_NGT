@@ -394,6 +394,27 @@ main {
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
 }
 
+/* style.css */
+
+.password-wrapper {
+    position: relative; /* Tạo một hệ quy chiếu cho icon */
+}
+
+/* Định vị và tạo kiểu cho icon con mắt */
+#togglePassword {
+    position: absolute;
+    top: 50%;
+    right: 15px; /* Khoảng cách từ lề phải */
+    transform: translateY(-50%); /* Căn giữa theo chiều dọc */
+    cursor: pointer;
+    color: var(--text-light);
+}
+
+/* Đổi màu khi hover */
+#togglePassword:hover {
+    color: var(--text-dark);
+}
+
 /* --- THÔNG BÁO FLASH --- */
 .flash-messages {
     max-width: 1200px;
