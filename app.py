@@ -2,6 +2,7 @@ import os
 from datetime import datetime
 import config # Import file config.py
 
+from itsdangerous import URLSafeTimedSerializer
 from flask import Flask, url_for, session, redirect, render_template, request, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
@@ -261,3 +262,76 @@ if __name__ == '__main__':
     with app.app_context():
         db.create_all()
     app.run(debug=True)
+
+# app.py
+
+# --- HÀM TẠO TOKEN BẢO MẬT ---
+def generate_reset_token(email):
+    serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
+    return serializer.dumps(email, salt='password-reset-salt')
+
+# --- HÀM XÁC THỰC TOKEN ---
+def confirm_reset_token(token, expiration=3600): # Hết hạn sau 1 giờ
+    serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
+    try:
+        email = serializer.loads(
+            token,
+            salt='password-reset-salt',
+            max_age=expiration
+        )
+        return email
+    except Exception:
+        return False
+
+# --- ROUTE XỬ LÝ QUÊN MẬT KHẨU ---
+@app.route('/forgot_password', methods=['GET', 'POST'])
+def forgot_password():
+    if request.method == 'POST':
+        email = request.form.get('email')
+        user = User.query.filter_by(email=email).first()
+        if user:
+            token = generate_reset_token(user.email)
+            reset_url = url_for('reset_password', token=token, _external=True)
+            
+            # Soạn và gửi email
+            msg = Message('Yêu cầu đặt lại mật khẩu - NGT Cough',
+                          sender=("Website NGT Cough", app.config['MAIL_USERNAME']),
+                          recipients=[user.email])
+            msg.body = f'''Chào {user.username},
+
+Để đặt lại mật khẩu của bạn, vui lòng nhấn vào đường link sau:
+{reset_url}
+
+Nếu bạn không phải là người yêu cầu, vui lòng bỏ qua email này. Link sẽ hết hạn sau 1 giờ.
+
+Trân trọng,
+Đội ngũ NGT Cough'''
+            mail.send(msg)
+            
+        # Dù email có tồn tại hay không, vẫn hiện thông báo này để bảo mật
+        flash('Nếu email của bạn tồn tại trong hệ thống, một hướng dẫn đặt lại mật khẩu đã được gửi đến.', 'success')
+        return redirect(url_for('login'))
+        
+    return render_template('forgot_password.html')
+
+
+# --- ROUTE XỬ LÝ ĐẶT LẠI MẬT KHẨU ---
+@app.route('/reset_password/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    email = confirm_reset_token(token)
+    if not email:
+        flash('Đường link đặt lại mật khẩu không hợp lệ hoặc đã hết hạn.', 'danger')
+        return redirect(url_for('forgot_password'))
+
+    if request.method == 'POST':
+        new_password = request.form.get('password')
+        hashed_password = bcrypt.generate_password_hash(new_password).decode('utf-8')
+        
+        user = User.query.filter_by(email=email).first()
+        user.password_hash = hashed_password
+        db.session.commit()
+        
+        flash('Mật khẩu của bạn đã được cập nhật thành công! Vui lòng đăng nhập.', 'success')
+        return redirect(url_for('login'))
+
+    return render_template('reset_password.html', token=token)
