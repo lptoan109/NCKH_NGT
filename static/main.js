@@ -75,9 +75,17 @@ document.addEventListener('DOMContentLoaded', () => {
             // Chuyển đổi thuộc tính 'type' của ô input
             const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
             passwordInput.setAttribute('type', type);
-            
-            // Chuyển đổi icon con mắt
-            this.classList.toggle('fa-eye-slash');
+
+            // Cập nhật lại icon cho đúng
+            if (type === 'password') {
+                // Nếu đang là dạng password, hiển thị icon con mắt
+                this.classList.remove('fa-eye-slash');
+                this.classList.add('fa-eye');
+            } else {
+                // Nếu đang là dạng text, hiển thị icon con mắt gạch chéo
+                this.classList.remove('fa-eye');
+                this.classList.add('fa-eye-slash');
+            }
         });
     }
 });
