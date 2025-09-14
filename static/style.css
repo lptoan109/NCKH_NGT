@@ -123,34 +123,34 @@
   --border-color: #fecaca; --text-dark: #7f1d1d; --text-light: #991b1b;
 }
 
-/* Theme 12: Cà Phê */
-[data-theme="coffee"] {
-  --primary-color: #854d0e; --primary-hover: #713f12;
-  --secondary-color: #713f12; --secondary-hover: #422006;
-  --danger-color: #b91c1c; --danger-hover: #991b1b;
-  --success-color: #15803d;
-  --background-color: #f5f2eb; --card-bg: #eaddc7;
-  --border-color: #d1bfa7; --text-dark: #422006; --text-light: #572e0e;
+/* THEME MỚI 1: Xanh Mòng Két */
+[data-theme="teal"] {
+  --primary-color: #14b8a6; --primary-hover: #0d9488;
+  --secondary-color: #0f766e; --secondary-hover: #134e4a;
+  --danger-color: #f43f5e; --danger-hover: #e11d48;
+  --success-color: #2dd4bf;
+  --background-color: #f0fdfa; --card-bg: #ccfbf1;
+  --border-color: #99f6e4; --text-dark: #134e4a; --text-light: #115e59;
 }
 
-/* Theme 13: Mùa Xuân */
-[data-theme="spring"] {
-  --primary-color: #34d399; --primary-hover: #10b981;
-  --secondary-color: #059669; --secondary-hover: #047857;
-  --danger-color: #ef4444; --danger-hover: #dc2626;
+/* THEME MỚI 2: Bầu Trời */
+[data-theme="sky"] {
+  --primary-color: #38bdf8; --primary-hover: #0ea5e9;
+  --secondary-color: #0284c7; --secondary-hover: #0369a1;
+  --danger-color: #fb7185; --danger-hover: #f43f5e;
+  --success-color: #4ade80;
+  --background-color: #f0f9ff; --card-bg: #e0f2fe;
+  --border-color: #bae6fd; --text-dark: #075985; --text-light: #0369a1;
+}
+
+/* THEME MỚI 3: Chàm */
+[data-theme="indigo"] {
+  --primary-color: #6366f1; --primary-hover: #4f46e5;
+  --secondary-color: #4338ca; --secondary-hover: #3730a3;
+  --danger-color: #f472b6; --danger-hover: #ec4899;
   --success-color: #34d399;
-  --background-color: #ecfdf5; --card-bg: #d1fae5;
-  --border-color: #a7f3d0; --text-dark: #047857; --text-light: #059669;
-}
-
-/* Theme 14: Mùa Thu */
-[data-theme="autumn"] {
-  --primary-color: #d97706; --primary-hover: #b45309;
-  --secondary-color: #92400e; --secondary-hover: #78350f;
-  --danger-color: #be123c; --danger-hover: #9f1239;
-  --success-color: #15803d;
-  --background-color: #fffaf0; --card-bg: #fef3c7;
-  --border-color: #fde68a; --text-dark: #78350f; --text-light: #92400e;
+  --background-color: #eef2ff; --card-bg: #e0e7ff;
+  --border-color: #c7d2fe; --text-dark: #312e81; --text-light: #4338ca;
 }
 
 /* Theme 15: Cyberpunk */
