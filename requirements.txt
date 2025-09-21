@@ -10,6 +10,6 @@ gunicorn
 Flask-Mail
 Flask-Babel
 tflite-runtime
-librosa
+soundfile
 numpy
 noisereduce
