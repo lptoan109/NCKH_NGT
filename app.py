@@ -60,9 +60,12 @@ class User(db.Model, UserMixin):
     picture = db.Column(db.String(200), nullable=True)
     recordings = db.relationship('Recording', backref='user', lazy=True)
 
-class Recording(db.Model):
+class Prediction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     filename = db.Column(db.String(150), nullable=False)
+    # Thêm các cột để lưu kết quả
+    result = db.Column(db.String(100), nullable=False)
+    confidence = db.Column(db.String(20), nullable=False)
     timestamp = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
@@ -143,8 +146,8 @@ def authorize():
     return redirect(url_for('diagnose'))
 
 @app.route('/diagnose')
-# Xóa @login_required ở đây
 def diagnose():
+    # Route này không cần login, ai cũng có thể truy cập trang
     return render_template('diagnose.html')
 
 @app.route('/about')
@@ -227,42 +230,55 @@ def edit_profile():
     return render_template('edit_profile.html')
 
 @app.route('/upload_audio', methods=['POST'])
-# Xóa @login_required ở đây
 def upload_audio():
+    """
+    Xử lý file âm thanh được tải lên, dự đoán và lưu kết quả.
+    Route này không yêu cầu đăng nhập.
+    """
     audio_file = request.files.get('audio_data')
     if not audio_file:
-        return {"error": "No audio file"}, 400
-    
-    upload_folder = os.path.join(app.root_path, 'static', 'uploads')
-    os.makedirs(upload_folder, exist_ok=True)
+        return jsonify({"error": "Không có file âm thanh"}), 400
 
-    # Tạo một tên file tạm thời không phụ thuộc vào user
-    timestamp_str = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    # Lưu file tạm thời để xử lý
-    temp_filename = f"temp_{timestamp_str}.wav"
-    temp_filepath = os.path.join(upload_folder, temp_filename)
-    audio_file.save(temp_filepath)
-    # --- GỌI MODEL AI ĐỂ XỬ LÝ FILE ---
-    ai_result = ai_model.predict(temp_filepath)
-
-    # Kiểm tra nếu người dùng đã đăng nhập
-    if current_user.is_authenticated:
-        # Nếu đã đăng nhập, tạo tên file và lưu vào lịch sử như cũ
-        filename = secure_filename(f"user_{current_user.id}_{timestamp_str}.wav")
-        filepath = os.path.join(upload_folder, filename)
-        audio_file.save(filepath)
-        
-        new_recording = Recording(filename=filename, user_id=current_user.id)
-        db.session.add(new_recording)
-        db.session.commit()
-    else:
-        # Nếu là khách, tạo tên file tạm và không lưu vào database
-        filename = secure_filename(f"guest_{timestamp_str}.wav")
-        filepath = os.path.join(upload_folder, filename)
-        audio_file.save(filepath)
+    # --- Logic lưu file và dự đoán được đơn giản hóa ---
     
-    # Trả về kết quả chẩn đoán
-    return jsonify({"success": True, "diagnosis_result": ai_result})
+    # 1. Tạo một tên file duy nhất
+    timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
+    # Phân biệt file của user và guest
+    user_prefix = f"user_{current_user.id}" if current_user.is_authenticated else "guest"
+    filename = secure_filename(f"{user_prefix}_{timestamp_str}.wav")
+    filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+
+    # 2. Lưu file MỘT LẦN DUY NHẤT
+    audio_file.save(filepath)
+    
+    try:
+        # 3. Gọi model AI để xử lý file đã lưu
+        ai_result = ai_model.predict(filepath)
+
+        # 4. Nếu người dùng đã đăng nhập, lưu kết quả vào lịch sử
+        if current_user.is_authenticated:
+            if 'error' not in ai_result:
+                new_prediction = Prediction(
+                    filename=filename,
+                    user_id=current_user.id,
+                    result=ai_result.get('predicted_class', 'N/A'),
+                    confidence=ai_result.get('confidence', '0%')
+                )
+                db.session.add(new_prediction)
+                db.session.commit()
+        else:
+            # Nếu là khách, chúng ta có thể xóa file tạm sau khi dự đoán để tiết kiệm dung lượng
+            # os.remove(filepath) # Bỏ comment dòng này nếu bạn muốn xóa file của guest
+            pass
+
+        # 5. Trả về kết quả chẩn đoán cho frontend
+        return jsonify({"success": True, "diagnosis_result": ai_result})
+
+    except Exception as e:
+        # Xử lý nếu có lỗi từ model AI
+        print(f"Lỗi khi dự đoán AI: {e}")
+        return jsonify({"error": "Lỗi máy chủ trong quá trình phân tích"}), 500
+
 
 # --- 4. CHẠY ỨNG DỤNG ---
 if __name__ == '__main__':
