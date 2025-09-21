@@ -268,7 +268,7 @@ def upload_audio():
                 db.session.commit()
         else:
             # Nếu là khách, chúng ta có thể xóa file tạm sau khi dự đoán để tiết kiệm dung lượng
-            # os.remove(filepath) # Bỏ comment dòng này nếu bạn muốn xóa file của guest
+            os.remove(filepath) # Bỏ comment dòng này nếu bạn muốn xóa file của guest
             pass
 
         # 5. Trả về kết quả chẩn đoán cho frontend
