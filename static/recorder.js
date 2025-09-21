@@ -89,27 +89,43 @@ document.addEventListener('DOMContentLoaded', () => {
     function stopTimer() {
         clearInterval(timerInterval);
     }
+    // Hàm tải file lên và hiển thị kết quả AI
     async function uploadAudio(audioBlob) {
+        // Chuyển giao diện sang màn hình kết quả và hiển thị thông báo chờ
         recordingPanel.style.display = 'none';
         resultsPanel.style.display = 'block';
-        resultMessage.textContent = 'Đang phân tích... Vui lòng chờ trong giây lát.';
-        resultPlayerContainer.style.display = 'none';
+        resultMessage.innerHTML = '<p class="text-info">Đang phân tích... Vui lòng chờ trong giây lát.</p>';
+
         const formData = new FormData();
         formData.append('audio_data', audioBlob, 'recording.wav');
+
         try {
             const response = await fetch('/upload_audio', { method: 'POST', body: formData });
-            const result = await response.json();
-            if (result.success) {
-                resultMessage.textContent = 'Phân tích thành công!';
-                const audioUrl = `/static/uploads/${result.filename}`;
-                audioPlayer.src = audioUrl;
-                resultPlayerContainer.style.display = 'block';
+            const data = await response.json();
+
+            if (data.success && data.diagnosis_result) {
+                const result = data.diagnosis_result;
+                if (result.error) {
+                    resultMessage.innerHTML = `<p class="text-danger">Lỗi: ${result.error}</p>`;
+                } else {
+                    // HIỂN THỊ KẾT QUẢ CHẨN ĐOÁN TỪ AI
+                    const className = result.predicted_class;
+                    const confidence = result.confidence;
+                    resultMessage.innerHTML = `
+                        <div class="alert alert-primary mb-0" role="alert">
+                            <h4 class="alert-heading">Kết quả Chẩn đoán</h4>
+                            <p>Dựa trên phân tích, kết quả có khả năng cao nhất là: <strong>${className}</strong></p>
+                            <hr>
+                            <p class="mb-0">Độ tự tin: ${confidence}</p>
+                        </div>
+                    `;
+                }
             } else {
-                resultMessage.textContent = 'Đã có lỗi xảy ra khi tải file lên.';
+                resultMessage.innerHTML = `<p class="text-danger">Có lỗi xảy ra từ phía server. Vui lòng thử lại.</p>`;
             }
         } catch (error) {
             console.error('Lỗi khi tải file lên:', error);
-            resultMessage.textContent = 'Lỗi mạng. Không thể kết nối đến server.';
+            resultMessage.innerHTML = `<p class="text-danger">Lỗi mạng. Không thể kết nối đến server.</p>`;
         }
     }
 });

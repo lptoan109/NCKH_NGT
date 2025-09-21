@@ -9,3 +9,7 @@ Werkzeug
 gunicorn
 Flask-Mail
 Flask-Babel
+tensorflow
+librosa
+numpy
+noisereduce

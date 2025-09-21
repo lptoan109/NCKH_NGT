@@ -10,7 +10,7 @@ from flask_bcrypt import Bcrypt
 from flask_mail import Mail, Message
 from authlib.integrations.flask_client import OAuth
 from werkzeug.utils import secure_filename
-
+from ai_predictor import CoughPredictor
 # --- 1. KHỞI TẠO VÀ CẤU HÌNH ---
 app = Flask(__name__)
 
@@ -46,6 +46,10 @@ google = oauth.register(
     server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
     client_kwargs={'scope': 'openid email profile'}
 )
+
+# --- TẢI MODEL AI MỘT LẦN KHI SERVER KHỞI ĐỘNG ---
+MODEL_FILE_PATH = os.path.join(os.path.dirname(__file__), 'models', 'student_model.keras')
+ai_model = CoughPredictor(model_path=MODEL_FILE_PATH)
 
 # --- 2. ĐỊNH NGHĨA MODEL ---
 class User(db.Model, UserMixin):
@@ -234,7 +238,13 @@ def upload_audio():
 
     # Tạo một tên file tạm thời không phụ thuộc vào user
     timestamp_str = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    
+    # Lưu file tạm thời để xử lý
+    temp_filename = f"temp_{timestamp_str}.wav"
+    temp_filepath = os.path.join(upload_folder, temp_filename)
+    audio_file.save(temp_filepath)
+    # --- GỌI MODEL AI ĐỂ XỬ LÝ FILE ---
+    ai_result = ai_model.predict(temp_filepath)
+
     # Kiểm tra nếu người dùng đã đăng nhập
     if current_user.is_authenticated:
         # Nếu đã đăng nhập, tạo tên file và lưu vào lịch sử như cũ
@@ -251,11 +261,8 @@ def upload_audio():
         filepath = os.path.join(upload_folder, filename)
         audio_file.save(filepath)
     
-    # --- TẠI ĐÂY BẠN SẼ GỌI MODEL AI ĐỂ XỬ LÝ FILE "filepath" ---
-    # ai_result = your_ai_function(filepath)
-    
-    # Trả về kết quả chẩn đoán (ví dụ)
-    return {"success": True, "filename": filename, "diagnosis_result": "Đây là kết quả AI..."}
+    # Trả về kết quả chẩn đoán
+    return jsonify({"success": True, "diagnosis_result": ai_result})
 
 # --- 4. CHẠY ỨNG DỤNG ---
 if __name__ == '__main__':
