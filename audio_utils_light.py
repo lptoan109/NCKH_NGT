@@ -105,3 +105,10 @@ def _mel_filterbank(sr, n_fft, n_mels):
             filters[i - 1, j] = (f_plus - j) / (f_plus - f_center)
             
     return filters
+
+def preprocess_input_effnet(x):
+    """
+    Tái hiện lại hàm preprocess_input của EfficientNet bằng NumPy.
+    Hàm này chuẩn hóa các giá trị pixel về khoảng [-1, 1].
+    """
+    return (x / 127.5) - 1.0

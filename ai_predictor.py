@@ -3,7 +3,6 @@ import numpy as np
 import noisereduce as nr
 import soundfile as sf
 import tflite_runtime.interpreter as tflite
-from tensorflow.keras.applications.efficientnet import preprocess_input
 import audio_utils_light as audio # Sử dụng file helper đã tạo
 
 # Các hằng số cho việc xử lý âm thanh
@@ -60,7 +59,7 @@ class CoughPredictor:
             
             spec_rgb = np.stack([db_spec, db_spec, db_spec], axis=-1)
             spec_expanded = np.expand_dims(spec_rgb, axis=0)
-            preprocessed_spec = preprocess_input(spec_expanded)
+            preprocessed_spec = audio.preprocess_input_effnet(spec_expanded)
 
             return preprocessed_spec
 
