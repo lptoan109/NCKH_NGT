@@ -2,7 +2,7 @@ import os
 import numpy as np
 import librosa
 import noisereduce as nr
-import tensorflow as tf
+import tflite_runtime.interpreter as tflite
 from tensorflow.keras.applications.efficientnet import preprocess_input
 
 # --- CÁC HẰNG SỐ TIỀN XỬ LÝ (PHẢI GIỐNG HỆT KHI HUẤN LUYỆN) ---
@@ -19,14 +19,18 @@ INPUT_SHAPE = (240, 240, 3) # Kích thước input cho EfficientNetB1
 class CoughPredictor:
     def __init__(self, model_path):
         """
-        Khởi tạo và tải mô hình AI vào bộ nhớ.
-        Args:
-            model_path (str): Đường dẫn đến file .keras của mô hình học sinh.
+        Khởi tạo và tải mô hình TFLite vào bộ nhớ.
         """
-        print(f"--- Đang tải mô hình từ: {model_path} ---")
-        self.model = tf.keras.models.load_model(model_path)
-        self.labels = ['healthy', 'asthma', 'covid', 'tuberculosis'] # Phải đúng thứ tự khi huấn luyện
-        print("--- Mô hình đã sẵn sàng! ---")
+        print(f"--- Đang tải mô hình TFLite từ: {model_path} ---")
+        self.interpreter = tflite.Interpreter(model_path=model_path)
+        self.interpreter.allocate_tensors()
+
+        # Lấy thông tin input và output
+        self.input_details = self.interpreter.get_input_details()
+        self.output_details = self.interpreter.get_output_details()
+
+        self.labels = ['healthy', 'asthma', 'covid', 'tuberculosis']
+        print("--- Mô hình TFLite đã sẵn sàng! ---")
 
     def _process_audio(self, file_path):
         """
@@ -96,25 +100,38 @@ class CoughPredictor:
             return {"error": "Không thể xử lý file âm thanh."}
 
         input_tensors = self._prepare_tensors_for_model(spectrograms)
-        
-        predictions_logits = self.model.predict(input_tensors)
-        predictions_probs = tf.nn.softmax(predictions_logits).numpy()
 
+        # --- THAY ĐỔI CÁCH DỰ ĐOÁN VỚI TFLITE ---
+        all_predictions = []
+        # TFLite thường xử lý từng ảnh một
+        for i in range(input_tensors.shape[0]):
+            # Lấy ra một segment tensor
+            single_tensor = np.expand_dims(input_tensors[i], axis=0)
+
+            # Đặt input tensor
+            self.interpreter.set_tensor(self.input_details[0]['index'], single_tensor)
+
+            # Chạy dự đoán
+            self.interpreter.invoke()
+
+            # Lấy kết quả
+            output_data = self.interpreter.get_tensor(self.output_details[0]['index'])
+            all_predictions.append(output_data[0])
+
+        predictions_logits = np.array(all_predictions)
+        # -----------------------------------------------
+
+        predictions_probs = tf.nn.softmax(predictions_logits).numpy()
         avg_prediction_probs = np.mean(predictions_probs, axis=0)
-        
+
         predicted_class_index = np.argmax(avg_prediction_probs)
         predicted_class_name = self.labels[predicted_class_index]
         confidence = float(avg_prediction_probs[predicted_class_index])
-        
-        # Đổi tên lớp để hiển thị thân thiện hơn
-        display_names = {
-            "healthy": "Khỏe mạnh",
-            "asthma": "Hen suyễn",
-            "covid": "COVID-19",
-            "tuberculosis": "Lao"
-        }
-        
+
+        display_names = {"healthy": "Khỏe mạnh", "asthma": "Hen suyễn", "covid": "COVID-19", "tuberculosis": "Lao"}
+
         return {
             "predicted_class": display_names.get(predicted_class_name, predicted_class_name),
-            "confidence": f"{confidence:.2%}"
+            "confidence": f"{confidence:.2%}",
+            "details": {display_names.get(label, label): f"{prob:.2%}" for label, prob in zip(self.labels, avg_prediction_probs)}
         }

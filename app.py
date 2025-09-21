@@ -48,7 +48,7 @@ google = oauth.register(
 )
 
 # --- TẢI MODEL AI MỘT LẦN KHI SERVER KHỞI ĐỘNG ---
-MODEL_FILE_PATH = os.path.join(os.path.dirname(__file__), 'models', 'student_model.keras')
+MODEL_FILE_PATH = os.path.join(os.path.dirname(__file__), 'models', 'student_model.tflite')
 ai_model = CoughPredictor(model_path=MODEL_FILE_PATH)
 
 # --- 2. ĐỊNH NGHĨA MODEL ---

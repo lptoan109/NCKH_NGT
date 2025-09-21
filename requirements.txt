@@ -9,7 +9,7 @@ Werkzeug
 gunicorn
 Flask-Mail
 Flask-Babel
-tensorflow
+tflite-runtime
 librosa
 numpy
 noisereduce
