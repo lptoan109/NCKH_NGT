@@ -10,7 +10,6 @@ from flask_bcrypt import Bcrypt
 from flask_mail import Mail, Message
 from authlib.integrations.flask_client import OAuth
 from werkzeug.utils import secure_filename
-from ai_predictor import CoughPredictor
 # --- 1. KHỞI TẠO VÀ CẤU HÌNH ---
 app = Flask(__name__)
 
@@ -46,10 +45,6 @@ google = oauth.register(
     server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
     client_kwargs={'scope': 'openid email profile'}
 )
-
-# --- TẢI MODEL AI MỘT LẦN KHI SERVER KHỞI ĐỘNG ---
-MODEL_FILE_PATH = os.path.join(os.path.dirname(__file__), 'models', 'student_model.tflite')
-ai_model = CoughPredictor(model_path=MODEL_FILE_PATH)
 
 # --- 2. ĐỊNH NGHĨA MODEL ---
 class User(db.Model, UserMixin):
@@ -232,53 +227,54 @@ def edit_profile():
 @app.route('/upload_audio', methods=['POST'])
 def upload_audio():
     """
-    Xử lý file âm thanh được tải lên, dự đoán và lưu kết quả.
-    Route này không yêu cầu đăng nhập.
+    Xử lý file âm thanh được tải lên và chỉ lưu lại.
+    Phiên bản này không gọi đến model AI để phục vụ mục đích gỡ lỗi.
     """
+    # 1. Kiểm tra xem có file audio trong request không
     audio_file = request.files.get('audio_data')
     if not audio_file:
-        return jsonify({"error": "Không có file âm thanh"}), 400
+        return jsonify({"error": "Không có file âm thanh nào được gửi lên."}), 400
 
-    # --- Logic lưu file và dự đoán được đơn giản hóa ---
-    
-    # 1. Tạo một tên file duy nhất
-    timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
-    # Phân biệt file của user và guest
-    user_prefix = f"user_{current_user.id}" if current_user.is_authenticated else "guest"
-    filename = secure_filename(f"{user_prefix}_{timestamp_str}.wav")
-    filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-
-    # 2. Lưu file MỘT LẦN DUY NHẤT
-    audio_file.save(filepath)
-    
     try:
-        # 3. Gọi model AI để xử lý file đã lưu
-        ai_result = ai_model.predict(filepath)
-
-        # 4. Nếu người dùng đã đăng nhập, lưu kết quả vào lịch sử
+        # 2. Tạo một tên file duy nhất dựa trên thời gian
+        timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
+        
+        # Phân biệt file của user đã đăng nhập và khách (guest)
         if current_user.is_authenticated:
-            if 'error' not in ai_result:
-                new_prediction = Prediction(
-                    filename=filename,
-                    user_id=current_user.id,
-                    result=ai_result.get('predicted_class', 'N/A'),
-                    confidence=ai_result.get('confidence', '0%')
-                )
-                db.session.add(new_prediction)
-                db.session.commit()
+            user_prefix = f"user_{current_user.id}"
         else:
-            # Nếu là khách, chúng ta có thể xóa file tạm sau khi dự đoán để tiết kiệm dung lượng
-            os.remove(filepath) # Bỏ comment dòng này nếu bạn muốn xóa file của guest
-            pass
+            user_prefix = "guest"
+            
+        filename = secure_filename(f"{user_prefix}_{timestamp_str}.wav")
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
 
-        # 5. Trả về kết quả chẩn đoán cho frontend
-        return jsonify({"success": True, "diagnosis_result": ai_result})
+        # 3. Lưu file vào thư mục đã định nghĩa trong cấu hình
+        audio_file.save(filepath)
+        
+        print(f"Đã lưu file thành công tại: {filepath}")
+
+        # 4. Nếu người dùng đã đăng nhập, có thể lưu thông tin file vào database (không có kết quả AI)
+        if current_user.is_authenticated:
+            new_prediction_record = Prediction(
+                filename=filename,
+                user_id=current_user.id,
+                result="Chưa phân tích", # Trạng thái mặc định
+                confidence="N/A"
+            )
+            db.session.add(new_prediction_record)
+            db.session.commit()
+
+        # 5. Trả về thông báo thành công cho phía người dùng
+        return jsonify({
+            "success": True,
+            "message": "File đã được tải lên thành công.",
+            "filename": filename
+        })
 
     except Exception as e:
-        # Xử lý nếu có lỗi từ model AI
-        print(f"Lỗi khi dự đoán AI: {e}")
-        return jsonify({"error": "Lỗi máy chủ trong quá trình phân tích"}), 500
-
+        # Bắt các lỗi có thể xảy ra trong quá trình lưu file
+        print(f"Lỗi khi lưu file: {e}")
+        return jsonify({"error": "Lỗi máy chủ trong quá trình lưu file."}), 500
 
 # --- 4. CHẠY ỨNG DỤNG ---
 if __name__ == '__main__':
