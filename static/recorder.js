@@ -1,9 +1,10 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // ... (Phần code ghi âm từ đầu đến trước hàm sendAudioToServer giữ nguyên) ...
     const recordButton = document.getElementById('record-button');
     const timerElement = document.getElementById('timer');
     const recordingPanel = document.getElementById('recording-panel');
     const resultsPanel = document.getElementById('results-panel');
-    const resultMessage = document.getElementById('result-message');
+    const resultsContent = document.getElementById('results-content'); // Đổi sang vùng chứa mới
     const resultPlayer = document.getElementById('result-player');
     const audioPlayer = resultPlayer.querySelector('audio');
     const diagnoseAgainButton = document.getElementById('diagnose-again-button');
@@ -15,7 +16,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let timerInterval;
     let seconds = 0;
 
-    // Hàm cập nhật đồng hồ
     function updateTimer() {
         seconds++;
         const mins = String(Math.floor(seconds / 60)).padStart(2, '0');
@@ -23,22 +23,16 @@ document.addEventListener('DOMContentLoaded', () => {
         timerElement.textContent = `${mins}:${secs}`;
     }
 
-    // Hàm bắt đầu ghi âm
     async function startRecording() {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             mediaRecorder = new MediaRecorder(stream);
-
-            mediaRecorder.ondataavailable = event => {
-                audioChunks.push(event.data);
-            };
-
+            mediaRecorder.ondataavailable = event => { audioChunks.push(event.data); };
             mediaRecorder.onstop = () => {
                 const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
                 sendAudioToServer(audioBlob);
-                audioChunks = []; // Reset lại
+                audioChunks = [];
             };
-
             mediaRecorder.start();
             recordButton.classList.add('is-recording');
             seconds = 0;
@@ -50,50 +44,61 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Hàm dừng ghi âm
     function stopRecording() {
-        mediaRecorder.stop();
-        recordButton.classList.remove('is-recording');
-        clearInterval(timerInterval);
+        if (mediaRecorder && mediaRecorder.state === 'recording') {
+            mediaRecorder.stop();
+            recordButton.classList.remove('is-recording');
+            clearInterval(timerInterval);
+        }
     }
 
-    // Hàm gửi audio lên server và hiển thị kết quả
     async function sendAudioToServer(audioBlob) {
-        // Hiển thị panel kết quả với thông báo đang chờ
         recordingPanel.style.display = 'none';
         resultsPanel.style.display = 'block';
-        resultMessage.innerHTML = '<h2>Đang phân tích...</h2><p>Vui lòng chờ trong giây lát.</p>';
+        resultsContent.innerHTML = '<p>Đang phân tích... Vui lòng chờ trong giây lát.</p>'; // Thông báo chờ
         resultPlayer.style.display = 'none';
 
         const formData = new FormData();
         formData.append('audio_data', audioBlob);
 
         try {
-            const response = await fetch('/upload_audio', {
-                method: 'POST',
-                body: formData
-            });
+            const response = await fetch('/upload_audio', { method: 'POST', body: formData });
             const data = await response.json();
 
             if (data.success) {
-                // Cập nhật giao diện với kết quả nhận được
+                let iconHtml = '';
+                let resultClass = '';
+
+                // Chọn icon và màu sắc dựa trên kết quả
+                if (data.diagnosis_result === 'Khỏe mạnh') {
+                    iconHtml = '<i class="fas fa-check-circle"></i>';
+                    resultClass = 'success';
+                } else {
+                    iconHtml = '<i class="fas fa-exclamation-triangle"></i>';
+                    resultClass = 'warning';
+                }
+                
+                // Tạo giao diện kết quả mới
                 const resultHtml = `
-                    <h2>Kết quả: <span style="color: var(--primary-color);">${data.diagnosis_result}</span></h2>
-                    <p>Đây là kết quả phân tích dựa trên tiếng ho của bạn. Vui lòng lưu ý kết quả chỉ mang tính tham khảo.</p>
+                    <div class="result-display ${resultClass}">
+                        <div class="result-icon">${iconHtml}</div>
+                        <p class="result-text-main">${data.diagnosis_result}</p>
+                        <p class="result-text-sub">Lưu ý: Kết quả chỉ mang tính chất tham khảo.</p>
+                    </div>
                 `;
-                resultMessage.innerHTML = resultHtml;
+                resultsContent.innerHTML = resultHtml;
                 audioPlayer.src = data.filename;
                 resultPlayer.style.display = 'block';
+
             } else {
-                resultMessage.innerHTML = '<h2>Đã có lỗi xảy ra</h2><p>Không thể phân tích file âm thanh. Vui lòng thử lại.</p>';
+                resultsContent.innerHTML = '<h2>Đã có lỗi xảy ra</h2><p>Không thể phân tích file âm thanh.</p>';
             }
         } catch (error) {
             console.error('Error uploading audio:', error);
-            resultMessage.innerHTML = '<h2>Đã có lỗi xảy ra</h2><p>Lỗi kết nối tới server. Vui lòng thử lại.</p>';
+            resultsContent.innerHTML = '<h2>Đã có lỗi xảy ra</h2><p>Lỗi kết nối tới server.</p>';
         }
     }
-
-    // Gán sự kiện cho các nút
+    
     recordButton.addEventListener('click', () => {
         if (mediaRecorder && mediaRecorder.state === 'recording') {
             stopRecording();

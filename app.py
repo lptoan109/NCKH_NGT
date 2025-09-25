@@ -13,18 +13,16 @@ from authlib.integrations.flask_client import OAuth
 from werkzeug.utils import secure_filename
 
 # --- GIẢI PHÁP TẠM THỜI CHO MODEL AI ---
+# app.py
 class FakeAIModel:
     def predict(self, filepath):
-        diseases = ["Bệnh lao", "Hen suyễn", "Covid", "Khỏe mạnh"]
-        probabilities = [0.07, 0.07, 0.07, 0.79] # 7%, 7%, 7%, 79%
-        
-        predicted_class = random.choices(diseases, probabilities, k=1)[0]
-        confidence_value = random.uniform(80, 95) if predicted_class == "Khỏe mạnh" else random.uniform(60, 85)
-        
-        return {
-            "predicted_class": predicted_class,
-            "confidence": f"{confidence_value:.2f}%"
-        }
+        # Trả về một chuỗi kết quả duy nhất
+        diseases = ["Bệnh lao", "Hen suyễn", "Covid"]
+        roll = random.randint(1, 100)
+        if roll <= 79:
+            return "Khỏe mạnh"
+        else:
+            return random.choice(diseases)
 # Khởi tạo model AI giả
 ai_model = FakeAIModel()
 # -----------------------------------------
@@ -244,6 +242,7 @@ def edit_profile():
         return redirect(url_for('profile'))
     return render_template('edit_profile.html')
 
+# app.py
 @app.route('/upload_audio', methods=['POST'])
 def upload_audio():
     audio_file = request.files.get('audio_data')
@@ -256,24 +255,27 @@ def upload_audio():
     filepath = os.path.join(app.root_path, app.config['UPLOAD_FOLDER'], filename)
 
     audio_file.save(filepath)
-    
+
     try:
-        ai_result = ai_model.predict(filepath)
+        # Model AI bây giờ sẽ trả về một chuỗi duy nhất
+        diagnosis_result_text = ai_model.predict(filepath)
 
         if current_user.is_authenticated:
             new_prediction = Prediction(
                 filename=filename,
                 user_id=current_user.id,
-                result=ai_result.get('predicted_class', 'N/A'),
-                confidence=ai_result.get('confidence', '0%')
+                result=diagnosis_result_text,
+                confidence='N/A' # Xóa độ tự tin, lưu là N/A
             )
             db.session.add(new_prediction)
             db.session.commit()
-        else:
-            # os.remove(filepath) # Tùy chọn: Xóa file của khách sau khi dự đoán
-            pass
 
-        return jsonify({"success": True, "filename": f"/static/uploads/{filename}", "diagnosis_result": ai_result})
+        # Trả về kết quả chẩn đoán dạng chuỗi cho frontend
+        return jsonify({
+            "success": True, 
+            "filename": f"/static/uploads/{filename}", 
+            "diagnosis_result": diagnosis_result_text
+        })
 
     except Exception as e:
         print(f"Lỗi khi dự đoán AI: {e}")
