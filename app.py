@@ -11,7 +11,6 @@ from flask_bcrypt import Bcrypt
 from flask_mail import Mail, Message
 from authlib.integrations.flask_client import OAuth
 from werkzeug.utils import secure_filename
-from ai_predictor import CoughPredictor
 # --- 1. KHỞI TẠO VÀ CẤU HÌNH ---
 app = Flask(__name__)
 
@@ -47,10 +46,6 @@ google = oauth.register(
     server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
     client_kwargs={'scope': 'openid email profile'}
 )
-
-# --- TẢI MODEL AI MỘT LẦN KHI SERVER KHỞI ĐỘNG ---
-MODEL_FILE_PATH = os.path.join(os.path.dirname(__file__), 'models', 'student_model.tflite')
-ai_model = CoughPredictor(model_path=MODEL_FILE_PATH)
 
 # --- 2. ĐỊNH NGHĨA MODEL ---
 class User(db.Model, UserMixin):
@@ -282,45 +277,53 @@ def edit_profile():
 
 @app.route('/upload_audio', methods=['POST'])
 def upload_audio():
+    """
+    Xử lý file âm thanh được tải lên, dự đoán và lưu kết quả.
+    Route này không yêu cầu đăng nhập.
+    """
     audio_file = request.files.get('audio_data')
     if not audio_file:
-        return {"error": "No audio file"}, 400
+        return jsonify({"error": "Không có file âm thanh"}), 400
 
-    upload_folder = os.path.join(app.root_path, 'static', 'uploads')
-    os.makedirs(upload_folder, exist_ok=True)
+    # --- Logic lưu file và dự đoán được đơn giản hóa ---
+    
+    # 1. Tạo một tên file duy nhất
+    timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
+    # Phân biệt file của user và guest
+    user_prefix = f"user_{current_user.id}" if current_user.is_authenticated else "guest"
+    filename = secure_filename(f"{user_prefix}_{timestamp_str}.wav")
+    filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
 
-    timestamp_str = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    # 2. Lưu file MỘT LẦN DUY NHẤT
+    audio_file.save(filepath)
+    
+    try:
+        # 3. Gọi model AI để xử lý file đã lưu
+        ai_result = ai_model.predict(filepath)
 
-    # --- LOGIC CHẨN ĐOÁN GIẢ TẠM THỜI ---
-    diseases = ["Bệnh lao", "Hen suyễn", "Covid"]
-    roll = random.randint(1, 100)
-    diagnosis_result = ""
+        # 4. Nếu người dùng đã đăng nhập, lưu kết quả vào lịch sử
+        if current_user.is_authenticated:
+            if 'error' not in ai_result:
+                new_prediction = Prediction(
+                    filename=filename,
+                    user_id=current_user.id,
+                    result=ai_result.get('predicted_class', 'N/A'),
+                    confidence=ai_result.get('confidence', '0%')
+                )
+                db.session.add(new_prediction)
+                db.session.commit()
+        else:
+            # Nếu là khách, chúng ta có thể xóa file tạm sau khi dự đoán để tiết kiệm dung lượng
+            os.remove(filepath) # Bỏ comment dòng này nếu bạn muốn xóa file của guest
+            pass
 
-    if roll <= 79:
-        diagnosis_result = "Khỏe mạnh"
-    else:
-        # 21% còn lại chia đều cho 3 bệnh
-        diagnosis_result = random.choice(diseases)
-    # --- KẾT THÚC LOGIC TẠM THỜI ---
+        # 5. Trả về kết quả chẩn đoán cho frontend
+        return jsonify({"success": True, "diagnosis_result": ai_result})
 
-    filename = ""
-    # Kiểm tra nếu người dùng đã đăng nhập để lưu lịch sử
-    if current_user.is_authenticated:
-        filename = secure_filename(f"user_{current_user.id}_{timestamp_str}.wav")
-        filepath = os.path.join(upload_folder, filename)
-        audio_file.save(filepath)
-
-        new_recording = Recording(filename=filename, user_id=current_user.id)
-        db.session.add(new_recording)
-        db.session.commit()
-    else:
-        # Nếu là khách, chỉ lưu file tạm và không lưu vào database
-        filename = secure_filename(f"guest_{timestamp_str}.wav")
-        filepath = os.path.join(upload_folder, filename)
-        audio_file.save(filepath)
-
-    # Trả về kết quả chẩn đoán trong JSON response
-    return {"success": True, "filename": f"/static/uploads/{filename}", "diagnosis_result": diagnosis_result}
+    except Exception as e:
+        # Xử lý nếu có lỗi từ model AI
+        print(f"Lỗi khi dự đoán AI: {e}")
+        return jsonify({"error": "Lỗi máy chủ trong quá trình phân tích"}), 500
 
 
 # --- 4. CHẠY ỨNG DỤNG ---
