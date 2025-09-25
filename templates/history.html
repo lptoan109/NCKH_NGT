@@ -1,35 +1,35 @@
 {% extends 'base.html' %}
 
-{% block title %}Lịch Sử Ghi Âm{% endblock %}
+{% block title %}Lịch Sử Chẩn Đoán - NGT Cough{% endblock %}
 
 {% block content %}
 <div class="history-container">
-    <h2>Lịch sử các bản ghi âm của bạn</h2>
+    <div class="diagnose-header">
+        <h2>Lịch sử các bản ghi âm của bạn</h2>
+    </div>
 
-    {% if recordings %}
+    {% if predictions %}
         <div class="table-responsive">
             <table class="history-table">
                 <thead>
                     <tr>
-                        <th>Tên file</th>
-                        <th>Ngày Ghi</th>
-                        <th>Phát lại</th>
-                        <th>Thao tác</th>
+                        <th>Thời gian</th>
+                        <th>Bản ghi âm</th>
+                        <th>Kết quả chẩn đoán</th>
+                        <th>Hành động</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for recording in recordings %}
+                    {% for prediction in predictions %}
                     <tr>
-                        <td data-label="Tên file">{{ recording.filename }}</td>
-                        <td data-label="Ngày Ghi">{{ recording.timestamp.strftime('%d-%m-%Y') }}</td>
-                        <td data-label="Phát lại">
-                            <audio controls src="{{ url_for('static', filename='uploads/' + recording.filename) }}"></audio>
+                        <td data-label="Thời gian">{{ prediction.timestamp.strftime('%d-%m-%Y %H:%M') }}</td>
+                        <td data-label="Bản ghi âm">
+                            <audio controls src="{{ url_for('static', filename='uploads/' + prediction.filename.split('_')[-1]) }}"></audio>
                         </td>
+                        <td data-label="Kết quả">{{ prediction.result }}</td>
                         <td data-label="Hành động">
-                            <form action="{{ url_for('delete_recording', recording_id=recording.id) }}" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn xóa bản ghi này không?');">
-                                <button type="submit" class="btn-delete">
-                                    <i class="fas fa-trash-alt"></i> Xóa
-                                </button>
+                            <form action="{{ url_for('delete_prediction', prediction_id=prediction.id) }}" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn xóa bản ghi này?');">
+                                <button type="submit" class="btn btn-delete">Xóa</button>
                             </form>
                         </td>
                     </tr>
@@ -38,23 +38,21 @@
             </table>
         </div>
     {% else %}
-        <p>Bạn chưa có bản ghi âm nào.</p>
+        <p style="text-align: center; margin-top: 30px; color: var(--text-light);">
+            Bạn chưa có bản ghi âm nào.
+        </p>
     {% endif %}
 
     {% if pagination and pagination.pages > 1 %}
-    <div class="pagination-nav">
+    <div class="pagination" style="text-align: center; margin-top: 30px;">
         {% if pagination.has_prev %}
-            <a href="{{ url_for('history', page=pagination.prev_num) }}" class="btn btn-secondary">&laquo; Trang Trước</a>
-        {% else %}
-            <span></span> {% endif %}
-        
-        <span>Trang {{ pagination.page }} / {{ pagination.pages }}</span>
-        
+            <a href="{{ url_for('history', page=pagination.prev_num) }}" class="btn btn-secondary">&laquo; Trang trước</a>
+        {% endif %}
         {% if pagination.has_next %}
-            <a href="{{ url_for('history', page=pagination.next_num) }}" class="btn btn-secondary">Trang Sau &raquo;</a>
-        {% else %}
-            <span></span> {% endif %}
+            <a href="{{ url_for('history', page=pagination.next_num) }}" class="btn btn-secondary">Trang sau &raquo;</a>
+        {% endif %}
     </div>
     {% endif %}
+
 </div>
 {% endblock %}
