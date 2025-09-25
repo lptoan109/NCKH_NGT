@@ -4,17 +4,36 @@ import config # Import file config.py
 import random
 
 from itsdangerous import URLSafeTimedSerializer
-from flask import Flask, url_for, session, redirect, render_template, request, flash
+from flask import Flask, url_for, session, redirect, render_template, request, flash, jsonify # <--- ĐÃ THÊM jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from flask_bcrypt import Bcrypt
 from flask_mail import Mail, Message
 from authlib.integrations.flask_client import OAuth
 from werkzeug.utils import secure_filename
+
+# --- GIẢI PHÁP TẠM THỜI CHO MODEL AI ---
+class FakeAIModel:
+    def predict(self, filepath):
+        diseases = ["Bệnh lao", "Hen suyễn", "Covid", "Khỏe mạnh"]
+        probabilities = [0.07, 0.07, 0.07, 0.79] # 7%, 7%, 7%, 79%
+        
+        predicted_class = random.choices(diseases, probabilities, k=1)[0]
+        confidence_value = random.uniform(80, 95) if predicted_class == "Khỏe mạnh" else random.uniform(60, 85)
+        
+        return {
+            "predicted_class": predicted_class,
+            "confidence": f"{confidence_value:.2f}%"
+        }
+# Khởi tạo model AI giả
+ai_model = FakeAIModel()
+# -----------------------------------------
+
+
 # --- 1. KHỞI TẠO VÀ CẤU HÌNH ---
 app = Flask(__name__)
 
-# Cấu hình từ file config.py
+# Cấu hình từ file config.py (SECRET_KEY và thông tin Mail)
 app.config['SECRET_KEY'] = config.SECRET_KEY
 app.config['MAIL_USERNAME'] = config.EMAIL_USER
 app.config['MAIL_PASSWORD'] = config.EMAIL_PASS
@@ -38,11 +57,11 @@ login_manager.login_view = 'login'
 oauth = OAuth(app)
 
 # --- Cấu hình Google Login ---
-# !!! THAY THẾ BẰNG CLIENT ID VÀ SECRET ĐÚNG TỪ "Web client 1" !!!
+# Tốt hơn là nên chuyển 2 dòng này vào config.py
 google = oauth.register(
     name='google',
-    client_id='564904327189-4gsii5kfkht070218tsjqu8amnstc7o1.apps.googleusercontent.com', # <-- GIÁ TRỊ ĐÚNG
-    client_secret='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', # <-- THAY BẰNG MÃ BÍ MẬT ĐÚNG CỦA BẠN
+    client_id='564904327189-4gsii5kfkht070218tsjqu8amnstc7o1.apps.googleusercontent.com',
+    client_secret='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',
     server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
     client_kwargs={'scope': 'openid email profile'}
 )
@@ -54,12 +73,12 @@ class User(db.Model, UserMixin):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(128), nullable=True)
     picture = db.Column(db.String(200), nullable=True)
-    recordings = db.relationship('Recording', backref='user', lazy=True)
+    # SỬA "Recording" thành "Prediction"
+    predictions = db.relationship('Prediction', backref='user', lazy=True)
 
 class Prediction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     filename = db.Column(db.String(150), nullable=False)
-    # Thêm các cột để lưu kết quả
     result = db.Column(db.String(100), nullable=False)
     confidence = db.Column(db.String(20), nullable=False)
     timestamp = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
@@ -75,6 +94,7 @@ def load_user(user_id):
 def homepage():
     return render_template('index.html')
 
+# (Các route login, register, logout, google... giữ nguyên)
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -91,23 +111,19 @@ def register():
     if request.method == 'POST':
         email = request.form.get('email')
         username = request.form.get('username')
-
         existing_user_email = User.query.filter_by(email=email).first()
         if existing_user_email:
             flash('Địa chỉ email này đã được sử dụng.', 'danger')
             return redirect(url_for('register'))
-
         existing_user_username = User.query.filter_by(username=username).first()
         if existing_user_username:
             flash('Tên đăng nhập này đã tồn tại.', 'danger')
             return redirect(url_for('register'))
-
         password = request.form.get('password')
         hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
         new_user = User(username=username, email=email, password_hash=hashed_password)
         db.session.add(new_user)
         db.session.commit()
-
         flash('Tạo tài khoản thành công! Vui lòng đăng nhập.', 'success')
         return redirect(url_for('login'))
     return render_template('register.html')
@@ -121,7 +137,6 @@ def logout():
 
 @app.route('/login/google')
 def login_google():
-    # Sửa http thành https ở dòng dưới
     redirect_uri = 'https://ngt.pythonanywhere.com/authorize'
     return google.authorize_redirect(redirect_uri)
 
@@ -143,7 +158,6 @@ def authorize():
 
 @app.route('/diagnose')
 def diagnose():
-    # Route này không cần login, ai cũng có thể truy cập trang
     return render_template('diagnose.html')
 
 @app.route('/about')
@@ -152,6 +166,7 @@ def about():
 
 @app.route('/contact', methods=['GET', 'POST'])
 def contact():
+    # Giữ nguyên logic
     if request.method == 'POST':
         try:
             name = request.form.get('name')
@@ -177,23 +192,26 @@ def contact():
 @login_required
 def history():
     page = request.args.get('page', 1, type=int)
-    pagination = Recording.query.filter_by(user_id=current_user.id)\
-                                .order_by(Recording.timestamp.desc())\
+    # SỬA "Recording" thành "Prediction"
+    pagination = Prediction.query.filter_by(user_id=current_user.id)\
+                                .order_by(Prediction.timestamp.desc())\
                                 .paginate(page=page, per_page=10, error_out=False)
-    recordings = pagination.items
-    return render_template('history.html', recordings=recordings, pagination=pagination)
+    predictions = pagination.items
+    return render_template('history.html', predictions=predictions, pagination=pagination)
 
-@app.route('/delete_recording/<int:recording_id>', methods=['POST'])
+@app.route('/delete_prediction/<int:prediction_id>', methods=['POST']) # Đổi tên route và biến
 @login_required
-def delete_recording(recording_id):
-    recording = Recording.query.get_or_404(recording_id)
-    if recording.user_id != current_user.id:
+def delete_prediction(prediction_id): # Đổi tên hàm và biến
+    # SỬA "Recording" thành "Prediction"
+    prediction = Prediction.query.get_or_404(prediction_id)
+    if prediction.user_id != current_user.id:
         return {"error": "Unauthorized"}, 403
     try:
-        filepath = os.path.join(app.root_path, 'uploads', recording.filename)
+        # Giả định file vẫn lưu trong 'static/uploads'
+        filepath = os.path.join(app.root_path, 'static', 'uploads', prediction.filename)
         if os.path.exists(filepath):
             os.remove(filepath)
-        db.session.delete(recording)
+        db.session.delete(prediction)
         db.session.commit()
         flash('Đã xóa bản ghi thành công.', 'success')
     except Exception as e:
@@ -209,6 +227,7 @@ def profile():
 @app.route('/edit_profile', methods=['GET', 'POST'])
 @login_required
 def edit_profile():
+    # Giữ nguyên logic
     if request.method == 'POST':
         new_username = request.form.get('username')
         current_user.username = new_username
@@ -219,150 +238,69 @@ def edit_profile():
                 upload_path = os.path.join(app.root_path, app.config['UPLOAD_FOLDER'])
                 os.makedirs(upload_path, exist_ok=True)
                 file.save(os.path.join(upload_path, filename))
-                current_user.picture = f"/{app.config['UPLOAD_FOLDER']}/{filename}"
+                current_user.picture = f"/static/uploads/{filename}"
         db.session.commit()
         flash('Cập nhật thông tin thành công!', 'success')
         return redirect(url_for('profile'))
     return render_template('edit_profile.html')
 
-# @app.route('/upload_audio', methods=['POST'])
-# def upload_audio():
-#     """
-#     Xử lý file âm thanh được tải lên, dự đoán và lưu kết quả.
-#     Route này không yêu cầu đăng nhập.
-#     """
-#     audio_file = request.files.get('audio_data')
-#     if not audio_file:
-#         return jsonify({"error": "Không có file âm thanh"}), 400
-
-#     # --- Logic lưu file và dự đoán được đơn giản hóa ---
-    
-#     # 1. Tạo một tên file duy nhất
-#     timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
-#     # Phân biệt file của user và guest
-#     user_prefix = f"user_{current_user.id}" if current_user.is_authenticated else "guest"
-#     filename = secure_filename(f"{user_prefix}_{timestamp_str}.wav")
-#     filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-
-#     # 2. Lưu file MỘT LẦN DUY NHẤT
-#     audio_file.save(filepath)
-    
-#     try:
-#         # 3. Gọi model AI để xử lý file đã lưu
-#         ai_result = ai_model.predict(filepath)
-
-#         # 4. Nếu người dùng đã đăng nhập, lưu kết quả vào lịch sử
-#         if current_user.is_authenticated:
-#             if 'error' not in ai_result:
-#                 new_prediction = Prediction(
-#                     filename=filename,
-#                     user_id=current_user.id,
-#                     result=ai_result.get('predicted_class', 'N/A'),
-#                     confidence=ai_result.get('confidence', '0%')
-#                 )
-#                 db.session.add(new_prediction)
-#                 db.session.commit()
-#         else:
-#             # Nếu là khách, chúng ta có thể xóa file tạm sau khi dự đoán để tiết kiệm dung lượng
-#             os.remove(filepath) # Bỏ comment dòng này nếu bạn muốn xóa file của guest
-#             pass
-
-#         # 5. Trả về kết quả chẩn đoán cho frontend
-#         return jsonify({"success": True, "diagnosis_result": ai_result})
-
-#     except Exception as e:
-#         # Xử lý nếu có lỗi từ model AI
-#         print(f"Lỗi khi dự đoán AI: {e}")
-#         return jsonify({"error": "Lỗi máy chủ trong quá trình phân tích"}), 500
-
 @app.route('/upload_audio', methods=['POST'])
 def upload_audio():
-    """
-    Xử lý file âm thanh được tải lên, dự đoán và lưu kết quả.
-    Route này không yêu cầu đăng nhập.
-    """
     audio_file = request.files.get('audio_data')
     if not audio_file:
         return jsonify({"error": "Không có file âm thanh"}), 400
 
-    # --- Logic lưu file và dự đoán được đơn giản hóa ---
-    
-    # 1. Tạo một tên file duy nhất
-    timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
-    # Phân biệt file của user và guest
     user_prefix = f"user_{current_user.id}" if current_user.is_authenticated else "guest"
+    timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
     filename = secure_filename(f"{user_prefix}_{timestamp_str}.wav")
-    filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    filepath = os.path.join(app.root_path, app.config['UPLOAD_FOLDER'], filename)
 
-    # 2. Lưu file MỘT LẦN DUY NHẤT
     audio_file.save(filepath)
     
     try:
-        # 3. Gọi model AI để xử lý file đã lưu
         ai_result = ai_model.predict(filepath)
 
-        # 4. Nếu người dùng đã đăng nhập, lưu kết quả vào lịch sử
         if current_user.is_authenticated:
-            if 'error' not in ai_result:
-                new_prediction = Prediction(
-                    filename=filename,
-                    user_id=current_user.id,
-                    result=ai_result.get('predicted_class', 'N/A'),
-                    confidence=ai_result.get('confidence', '0%')
-                )
-                db.session.add(new_prediction)
-                db.session.commit()
+            new_prediction = Prediction(
+                filename=filename,
+                user_id=current_user.id,
+                result=ai_result.get('predicted_class', 'N/A'),
+                confidence=ai_result.get('confidence', '0%')
+            )
+            db.session.add(new_prediction)
+            db.session.commit()
         else:
-            # Nếu là khách, chúng ta có thể xóa file tạm sau khi dự đoán để tiết kiệm dung lượng
-            os.remove(filepath) # Bỏ comment dòng này nếu bạn muốn xóa file của guest
+            # os.remove(filepath) # Tùy chọn: Xóa file của khách sau khi dự đoán
             pass
 
-        # 5. Trả về kết quả chẩn đoán cho frontend
-        return jsonify({"success": True, "diagnosis_result": ai_result})
+        return jsonify({"success": True, "filename": f"/static/uploads/{filename}", "diagnosis_result": ai_result})
 
     except Exception as e:
-        # Xử lý nếu có lỗi từ model AI
         print(f"Lỗi khi dự đoán AI: {e}")
         return jsonify({"error": "Lỗi máy chủ trong quá trình phân tích"}), 500
 
-
-# --- 4. CHẠY ỨNG DỤNG ---
-if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
-    app.run(debug=True)
-
-# app.py
-
-# --- HÀM TẠO TOKEN BẢO MẬT ---
+# --- CÁC HÀM VÀ ROUTE "QUÊN MẬT KHẨU" (ĐÃ DI CHUYỂN LÊN ĐÂY) ---
 def generate_reset_token(email):
     serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
     return serializer.dumps(email, salt='password-reset-salt')
 
-# --- HÀM XÁC THỰC TOKEN ---
-def confirm_reset_token(token, expiration=3600): # Hết hạn sau 1 giờ
+def confirm_reset_token(token, expiration=3600):
     serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
     try:
-        email = serializer.loads(
-            token,
-            salt='password-reset-salt',
-            max_age=expiration
-        )
+        email = serializer.loads(token, salt='password-reset-salt', max_age=expiration)
         return email
     except Exception:
         return False
 
-# --- ROUTE XỬ LÝ QUÊN MẬT KHẨU ---
 @app.route('/forgot_password', methods=['GET', 'POST'])
 def forgot_password():
+    # Giữ nguyên logic
     if request.method == 'POST':
         email = request.form.get('email')
         user = User.query.filter_by(email=email).first()
         if user:
             token = generate_reset_token(user.email)
             reset_url = url_for('reset_password', token=token, _external=True)
-            
-            # Soạn và gửi email
             msg = Message('Yêu cầu đặt lại mật khẩu - NGT Cough',
                           sender=("Website NGT Cough", app.config['MAIL_USERNAME']),
                           recipients=[user.email])
@@ -376,31 +314,30 @@ Nếu bạn không phải là người yêu cầu, vui lòng bỏ qua email này
 Trân trọng,
 Đội ngũ NGT Cough'''
             mail.send(msg)
-            
-        # Dù email có tồn tại hay không, vẫn hiện thông báo này để bảo mật
         flash('Nếu email của bạn tồn tại trong hệ thống, một hướng dẫn đặt lại mật khẩu đã được gửi đến.', 'success')
         return redirect(url_for('login'))
-        
     return render_template('forgot_password.html')
 
-
-# --- ROUTE XỬ LÝ ĐẶT LẠI MẬT KHẨU ---
 @app.route('/reset_password/<token>', methods=['GET', 'POST'])
 def reset_password(token):
+    # Giữ nguyên logic
     email = confirm_reset_token(token)
     if not email:
         flash('Đường link đặt lại mật khẩu không hợp lệ hoặc đã hết hạn.', 'danger')
         return redirect(url_for('forgot_password'))
-
     if request.method == 'POST':
         new_password = request.form.get('password')
         hashed_password = bcrypt.generate_password_hash(new_password).decode('utf-8')
-        
         user = User.query.filter_by(email=email).first()
         user.password_hash = hashed_password
         db.session.commit()
-        
         flash('Mật khẩu của bạn đã được cập nhật thành công! Vui lòng đăng nhập.', 'success')
         return redirect(url_for('login'))
-
     return render_template('reset_password.html', token=token)
+
+
+# --- 4. CHẠY ỨNG DỤNG ---
+if __name__ == '__main__':
+    with app.app_context():
+        db.create_all()
+    app.run(debug=True)
