@@ -24,7 +24,7 @@
                     <tr>
                         <td data-label="Thời gian">{{ prediction.timestamp.strftime('%d-%m-%Y %H:%M') }}</td>
                         <td data-label="Bản ghi âm">
-                            <audio controls src="{{ url_for('static', filename='uploads/' + prediction.filename.split('_')[-1]) }}"></audio>
+                            <audio controls src="{{ url_for('static', filename='uploads/' + prediction.filename) }}"></audio>
                         </td>
                         <td data-label="Kết quả">{{ prediction.result }}</td>
                         <td data-label="Hành động">
