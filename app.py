@@ -264,6 +264,7 @@ def upload_audio():
 
     # --- Lấy theme từ request ---
     selected_theme = request.form.get('theme', 'default')
+    print(f"Server đã nhận được theme: {selected_theme}")
     # -----------------------------
 
     user_prefix = f"user_{current_user.id}" if current_user.is_authenticated else "guest"
