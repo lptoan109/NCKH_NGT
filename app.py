@@ -1,9 +1,9 @@
 import os
 from datetime import datetime
-import config # Import file config.py
+import config 
 import random
 
-from itsdangerous import URLSafeTimedSerializer
+from itsdangerous import URLSafeTimedSerializer  
 from flask import Flask, url_for, session, redirect, render_template, request, flash, jsonify # <--- ĐÃ THÊM jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
@@ -12,17 +12,30 @@ from flask_mail import Mail, Message
 from authlib.integrations.flask_client import OAuth
 from werkzeug.utils import secure_filename
 
-# --- GIẢI PHÁP TẠM THỜI CHO MODEL AI ---
 # app.py
 class FakeAIModel:
-    def predict(self, filepath):
-        # Trả về một chuỗi kết quả duy nhất
-        diseases = ["Bệnh lao", "Hen suyễn", "Covid"]
-        roll = random.randint(1, 100)
-        if roll <= 79:
-            return "Khỏe mạnh"
+    def predict(self, filepath, theme='default'):
+        # Tạo một từ điển (dictionary) để ánh xạ theme với kết quả cụ thể
+        specific_results = {
+            "dark": "Khỏe mạnh",
+            "slate": "Hen suyễn",
+            "ocean": "Covid-19",
+            "forest": "Bệnh lao"
+        }
+        
+        # Kiểm tra xem theme được chọn có trong danh sách kết quả cụ thể không
+        if theme in specific_results:
+            return specific_results[theme]
+        
+        # Nếu không, sử dụng logic ngẫu nhiên làm mặc định
         else:
-            return random.choice(diseases)
+            diseases = ["Bệnh lao", "Hen suyễn", "Covid-19"]
+            roll = random.randint(1, 100)
+            if roll <= 79:
+                return "Khỏe mạnh"
+            else:
+                return random.choice(diseases)
+
 # Khởi tạo model AI giả
 ai_model = FakeAIModel()
 # -----------------------------------------
@@ -249,6 +262,10 @@ def upload_audio():
     if not audio_file:
         return jsonify({"error": "Không có file âm thanh"}), 400
 
+    # --- Lấy theme từ request ---
+    selected_theme = request.form.get('theme', 'default')
+    # -----------------------------
+
     user_prefix = f"user_{current_user.id}" if current_user.is_authenticated else "guest"
     timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
     filename = secure_filename(f"{user_prefix}_{timestamp_str}.wav")
@@ -257,15 +274,15 @@ def upload_audio():
     audio_file.save(filepath)
 
     try:
-        # Model AI bây giờ sẽ trả về một chuỗi duy nhất
-        diagnosis_result_text = ai_model.predict(filepath)
+        diagnosis_result_text = ai_model.predict(filepath, theme=selected_theme)
+        # -------------------------------------
 
         if current_user.is_authenticated:
             new_prediction = Prediction(
                 filename=filename,
                 user_id=current_user.id,
                 result=diagnosis_result_text,
-                confidence='N/A' # Xóa độ tự tin, lưu là N/A
+                confidence='N/A' 
             )
             db.session.add(new_prediction)
             db.session.commit()
