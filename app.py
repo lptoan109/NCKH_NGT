@@ -1,9 +1,9 @@
 import os
 from datetime import datetime
-import config 
+import config # Import file config.py
 import random
 
-from itsdangerous import URLSafeTimedSerializer  
+from itsdangerous import URLSafeTimedSerializer
 from flask import Flask, url_for, session, redirect, render_template, request, flash, jsonify # <--- ĐÃ THÊM jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
@@ -12,35 +12,83 @@ from flask_mail import Mail, Message
 from authlib.integrations.flask_client import OAuth
 from werkzeug.utils import secure_filename
 
-# app.py
-class FakeAIModel:
-    def predict(self, filepath, theme='default'):
-        # Tạo một từ điển (dictionary) để ánh xạ theme với kết quả cụ thể
-        specific_results = {
-            "dark": "Khỏe mạnh",
-            "slate": "Hen suyễn",
-            "ocean": "Covid-19",
-            "forest": "Bệnh lao"
-        }
+import tensorflow as tf
+import numpy as np
+import librosa
+import noisereduce as nr
+from scipy.stats import mode
+from tensorflow.keras.applications.efficientnet import preprocess_input
+
+# --- TẢI 5 MÔ HÌNH CNN ---
+MODELS = []
+MODEL_PATHS = [
+    'models/EfficienetB1_CV_TPU_fold_1.keras',
+    'models/EfficienetB1_CV_TPU_fold_2.keras',
+    'models/EfficienetB1_CV_TPU_fold_3.keras',
+    'models/EfficienetB1_CV_TPU_fold_4.keras',
+    'models/EfficienetB1_CV_TPU_fold_5.keras',
+]
+
+try:
+    for path in MODEL_PATHS:
+        MODELS.append(tf.keras.models.load_model(path))
+    print(f"Đã tải thành công {len(MODELS)} mô hình CNN.")
+except Exception as e:
+    print(f"LỖI KHI TẢI MÔ HÌNH: {e}")
+    MODELS = []
+# -------------------------
+
+# --- CÁC THAM SỐ TIỀN XỬ LÝ ---
+SAMPLE_RATE = 16000
+N_MELS = 256
+N_FFT = 2048
+HOP_LENGTH = 512
+SILENCE_THRESHOLD_DB = 20
+SEGMENT_LENGTH_S = 4  # Độ dài chuẩn hóa là 4 giây 
+IMG_SIZE = (240, 240, 3) # Kích thước đầu vào của EfficientNetB1 
+
+def preprocess_audio_for_cnn(file_path):
+    """
+    Tiền xử lý file âm thanh để tạo Mel Spectrogram cho mô hình CNN.
+    """
+    try:
+        y, sr = librosa.load(file_path, sr=SAMPLE_RATE, mono=True)
         
-        # Kiểm tra xem theme được chọn có trong danh sách kết quả cụ thể không
-        if theme in specific_results:
-            return specific_results[theme]
+        # 1. Chuẩn hóa biên độ và giảm nhiễu
+        y = librosa.util.normalize(y)
+        y_denoised = nr.reduce_noise(y=y, sr=sr)
         
-        # Nếu không, sử dụng logic ngẫu nhiên làm mặc định
+        # 2. Cắt bỏ khoảng lặng
+        y_trimmed, _ = librosa.effects.trim(y_denoised, top_db=SILENCE_THRESHOLD_DB)
+        if len(y_trimmed) < 1:
+            return None
+
+        # 3. Phân đoạn và đệm (chuẩn hóa độ dài 4 giây)
+        target_length = SEGMENT_LENGTH_S * sr
+        if len(y_trimmed) < target_length:
+            y_padded = np.pad(y_trimmed, (0, target_length - len(y_trimmed)), 'constant')
         else:
-            diseases = ["Bệnh lao", "Hen suyễn", "Covid-19"]
-            roll = random.randint(1, 100)
-            if roll <= 79:
-                return "Khỏe mạnh"
-            else:
-                return random.choice(diseases)
+            y_padded = y_trimmed[:target_length]
+            
+        # 4. Tính Mel Spectrogram
+        mel_spec = librosa.feature.melspectrogram(y=y_padded, sr=sr, n_mels=N_MELS, n_fft=N_FFT, hop_length=HOP_LENGTH)
+        mel_spec_db = librosa.power_to_db(mel_spec, ref=np.max)
 
-# Khởi tạo model AI giả
-ai_model = FakeAIModel()
-# -----------------------------------------
+        # 5. Chuyển thành ảnh 3 kênh và resize
+        spec_3_channels = np.stack([mel_spec_db]*3, axis=-1)
+        spec_resized = tf.image.resize(spec_3_channels, IMG_SIZE)
+        
+        # 6. Áp dụng hàm tiền xử lý đặc trưng của EfficientNet
+        spec_preprocessed = preprocess_input(spec_resized)
+        
+        # 7. Mở rộng thêm một chiều cho batch
+        final_spec = np.expand_dims(spec_preprocessed, axis=0)
 
-
+        return final_spec
+    except Exception as e:
+        print(f"Lỗi khi tiền xử lý file {file_path}: {e}")
+        return None
+    
 # --- 1. KHỞI TẠO VÀ CẤU HÌNH ---
 app = Flask(__name__)
 
@@ -262,22 +310,36 @@ def upload_audio():
     if not audio_file:
         return jsonify({"error": "Không có file âm thanh"}), 400
 
-    # --- Lấy theme từ request ---
-    selected_theme = request.form.get('theme', 'default')
-    print(f"Server đã nhận được theme: {selected_theme}")
-    # -----------------------------
-
     user_prefix = f"user_{current_user.id}" if current_user.is_authenticated else "guest"
     timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
     filename = secure_filename(f"{user_prefix}_{timestamp_str}.wav")
     filepath = os.path.join(app.root_path, app.config['UPLOAD_FOLDER'], filename)
-
     audio_file.save(filepath)
 
-    try:
-        diagnosis_result_text = ai_model.predict(filepath, theme=selected_theme)
-        # -------------------------------------
+    if not MODELS:
+        return jsonify({"error": "Mô hình AI chưa sẵn sàng, vui lòng thử lại sau."}), 503
 
+    try:
+        # 1. Tiền xử lý file âm thanh
+        processed_spec = preprocess_audio_for_cnn(filepath)
+        if processed_spec is None:
+            return jsonify({"error": "File âm thanh không hợp lệ hoặc quá ngắn."}), 400
+
+        # 2. Lấy dự đoán từ 5 mô hình
+        predictions = []
+        # Thay thế bằng các lớp thực tế của bạn
+        class_names = ['Khỏe mạnh', 'Hen suyễn', 'Covid', 'Bệnh lao']
+        
+        for model in MODELS:
+            pred_probs = model.predict(processed_spec)[0]
+            predicted_class_index = np.argmax(pred_probs)
+            predictions.append(predicted_class_index)
+
+        # 3. Tổng hợp kết quả (Majority Voting - Lấy kết quả phổ biến nhất)
+        final_prediction_index, _ = mode(predictions)
+        diagnosis_result_text = class_names[final_prediction_index[0]]
+
+        # 4. Lưu vào DB và trả về kết quả
         if current_user.is_authenticated:
             new_prediction = Prediction(
                 filename=filename,
@@ -288,13 +350,11 @@ def upload_audio():
             db.session.add(new_prediction)
             db.session.commit()
 
-        # Trả về kết quả chẩn đoán dạng chuỗi cho frontend
         return jsonify({
             "success": True, 
             "filename": f"/static/uploads/{filename}", 
             "diagnosis_result": diagnosis_result_text
         })
-
     except Exception as e:
         print(f"Lỗi khi dự đoán AI: {e}")
         return jsonify({"error": "Lỗi máy chủ trong quá trình phân tích"}), 500
