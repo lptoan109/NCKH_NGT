@@ -1,14 +1,13 @@
 // recorder.js
 
 // --- HÀM TRỢ GIÚP: Chuyển Blob sang Base64 ---
-// Cần thiết để gửi file âm thanh tới API Gradio
 function blobToBase64(blob) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.readAsDataURL(blob);
         reader.onloadend = () => {
-            // Loại bỏ phần đầu "data:audio/wav;base64,"
-            const base64data = reader.result.split(',')[1];
+            // API Gradio cần toàn bộ chuỗi base64, bao gồm "data:..."
+            const base64data = reader.result;
             resolve(base64data);
         };
         reader.onerror = error => reject(error);
@@ -68,11 +67,8 @@ document.addEventListener('DOMContentLoaded', () => {
             mediaRecorder.onstop = () => {
                 const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
                 
-                // --- THAY ĐỔI LỚN BẮT ĐẦU TỪ ĐÂY ---
-                // Thay vì gọi sendAudioToServer, chúng ta gọi hàm mới
-                // để xử lý logic API Hugging Face
+                // Gọi hàm xử lý logic API Hugging Face
                 handleRecordingStop(audioBlob); 
-                // -----------------------------------
 
                 stream.getTracks().forEach(track => track.stop());
             };
@@ -138,8 +134,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // 3. Gọi API Hugging Face
-        // URL API công khai của Space 'nickhNGT/ngt-cough-api'
-        const HF_API_URL = "https://nickhngt-ngt-cough-api.hf.space/run/predict";
+        // URL API chính xác (viết hoa NGT)
+        const HF_API_URL = "https://nckhNGT-NGT-cough-api.hf.space/run/predict";
 
         let hfResultData;
         try {
@@ -148,8 +144,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     "data": [
-                        // Gradio API cần tiền tố "data:audio/wav;base64,"
-                        "data:audio/wav;base64," + base64Audio
+                        // Gradio API cần toàn bộ chuỗi base64
+                        base64Audio
                     ]
                 })
             });
@@ -180,7 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
         formData.append('confidence', confidence);
 
         try {
-            // Gọi về server Flask (đã được sửa)
+            // Gọi về server Flask (trên PythonAnywhere)
             const flaskResponse = await fetch('/upload_audio', { method: 'POST', body: formData });
             const data = await flaskResponse.json();
 
@@ -226,4 +222,3 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 });
-
