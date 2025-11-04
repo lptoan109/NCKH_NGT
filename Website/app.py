@@ -4,7 +4,8 @@ import config # Import file config.py
 import random
 
 from itsdangerous import URLSafeTimedSerializer
-from flask import Flask, url_for, session, redirect, render_template, request, flash, jsonify # Giữ nguyên
+# SỬA LỖI: Đảm bảo 'jsonify' đã được import
+from flask import Flask, url_for, session, redirect, render_template, request, flash, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from flask_bcrypt import Bcrypt
@@ -12,22 +13,18 @@ from flask_mail import Mail, Message
 from authlib.integrations.flask_client import OAuth
 from werkzeug.utils import secure_filename
 
-# --- XÓA CÁC THƯ VIỆN AI ---
-# Đã xóa: tensorflow, numpy, librosa, noisereduce, scipy.stats, v.v.
+# --- KHỐI AI ĐÃ BỊ XÓA ---
+# (Không còn import tensorflow, librosa, noisereduce)
+# (Không còn tải 5 model EfficienetB1)
+# (Không còn hàm preprocess_audio_for_cnn)
 # -------------------------
 
-# --- XÓA KHỐI TẢI MODEL ---
-# Toàn bộ khối "TẢI 5 MÔ HÌNH CNN" đã được xóa.
-# Biến MODELS không còn tồn tại.
-# -------------------------
-
-# --- XÓA HÀM TIỀN XỬ LÝ ---
-# Hàm `preprocess_audio_for_cnn` đã được xóa.
-# -------------------------
     
-# --- 1. KHỞI TẠO VÀ CẤU HÌNH (Giữ nguyên) ---
-# Đây là dòng code ĐÚNG
-app = Flask(__name__)
+# --- 1. KHỞI TẠO VÀ CẤU HÌNH ---
+# SỬA LỖI: Chúng ta cần chỉ rõ thư mục template và static vì app.py nằm trong 'Website'
+app = Flask(__name__, 
+            template_folder='templates', 
+            static_folder='static')
 
 # Cấu hình từ file config.py (SECRET_KEY và thông tin Mail)
 app.config['SECRET_KEY'] = config.SECRET_KEY
@@ -35,9 +32,12 @@ app.config['MAIL_USERNAME'] = config.EMAIL_USER
 app.config['MAIL_PASSWORD'] = config.EMAIL_PASS
 
 # Cấu hình chung
+# SỬA LỖI: Đường dẫn DB này sẽ tạo file 'database.db' bên trong thư mục 'Website'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+# SỬA LỖI: UPLOAD_FOLDER phải là đường dẫn tương đối từ app.py
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
+
 
 # Cấu hình Mail
 app.config['MAIL_SERVER'] = 'smtp.googlemail.com'
@@ -83,7 +83,6 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 # --- 3. ĐỊNH NGHĨA ROUTE (Giữ nguyên hầu hết) ---
-
 @app.route('/')
 def homepage():
     return render_template('index.html')
@@ -198,7 +197,8 @@ def delete_prediction(prediction_id):
     if prediction.user_id != current_user.id:
         return {"error": "Unauthorized"}, 403
     try:
-        filepath = os.path.join(app.root_path, 'static', 'uploads', prediction.filename)
+        # Đường dẫn này bây giờ ĐÚNG vì 'static/uploads' là tương đối với 'app.py'
+        filepath = os.path.join(app.root_path, app.config['UPLOAD_FOLDER'], prediction.filename)
         if os.path.exists(filepath):
             os.remove(filepath)
         db.session.delete(prediction)
@@ -247,11 +247,15 @@ def upload_audio():
     if not audio_file or not diagnosis_result:
         return jsonify({"error": "Không có file âm thanh hoặc kết quả chẩn đoán"}), 400
 
-    # 1. Lưu file âm thanh (giống code cũ của bạn)
+    # 1. Lưu file âm thanh
     user_prefix = f"user_{current_user.id}" if current_user.is_authenticated else "guest"
     timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
     filename = secure_filename(f"{user_prefix}_{timestamp_str}.wav")
-    filepath = os.path.join(app.root_path, app.config['UPLOAD_FOLDER'], filename)
+    
+    # Đảm bảo thư mục 'uploads' tồn tại bên trong 'static'
+    upload_path = os.path.join(app.root_path, app.config['UPLOAD_FOLDER'])
+    os.makedirs(upload_path, exist_ok=True)
+    filepath = os.path.join(upload_path, filename)
     
     try:
         audio_file.save(filepath)
@@ -270,7 +274,8 @@ def upload_audio():
         # 3. Trả về JSON để JS hiển thị
         return jsonify({
             "success": True, 
-            "filename": f"/static/uploads/{filename}", 
+            # Trả về đường dẫn file đã lưu
+            "filename": url_for('static', filename=f'uploads/{filename}'), 
             "diagnosis_result": diagnosis_result # Gửi trả lại kết quả
         })
     except Exception as e:
@@ -335,8 +340,9 @@ def reset_password(token):
     return render_template('reset_password.html', token=token)
 
 
-# --- 4. CHẠY ỨNG DỤNG (Giữ nguyên) ---
+# --- 4. CHẠY ỨNG DỤNG ---
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
     app.run(debug=True)
+

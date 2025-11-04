@@ -1,3 +1,20 @@
+// recorder.js
+
+// --- HÀM TRỢ GIÚP: Chuyển Blob sang Base64 ---
+// Cần thiết để gửi file âm thanh tới API Gradio
+function blobToBase64(blob) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(blob);
+        reader.onloadend = () => {
+            // Loại bỏ phần đầu "data:audio/wav;base64,"
+            const base64data = reader.result.split(',')[1];
+            resolve(base64data);
+        };
+        reader.onerror = error => reject(error);
+    });
+}
+// -------------------------------------------
 
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -18,59 +35,51 @@ document.addEventListener('DOMContentLoaded', () => {
     let timerInterval;
     let seconds = 0;
 
-    // Kiểm tra xem các phần tử có tồn tại không trước khi gán sự kiện
     if (recordButton) {
         recordButton.addEventListener('click', toggleRecording);
     }
 
     if (diagnoseAgainButton) {
         diagnoseAgainButton.addEventListener('click', () => {
-            // Reset giao diện về trạng thái ban đầu
             resultsPanel.style.display = 'none';
             recordingPanel.style.display = 'block';
             resetTimer();
         });
     }
 
-    // Hàm chính để Bắt đầu/Dừng ghi âm
     async function toggleRecording() {
         if (isRecording) {
-            // Nếu đang ghi âm -> Dừng lại
             stopRecording();
         } else {
-            // Nếu chưa ghi âm -> Bắt đầu
             await startRecording();
         }
     }
 
-    // Hàm bắt đầu quá trình ghi âm
     async function startRecording() {
         try {
-            // Yêu cầu quyền truy cập micro
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            
-            // Khởi tạo MediaRecorder
             mediaRecorder = new MediaRecorder(stream);
-            audioChunks = []; // Xóa các đoạn âm thanh cũ
+            audioChunks = [];
 
-            // Sự kiện này được gọi khi có một đoạn âm thanh mới
             mediaRecorder.ondataavailable = event => {
                 audioChunks.push(event.data);
             };
 
-            // Sự kiện này được gọi khi việc ghi âm kết thúc
             mediaRecorder.onstop = () => {
                 const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-                // Gọi hàm để gửi file âm thanh lên server
-                sendAudioToServer(audioBlob);
-                // Dừng track micro để tắt icon trên trình duyệt
+                
+                // --- THAY ĐỔI LỚN BẮT ĐẦU TỪ ĐÂY ---
+                // Thay vì gọi sendAudioToServer, chúng ta gọi hàm mới
+                // để xử lý logic API Hugging Face
+                handleRecordingStop(audioBlob); 
+                // -----------------------------------
+
                 stream.getTracks().forEach(track => track.stop());
             };
 
-            // Bắt đầu ghi âm
             mediaRecorder.start();
             isRecording = true;
-            recordButton.classList.add('is-recording'); // Thêm class để có hiệu ứng animation
+            recordButton.classList.add('is-recording');
             startTimer();
 
         } catch (error) {
@@ -79,7 +88,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Hàm dừng quá trình ghi âm
     function stopRecording() {
         if (mediaRecorder && mediaRecorder.state !== 'inactive') {
             mediaRecorder.stop();
@@ -89,7 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    // --- Các hàm quản lý đồng hồ đếm giờ ---
+    // --- Các hàm quản lý đồng hồ (giữ nguyên) ---
     function startTimer() {
         seconds = 0;
         timerDisplay.textContent = '00:00';
@@ -110,64 +118,112 @@ document.addEventListener('DOMContentLoaded', () => {
         seconds = 0;
         timerDisplay.textContent = '00:00';
     }
+
+    // --- HÀM XỬ LÝ MỚI KHI GHI ÂM DỪNG ---
+    async function handleRecordingStop(audioBlob) {
+        // 1. Hiển thị bảng kết quả và thông báo chờ
+        recordingPanel.style.display = 'none';
+        resultsPanel.style.display = 'block';
+        resultsContent.innerHTML = '<p>Đang phân tích... Vui lòng chờ trong giây lát.</p>'; 
+        resultPlayer.style.display = 'none';
+
+        // 2. Chuyển Blob sang Base64
+        let base64Audio;
+        try {
+            base64Audio = await blobToBase64(audioBlob);
+        } catch (error) {
+            console.error('Lỗi chuyển đổi Base64:', error);
+            resultsContent.innerHTML = '<h2>Đã có lỗi xảy ra</h2><p>Lỗi xử lý file âm thanh.</p>';
+            return;
+        }
+
+        // 3. Gọi API Hugging Face
+        // URL API công khai của Space 'nickhNGT/ngt-cough-api'
+        const HF_API_URL = "https://nickhngt-ngt-cough-api.hf.space/run/predict";
+
+        let hfResultData;
+        try {
+            const hfResponse = await fetch(HF_API_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    "data": [
+                        // Gradio API cần tiền tố "data:audio/wav;base64,"
+                        "data:audio/wav;base64," + base64Audio
+                    ]
+                })
+            });
+
+            hfResultData = await hfResponse.json();
+
+            if (!hfResultData.data || !hfResultData.data[0]) {
+                throw new Error("Kết quả trả về từ API không hợp lệ.");
+            }
+
+        } catch (error) {
+            console.error('Lỗi khi gọi API Hugging Face:', error);
+            resultsContent.innerHTML = `<h2>Đã có lỗi xảy ra</h2><p>Không thể kết nối tới máy chủ AI. Vui lòng thử lại sau.</p><p style="font-size: 0.8em; color: var(--text-light);">${error.message}</p>`;
+            return;
+        }
+
+        // 4. Lấy kết quả chẩn đoán và độ tin cậy
+        const predictions = hfResultData.data[0].confidences;
+        const topPrediction = predictions.reduce((prev, current) => (prev.confidence > current.confidence) ? prev : current);
+        
+        const diagnosis_result = topPrediction.label; // vd: "healthy"
+        const confidence = topPrediction.confidence.toFixed(2); // vd: "0.85"
+
+        // 5. Gửi file âm thanh VÀ kết quả về server Flask để lưu
+        const formData = new FormData();
+        formData.append('audio_data', audioBlob);
+        formData.append('diagnosis_result', diagnosis_result);
+        formData.append('confidence', confidence);
+
+        try {
+            // Gọi về server Flask (đã được sửa)
+            const flaskResponse = await fetch('/upload_audio', { method: 'POST', body: formData });
+            const data = await flaskResponse.json();
+
+            if (data.success) {
+                let iconHtml = '';
+                let resultClass = '';
+                
+                // Cập nhật tên lớp (phải khớp với tên lớp trên Hugging Face)
+                const classDisplayNames = {
+                    "healthy": "Khỏe mạnh",
+                    "asthma": "Hen suyễn",
+                    "covid": "Covid",
+                    "tuberculosis": "Bệnh lao"
+                };
+                
+                const displayResult = classDisplayNames[data.diagnosis_result] || data.diagnosis_result;
+
+                if (data.diagnosis_result === 'healthy') {
+                    iconHtml = '<i class="fas fa-check-circle"></i>';
+                    resultClass = 'success';
+                } else {
+                    iconHtml = '<i class="fas fa-exclamation-triangle"></i>';
+                    resultClass = 'warning';
+                }
+                
+                const resultHtml = `
+                    <div class="result-display ${resultClass}">
+                        <div class="result-icon">${iconHtml}</div>
+                        <p class="result-text-main">${displayResult}</p>
+                        <p class="result-text-sub">Lưu ý: Kết quả chỉ mang tính chất tham khảo.</p>
+                    </div>
+                `;
+                resultsContent.innerHTML = resultHtml;
+                audioPlayer.src = data.filename; // Flask trả về đường dẫn file đã lưu
+                resultPlayer.style.display = 'block';
+
+            } else {
+                resultsContent.innerHTML = `<h2>Đã có lỗi xảy ra</h2><p>${data.error || 'Không thể lưu kết quả.'}</p>`;
+            }
+        } catch (error) {
+            console.error('Lỗi khi gửi kết quả về server Flask:', error);
+            resultsContent.innerHTML = '<h2>Đã có lỗi xảy ra</h2><p>Lỗi kết nối tới server (để lưu file).</p>';
+        }
+    }
 });
 
-
-
-async function sendAudioToServer(audioBlob) {
-    // Lấy các phần tử HTML một lần nữa vì chúng nằm ngoài phạm vi của DOMContentLoaded
-    const recordingPanel = document.getElementById('recording-panel');
-    const resultsPanel = document.getElementById('results-panel');
-    const resultsContent = document.getElementById('results-content');
-    const resultPlayer = document.getElementById('result-player');
-    const audioPlayer = resultPlayer.querySelector('audio');
-
-    recordingPanel.style.display = 'none';
-    resultsPanel.style.display = 'block';
-    resultsContent.innerHTML = '<p>Đang phân tích... Vui lòng chờ trong giây lát.</p>'; // Thông báo chờ
-    resultPlayer.style.display = 'none';
-
-    const formData = new FormData();
-    formData.append('audio_data', audioBlob);
-
-    // Lấy theme hiện tại từ localStorage
-    const currentTheme = localStorage.getItem('theme') || 'default';
-    formData.append('theme', currentTheme);
-
-    try {
-        const response = await fetch('/upload_audio', { method: 'POST', body: formData });
-        const data = await response.json();
-
-        if (data.success) {
-            let iconHtml = '';
-            let resultClass = '';
-
-            // Chọn icon và màu sắc dựa trên kết quả
-            if (data.diagnosis_result === 'Khỏe mạnh') {
-                iconHtml = '<i class="fas fa-check-circle"></i>';
-                resultClass = 'success';
-            } else {
-                iconHtml = '<i class="fas fa-exclamation-triangle"></i>';
-                resultClass = 'warning';
-            }
-            
-            // Tạo giao diện kết quả mới
-            const resultHtml = `
-                <div class="result-display ${resultClass}">
-                    <div class="result-icon">${iconHtml}</div>
-                    <p class="result-text-main">${data.diagnosis_result}</p>
-                    <p class="result-text-sub">Lưu ý: Kết quả chỉ mang tính chất tham khảo.</p>
-                </div>
-            `;
-            resultsContent.innerHTML = resultHtml;
-            audioPlayer.src = data.filename;
-            resultPlayer.style.display = 'block';
-
-        } else {
-            resultsContent.innerHTML = '<h2>Đã có lỗi xảy ra</h2><p>Không thể phân tích file âm thanh.</p>';
-        }
-    } catch (error) {
-        console.error('Error uploading audio:', error);
-        resultsContent.innerHTML = '<h2>Đã có lỗi xảy ra</h2><p>Lỗi kết nối tới server.</p>';
-    }
-}
