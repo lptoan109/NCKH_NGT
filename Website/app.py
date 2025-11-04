@@ -4,7 +4,7 @@ import config # Import file config.py
 import random
 
 from itsdangerous import URLSafeTimedSerializer
-from flask import Flask, url_for, session, redirect, render_template, request, flash, jsonify # <--- ĐÃ THÊM jsonify
+from flask import Flask, url_for, session, redirect, render_template, request, flash, jsonify # Giữ nguyên
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from flask_bcrypt import Bcrypt
@@ -12,84 +12,20 @@ from flask_mail import Mail, Message
 from authlib.integrations.flask_client import OAuth
 from werkzeug.utils import secure_filename
 
-import tensorflow as tf
-import numpy as np
-import librosa
-import noisereduce as nr
-from scipy.stats import mode
-from tensorflow.keras.applications.efficientnet import preprocess_input
-
-# --- TẢI 5 MÔ HÌNH CNN ---
-MODELS = []
-MODEL_PATHS = [
-    'models/EfficienetB1_CV_TPU_fold_1.keras',
-    'models/EfficienetB1_CV_TPU_fold_2.keras',
-    'models/EfficienetB1_CV_TPU_fold_3.keras',
-    'models/EfficienetB1_CV_TPU_fold_4.keras',
-    'models/EfficienetB1_CV_TPU_fold_5.keras',
-]
-
-try:
-    for path in MODEL_PATHS:
-        MODELS.append(tf.keras.models.load_model(path))
-    print(f"Đã tải thành công {len(MODELS)} mô hình CNN.")
-except Exception as e:
-    print(f"LỖI KHI TẢI MÔ HÌNH: {e}")
-    MODELS = []
+# --- XÓA CÁC THƯ VIỆN AI ---
+# Đã xóa: tensorflow, numpy, librosa, noisereduce, scipy.stats, v.v.
 # -------------------------
 
-# --- CÁC THAM SỐ TIỀN XỬ LÝ ---
-SAMPLE_RATE = 16000
-N_MELS = 256
-N_FFT = 2048
-HOP_LENGTH = 512
-SILENCE_THRESHOLD_DB = 20
-SEGMENT_LENGTH_S = 4  # Độ dài chuẩn hóa là 4 giây 
-IMG_SIZE = (240, 240, 3) # Kích thước đầu vào của EfficientNetB1 
+# --- XÓA KHỐI TẢI MODEL ---
+# Toàn bộ khối "TẢI 5 MÔ HÌNH CNN" đã được xóa.
+# Biến MODELS không còn tồn tại.
+# -------------------------
 
-def preprocess_audio_for_cnn(file_path):
-    """
-    Tiền xử lý file âm thanh để tạo Mel Spectrogram cho mô hình CNN.
-    """
-    try:
-        y, sr = librosa.load(file_path, sr=SAMPLE_RATE, mono=True)
-        
-        # 1. Chuẩn hóa biên độ và giảm nhiễu
-        y = librosa.util.normalize(y)
-        y_denoised = nr.reduce_noise(y=y, sr=sr)
-        
-        # 2. Cắt bỏ khoảng lặng
-        y_trimmed, _ = librosa.effects.trim(y_denoised, top_db=SILENCE_THRESHOLD_DB)
-        if len(y_trimmed) < 1:
-            return None
-
-        # 3. Phân đoạn và đệm (chuẩn hóa độ dài 4 giây)
-        target_length = SEGMENT_LENGTH_S * sr
-        if len(y_trimmed) < target_length:
-            y_padded = np.pad(y_trimmed, (0, target_length - len(y_trimmed)), 'constant')
-        else:
-            y_padded = y_trimmed[:target_length]
-            
-        # 4. Tính Mel Spectrogram
-        mel_spec = librosa.feature.melspectrogram(y=y_padded, sr=sr, n_mels=N_MELS, n_fft=N_FFT, hop_length=HOP_LENGTH)
-        mel_spec_db = librosa.power_to_db(mel_spec, ref=np.max)
-
-        # 5. Chuyển thành ảnh 3 kênh và resize
-        spec_3_channels = np.stack([mel_spec_db]*3, axis=-1)
-        spec_resized = tf.image.resize(spec_3_channels, IMG_SIZE)
-        
-        # 6. Áp dụng hàm tiền xử lý đặc trưng của EfficientNet
-        spec_preprocessed = preprocess_input(spec_resized)
-        
-        # 7. Mở rộng thêm một chiều cho batch
-        final_spec = np.expand_dims(spec_preprocessed, axis=0)
-
-        return final_spec
-    except Exception as e:
-        print(f"Lỗi khi tiền xử lý file {file_path}: {e}")
-        return None
+# --- XÓA HÀM TIỀN XỬ LÝ ---
+# Hàm `preprocess_audio_for_cnn` đã được xóa.
+# -------------------------
     
-# --- 1. KHỞI TẠO VÀ CẤU HÌNH ---
+# --- 1. KHỞI TẠO VÀ CẤU HÌNH (Giữ nguyên) ---
 app = Flask(__name__)
 
 # Cấu hình từ file config.py (SECRET_KEY và thông tin Mail)
@@ -115,8 +51,7 @@ login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 oauth = OAuth(app)
 
-# --- Cấu hình Google Login ---
-# Tốt hơn là nên chuyển 2 dòng này vào config.py
+# --- Cấu hình Google Login (Giữ nguyên) ---
 google = oauth.register(
     name='google',
     client_id='564904327189-4gsii5kfkht070218tsjqu8amnstc7o1.apps.googleusercontent.com',
@@ -125,14 +60,13 @@ google = oauth.register(
     client_kwargs={'scope': 'openid email profile'}
 )
 
-# --- 2. ĐỊNH NGHĨA MODEL ---
+# --- 2. ĐỊNH NGHĨA MODEL (Giữ nguyên) ---
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(128), nullable=True)
     picture = db.Column(db.String(200), nullable=True)
-    # SỬA "Recording" thành "Prediction"
     predictions = db.relationship('Prediction', backref='user', lazy=True)
 
 class Prediction(db.Model):
@@ -147,13 +81,12 @@ class Prediction(db.Model):
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# --- 3. ĐỊNH NGHĨA ROUTE ---
+# --- 3. ĐỊNH NGHĨA ROUTE (Giữ nguyên hầu hết) ---
 
 @app.route('/')
 def homepage():
     return render_template('index.html')
 
-# (Các route login, register, logout, google... giữ nguyên)
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -251,22 +184,19 @@ def contact():
 @login_required
 def history():
     page = request.args.get('page', 1, type=int)
-    # SỬA "Recording" thành "Prediction"
     pagination = Prediction.query.filter_by(user_id=current_user.id)\
                                 .order_by(Prediction.timestamp.desc())\
                                 .paginate(page=page, per_page=10, error_out=False)
     predictions = pagination.items
     return render_template('history.html', predictions=predictions, pagination=pagination)
 
-@app.route('/delete_prediction/<int:prediction_id>', methods=['POST']) # Đổi tên route và biến
+@app.route('/delete_prediction/<int:prediction_id>', methods=['POST'])
 @login_required
-def delete_prediction(prediction_id): # Đổi tên hàm và biến
-    # SỬA "Recording" thành "Prediction"
+def delete_prediction(prediction_id):
     prediction = Prediction.query.get_or_404(prediction_id)
     if prediction.user_id != current_user.id:
         return {"error": "Unauthorized"}, 403
     try:
-        # Giả định file vẫn lưu trong 'static/uploads'
         filepath = os.path.join(app.root_path, 'static', 'uploads', prediction.filename)
         if os.path.exists(filepath):
             os.remove(filepath)
@@ -303,63 +233,51 @@ def edit_profile():
         return redirect(url_for('profile'))
     return render_template('edit_profile.html')
 
-# app.py
+# --- ROUTE /upload_audio (ĐÃ THAY ĐỔI HOÀN TOÀN) ---
+# Route này bây giờ KHÔNG dự đoán.
+# Nó chỉ nhận file âm thanh VÀ kết quả dự đoán (từ JS) để lưu vào DB.
 @app.route('/upload_audio', methods=['POST'])
 def upload_audio():
     audio_file = request.files.get('audio_data')
-    if not audio_file:
-        return jsonify({"error": "Không có file âm thanh"}), 400
+    # Lấy kết quả chẩn đoán và độ tin cậy do JavaScript gửi lên
+    diagnosis_result = request.form.get('diagnosis_result')
+    confidence_str = request.form.get('confidence')
 
+    if not audio_file or not diagnosis_result:
+        return jsonify({"error": "Không có file âm thanh hoặc kết quả chẩn đoán"}), 400
+
+    # 1. Lưu file âm thanh (giống code cũ của bạn)
     user_prefix = f"user_{current_user.id}" if current_user.is_authenticated else "guest"
     timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
     filename = secure_filename(f"{user_prefix}_{timestamp_str}.wav")
     filepath = os.path.join(app.root_path, app.config['UPLOAD_FOLDER'], filename)
-    audio_file.save(filepath)
-
-    if not MODELS:
-        return jsonify({"error": "Mô hình AI chưa sẵn sàng, vui lòng thử lại sau."}), 503
-
+    
     try:
-        # 1. Tiền xử lý file âm thanh
-        processed_spec = preprocess_audio_for_cnn(filepath)
-        if processed_spec is None:
-            return jsonify({"error": "File âm thanh không hợp lệ hoặc quá ngắn."}), 400
+        audio_file.save(filepath)
 
-        # 2. Lấy dự đoán từ 5 mô hình
-        predictions = []
-        # Thay thế bằng các lớp thực tế của bạn
-        class_names = ['Khỏe mạnh', 'Hen suyễn', 'Covid', 'Bệnh lao']
-        
-        for model in MODELS:
-            pred_probs = model.predict(processed_spec)[0]
-            predicted_class_index = np.argmax(pred_probs)
-            predictions.append(predicted_class_index)
-
-        # 3. Tổng hợp kết quả (Majority Voting - Lấy kết quả phổ biến nhất)
-        final_prediction_index, _ = mode(predictions)
-        diagnosis_result_text = class_names[final_prediction_index[0]]
-
-        # 4. Lưu vào DB và trả về kết quả
+        # 2. Lưu kết quả vào Database (nếu đã đăng nhập)
         if current_user.is_authenticated:
             new_prediction = Prediction(
                 filename=filename,
                 user_id=current_user.id,
-                result=diagnosis_result_text,
-                confidence='N/A' 
+                result=diagnosis_result, # Dùng kết quả từ JS
+                confidence=confidence_str or 'N/A' # Dùng độ tin cậy từ JS
             )
             db.session.add(new_prediction)
             db.session.commit()
 
+        # 3. Trả về JSON để JS hiển thị
         return jsonify({
             "success": True, 
             "filename": f"/static/uploads/{filename}", 
-            "diagnosis_result": diagnosis_result_text
+            "diagnosis_result": diagnosis_result # Gửi trả lại kết quả
         })
     except Exception as e:
-        print(f"Lỗi khi dự đoán AI: {e}")
-        return jsonify({"error": "Lỗi máy chủ trong quá trình phân tích"}), 500
+        print(f"Lỗi khi lưu file hoặc lưu vào DB: {e}")
+        return jsonify({"error": "Lỗi máy chủ khi lưu kết quả"}), 500
+# ---------------------------------------------------
 
-# --- CÁC HÀM VÀ ROUTE "QUÊN MẬT KHẨU" (ĐÃ DI CHUYỂN LÊN ĐÂY) ---
+# --- CÁC HÀM VÀ ROUTE "QUÊN MẬT KHẨU" (Giữ nguyên) ---
 def generate_reset_token(email):
     serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
     return serializer.dumps(email, salt='password-reset-salt')
@@ -416,7 +334,7 @@ def reset_password(token):
     return render_template('reset_password.html', token=token)
 
 
-# --- 4. CHẠY ỨNG DỤNG ---
+# --- 4. CHẠY ỨNG DỤNG (Giữ nguyên) ---
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
