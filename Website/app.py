@@ -26,9 +26,8 @@ from werkzeug.utils import secure_filename
 # -------------------------
     
 # --- 1. KHỞI TẠO VÀ CẤU HÌNH (Giữ nguyên) ---
-app = Flask(__name__, 
-            template_folder='templates', 
-            static_folder='static')
+# Đây là dòng code ĐÚNG
+app = Flask(__name__)
 
 # Cấu hình từ file config.py (SECRET_KEY và thông tin Mail)
 app.config['SECRET_KEY'] = config.SECRET_KEY
