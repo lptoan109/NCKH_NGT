@@ -1,6 +1,6 @@
 import os
 from datetime import datetime
-import Website.config as config # Import file config.py
+import config as config # Import file config.py
 import random
 
 from itsdangerous import URLSafeTimedSerializer
