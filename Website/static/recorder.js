@@ -221,4 +221,4 @@ document.addEventListener('DOMContentLoaded', () => {
             resultsContent.innerHTML = '<h2>Đã có lỗi xảy ra</h2><p>Lỗi kết nối tới server (để lưu file).</p>';
         }
     }
-});
+});//a
