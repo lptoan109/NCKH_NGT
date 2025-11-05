@@ -15,6 +15,43 @@ function blobToBase64(blob) {
         reader.onerror = error => reject(error);
     });
 }
+
+// --- HÀM TRỢ GIÚP MỚI: Kiểm tra file âm thanh có bị im lặng không ---
+async function isAudioSilent(audioBlob) {
+    try {
+        // 1. Tạo AudioContext (bộ xử lý âm thanh của trình duyệt)
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        
+        // 2. Chuyển Blob thành một định dạng mà AudioContext có thể đọc
+        const arrayBuffer = await audioBlob.arrayBuffer();
+        
+        // 3. Giải mã dữ liệu âm thanh
+        const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+        
+        // 4. Lấy dữ liệu từ kênh đầu tiên (thường là mono hoặc kênh trái)
+        const channelData = audioBuffer.getChannelData(0);
+        
+        // 5. Tính toán RMS (Root Mean Square) để đo năng lượng/âm lượng trung bình
+        let sumSquares = 0.0;
+        for (let i = 0; i < channelData.length; i++) {
+            sumSquares += channelData[i] * channelData[i];
+        }
+        const rms = Math.sqrt(sumSquares / channelData.length);
+        
+        // 6. Đặt ngưỡng im lặng (ví dụ: 0.01)
+        // Bất cứ tín hiệu nào dưới 1% biên độ tối đa được coi là im lặng.
+        // Bạn có thể điều chỉnh con số này nếu cần (ví dụ: 0.005)
+        const SILENCE_THRESHOLD = 0.01; 
+        
+        console.log("Audio RMS (âm lượng):", rms); // In ra để bạn kiểm tra
+        return rms < SILENCE_THRESHOLD;
+
+    } catch (error) {
+        console.error("Không thể phân tích âm thanh:", error);
+        // Nếu lỗi, tạm thời coi như không im lặng để code chạy tiếp
+        return false;
+    }
+}
 // -------------------------------------------
 
 
@@ -118,13 +155,58 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 
-    // --- HÀM XỬ LÝ MỚI KHI GHI ÂM DỪNG ---
+    // --- HÀM XỬ LÝ MỚI KHI GHI ÂM DỪNG (ĐÃ THÊM VALIDATION) ---
     async function handleRecordingStop(audioBlob) {
-        // 1. Hiển thị bảng kết quả và thông báo chờ
+        
+        // --- BẮT ĐẦU PHẦN KIỂM TRA MỚI ---
+
+        // 1. Hiển thị bảng kết quả và ẩn bảng ghi âm
         recordingPanel.style.display = 'none';
         resultsPanel.style.display = 'block';
-        resultsContent.innerHTML = '<p>Đang phân tích... Vui lòng chờ trong giây lát.</p>'; 
-        resultPlayer.style.display = 'none';
+        resultPlayer.style.display = 'none'; // Ẩn trình phát nhạc trước
+
+        // 2. Kiểm tra thời lượng
+        // (Chúng ta dùng 'seconds' từ đồng hồ bấm giờ)
+        if (seconds < 1) { 
+            console.log("Validation Lỗi: Âm thanh quá ngắn");
+            resultsContent.innerHTML = `
+                <div class="result-display warning"> 
+                    <div class="result-icon"><i class="fas fa-exclamation-triangle"></i></div>
+                    <p class="result-text-main">Âm thanh quá ngắn</p>
+                    <p class="result-text-sub">Bản ghi âm của bạn dưới 1 giây. Vui lòng ghi âm lại và ho rõ ràng hơn.</p>
+                </div>`;
+            
+            // Hiển thị nút "Chẩn đoán lại"
+            resultPlayer.style.display = 'block'; 
+            audioPlayer.style.display = 'none'; // Ẩn trình phát nhạc
+            audioPlayer.src = '';
+            return; // Dừng hàm, không gọi API
+        }
+
+        // 3. Kiểm tra file có bị im lặng không
+        resultsContent.innerHTML = '<p>Đang kiểm tra chất lượng âm thanh...</p>';
+        
+        const audioIsSilent = await isAudioSilent(audioBlob);
+        if (audioIsSilent) {
+            console.log("Validation Lỗi: Âm thanh quá im lặng");
+            resultsContent.innerHTML = `
+                <div class="result-display warning">
+                    <div class="result-icon"><i class="fas fa-exclamation-triangle"></i></div>
+                    <p class="result-text-main">Không phát hiện âm thanh</p>
+                    <p class="result-text-sub">Không phát hiện thấy tiếng ho hoặc âm thanh quá nhỏ. Vui lòng ghi âm lại ở nơi yên tĩnh và ho gần micro hơn.</p>
+                </div>`;
+            
+            // Hiển thị nút "Chẩn đoán lại"
+            resultPlayer.style.display = 'block';
+            audioPlayer.style.display = 'none';
+            audioPlayer.src = '';
+            return; // Dừng hàm, không gọi API
+        }
+        
+        // --- KẾT THÚC PHẦN KIỂM TRA ---
+
+        // Nếu vượt qua, tiếp tục gọi API
+        resultsContent.innerHTML = '<p>Đang phân tích... Vui lòng chờ trong giây lát.</p>';
 
         // 3. Gọi API Hugging Face bằng @gradio/client
         const HF_SPACE_URL = "https://nckhngt-ngt-cough-api.hf.space/";
@@ -164,16 +246,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const topPrediction = predictions.reduce((prev, current) => (prev.confidence > current.confidence) ? prev : current);
         const diagnosis_result = topPrediction.label; 
         
-        // --- THAY ĐỔI 1: Tính toán % để hiển thị ---
-        const confidence_raw = topPrediction.confidence; // vd: 0.8534
-        const confidence_display = (confidence_raw * 100).toFixed(0); // vd: "85"
+        const confidence_raw = topPrediction.confidence;
+        const confidence_display = (confidence_raw * 100).toFixed(0); 
 
 
         // 5. Gửi file âm thanh VÀ kết quả về server Flask để lưu
         const formData = new FormData();
         formData.append('audio_data', audioBlob);
         formData.append('diagnosis_result', diagnosis_result);
-        formData.append('confidence', confidence_raw.toFixed(2)); // Gửi "0.85" về Flask
+        formData.append('confidence', confidence_raw.toFixed(2)); 
 
         try {
             // Gọi về server Flask (trên PythonAnywhere)
@@ -201,7 +282,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     resultClass = 'warning';
                 }
                 
-                // --- THAY ĐỔI 2: Thêm dòng hiển thị độ tin cậy ---
                 const resultHtml = `
                     <div class="result-display ${resultClass}">
                         <div class="result-icon">${iconHtml}</div>
@@ -215,8 +295,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 `;
                 resultsContent.innerHTML = resultHtml;
-                audioPlayer.src = data.filename; // Flask trả về đường dẫn file đã lưu
-                resultPlayer.style.display = 'block';
+                audioPlayer.src = data.filename; 
+                audioPlayer.style.display = 'block'; // Hiển thị lại trình phát nhạc
+                resultPlayer.style.display = 'block'; // Đảm bảo toàn bộ block hiển thị
 
             } else {
                 resultsContent.innerHTML = `<h2>Đã có lỗi xảy ra</h2><p>${data.error || 'Không thể lưu kết quả.'}</p>`;
