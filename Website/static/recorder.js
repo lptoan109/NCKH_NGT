@@ -130,7 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const HF_SPACE_URL = "https://nckhngt-ngt-cough-api.hf.space/";
 
         let hfResultData;
-        let resultObject; // Biến mới để lưu object kết quả
+        let resultObject; 
         try {
             const client = await Client.connect(HF_SPACE_URL);
 
@@ -139,25 +139,18 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             hfResultData = result.data;
-
-            // --- BẮT ĐẦU SỬA LỖI ---
-            // Dữ liệu trả về là một MẢNG (Array) chứa 1 object, ví dụ: [ { label: '...', confidences: [...] } ]
             
-            // 1. Kiểm tra xem có phải là mảng và có phần tử không
             if (!Array.isArray(hfResultData) || hfResultData.length === 0) {
                 console.error("Dữ liệu trả về không phải mảng hoặc rỗng:", hfResultData);
                 throw new Error("Kết quả API trả về có cấu trúc không mong đợi (không phải mảng).");
             }
 
-            // 2. Lấy object đầu tiên từ mảng
             resultObject = hfResultData[0]; 
 
-            // 3. Kiểm tra object đó có 'confidences' không
             if (!resultObject || !resultObject.confidences) {
                 console.error("Đối tượng kết quả không có 'confidences':", resultObject);
                 throw new Error("Kết quả API không hợp lệ hoặc thiếu 'confidences'.");
             }
-            // --- KẾT THÚC SỬA LỖI ---
 
         } catch (error) {
             console.error('Lỗi khi gọi API Hugging Face:', error);
@@ -166,20 +159,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // 4. Lấy kết quả chẩn đoán và độ tin cậy
-        
-        // --- SỬA LỖI: Lấy 'confidences' từ 'resultObject' (thay vì hfResultData) ---
         const predictions = resultObject.confidences;
         
         const topPrediction = predictions.reduce((prev, current) => (prev.confidence > current.confidence) ? prev : current);
-        const diagnosis_result = topPrediction.label; // vd: "healthy"
-        const confidence = topPrediction.confidence.toFixed(2); // vd: "0.85"
+        const diagnosis_result = topPrediction.label; 
+        
+        // --- THAY ĐỔI 1: Tính toán % để hiển thị ---
+        const confidence_raw = topPrediction.confidence; // vd: 0.8534
+        const confidence_display = (confidence_raw * 100).toFixed(0); // vd: "85"
 
 
-        // 5. Gửi file âm thanh VÀ kết quả về server Flask để lưu (Giữ nguyên)
+        // 5. Gửi file âm thanh VÀ kết quả về server Flask để lưu
         const formData = new FormData();
         formData.append('audio_data', audioBlob);
         formData.append('diagnosis_result', diagnosis_result);
-        formData.append('confidence', confidence);
+        formData.append('confidence', confidence_raw.toFixed(2)); // Gửi "0.85" về Flask
 
         try {
             // Gọi về server Flask (trên PythonAnywhere)
@@ -207,11 +201,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     resultClass = 'warning';
                 }
                 
+                // --- THAY ĐỔI 2: Thêm dòng hiển thị độ tin cậy ---
                 const resultHtml = `
                     <div class="result-display ${resultClass}">
                         <div class="result-icon">${iconHtml}</div>
                         <p class="result-text-main">${displayResult}</p>
-                        <p class="result-text-sub">Lưu ý: Kết quả chỉ mang tính chất tham khảo.</p>
+                        
+                        <p style="color: var(--text-light); margin-top: 5px; font-size: 1em;">
+                            Độ tin cậy: <strong>${confidence_display}%</strong>
+                        </p>
+                        
+                        <p class="result-text-sub" style="margin-top: 15px;">Lưu ý: Kết quả chỉ mang tính chất tham khảo.</p>
                     </div>
                 `;
                 resultsContent.innerHTML = resultHtml;
