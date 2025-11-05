@@ -12,6 +12,11 @@
         <p class="diagnose-instructions">
             Hãy đưa micro gần miệng và ho một cách tự nhiên. Nhấn nút bên dưới để bắt đầu.
         </p>
+        
+        <p class="diagnose-tip">
+            💡 **Mẹo:** Để có kết quả tốt nhất, bạn nên ho kéo dài **trên 4 giây**.
+        </p>
+        
         <div class="recorder">
             <button id="record-button" class="record-btn">
                 <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-mic-fill" viewBox="0 0 16 16">
@@ -46,5 +51,7 @@
 {% endblock %}
 
 {% block scripts %}
-    <script src="{{ url_for('static', filename='recorder.js') }}"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@gradio/client/dist/index.min.js"></script>
+    
+    <script type="module" src="{{ url_for('static', filename='recorder.js') }}"></script>
 {% endblock %}

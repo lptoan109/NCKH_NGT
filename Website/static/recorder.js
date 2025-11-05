@@ -1,12 +1,13 @@
 // recorder.js
 
 // --- HÀM TRỢ GIÚP: Chuyển Blob sang Base64 ---
+// (Hàm này không còn cần thiết cho việc gọi Gradio,
+// nhưng giữ lại cũng không sao)
 function blobToBase64(blob) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.readAsDataURL(blob);
         reader.onloadend = () => {
-            // API Gradio cần toàn bộ chuỗi base64, bao gồm "data:..."
             const base64data = reader.result;
             resolve(base64data);
         };
@@ -115,7 +116,7 @@ document.addEventListener('DOMContentLoaded', () => {
         timerDisplay.textContent = '00:00';
     }
 
-    // --- HÀM XỬ LÝ MỚI KHI GHI ÂM DỪNG ---
+    // --- HÀM XỬ LÝ MỚI KHI GHI ÂM DỪNG (ĐÃ VIẾT LẠI) ---
     async function handleRecordingStop(audioBlob) {
         // 1. Hiển thị bảng kết quả và thông báo chờ
         recordingPanel.style.display = 'none';
@@ -123,48 +124,39 @@ document.addEventListener('DOMContentLoaded', () => {
         resultsContent.innerHTML = '<p>Đang phân tích... Vui lòng chờ trong giây lát.</p>'; 
         resultPlayer.style.display = 'none';
 
-        // 2. Chuyển Blob sang Base64
-        let base64Audio;
-        try {
-            base64Audio = await blobToBase64(audioBlob);
-        } catch (error) {
-            console.error('Lỗi chuyển đổi Base64:', error);
-            resultsContent.innerHTML = '<h2>Đã có lỗi xảy ra</h2><p>Lỗi xử lý file âm thanh.</p>';
-            return;
-        }
+        // 2. Không cần chuyển sang Base64 nữa, thư viện client sẽ tự xử lý Blob
 
-        // 3. Gọi API Hugging Face
+        // 3. Gọi API Hugging Face bằng @gradio/client
         
-        // **THAY ĐỔI 1: Sửa URL endpoint sang /api/predict/ (thay vì /run/predict)**
-        // URL /run/predict là để xem (GET), /api/predict/ mới là để gửi dữ liệu (POST)
-        const HF_API_URL = "https://nckhNGT-NGT-cough-api.hf.space/api/predict/";
+        // **THAY ĐỔI 1: Dùng URL gốc của Space**
+        const HF_SPACE_URL = "https://nckhngt-ngt-cough-api.hf.space/";
+        
+        // **THAY ĐỔI 2: Lấy Client từ thư viện đã import ở HTML**
+        // (window.gradio_client được thêm vào từ file .js trên CDN)
+        const { Client } = window.gradio_client;
 
         let hfResultData;
         try {
-            const hfResponse = await fetch(HF_API_URL, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
+            // **THAY ĐỔI 3: Kết nối (connect) tới Space**
+            const client = await Client.connect(HF_SPACE_URL);
 
-                // **THAY ĐỔI 2: Cấu trúc body cho Gradio Audio component**
-                // API Gradio yêu cầu một object chứa "name" và "data" (chuỗi base64)
-                body: JSON.stringify({
-                    "data": [
-                        {
-                            "name": "recording.wav", // Đặt tên file bất kỳ
-                            "data": base64Audio      // Chuỗi base64 đầy đủ từ hàm blobToBase64
-                        }
-                    ]
-                })
+            // **THAY ĐỔI 4: Gọi hàm predict với api_name và payload**
+            // Lấy từ ảnh chụp màn hình "Use via API" của bạn
+            // - api_name là "/predict"
+            // - tham số đầu vào là "audio_file"
+            const result = await client.predict("/predict", {
+                audio_file: audioBlob 
             });
 
-            hfResultData = await hfResponse.json();
+            // **THAY ĐỔI 5: Lấy kết quả từ 'result.data'**
+            // (Thư viện JS client trả kết quả trong thuộc tính 'data')
+            hfResultData = result.data;
 
-            if (!hfResultData.data || !hfResultData.data[0]) {
-                // Kiểm tra xem có phải lỗi do server Gradio đang bận không
-                if (hfResultData.error) {
-                    throw new Error(`Lỗi từ API: ${hfResultData.error}`);
-                }
-                throw new Error("Kết quả trả về từ API không hợp lệ.");
+            // **THAY ĐỔI 6: Cấu trúc kết quả đã thay đổi**
+            // Dựa theo ảnh chụp màn hình, kết quả là một dictionary
+            // { label: "...", confidences: [...] }
+            if (!hfResultData || !hfResultData.confidences) {
+                throw new Error("Kết quả trả về từ API không hợp lệ hoặc thiếu 'confidences'.");
             }
 
         } catch (error) {
@@ -174,28 +166,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // 4. Lấy kết quả chẩn đoán và độ tin cậy
-        // Cấu trúc trả về của Gradio có thể là data[0] (cho audio) và data[1] (cho label)
-        // Hoặc data[0] là một object JSON chứa kết quả.
-        // Dựa theo code cũ của bạn, chúng ta giả định nó là data[0].confidences
-        let predictions;
-        if (hfResultData.data[0].confidences) {
-            // Cấu trúc cũ
-            predictions = hfResultData.data[0].confidences;
-        } else if (Array.isArray(hfResultData.data[0])) {
-            // Cấu trúc mới có thể là: data[0] là mảng các { "label": ..., "conf": ... }
-            predictions = hfResultData.data[0].map(p => ({ label: p.label, confidence: p.conf }));
-        } else {
-             console.error('Cấu trúc data trả về không xác định:', hfResultData.data);
-             resultsContent.innerHTML = `<h2>Đã có lỗi xảy ra</h2><p>Không thể đọc định dạng kết quả từ máy chủ AI.</p>`;
-             return;
-        }
         
+        // **THAY ĐỔI 7: Lấy 'confidences' trực tiếp từ hfResultData**
+        const predictions = hfResultData.confidences;
+        
+        // Phần này giữ nguyên
         const topPrediction = predictions.reduce((prev, current) => (prev.confidence > current.confidence) ? prev : current);
-        
         const diagnosis_result = topPrediction.label; // vd: "healthy"
         const confidence = topPrediction.confidence.toFixed(2); // vd: "0.85"
 
-        // 5. Gửi file âm thanh VÀ kết quả về server Flask để lưu
+
+        // 5. Gửi file âm thanh VÀ kết quả về server Flask để lưu (Giữ nguyên)
         const formData = new FormData();
         formData.append('audio_data', audioBlob);
         formData.append('diagnosis_result', diagnosis_result);
@@ -240,7 +221,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 resultPlayer.style.display = 'block';
 
             } else {
-                resultsContent.innerHTML = `<h2>Đã có lỗi xảy ra</h2><p>${data.error || 'Không thể lưu kết quả.'}</p>`;
+                resultsContent.innerHTML = `<h2>Đã có lỗi xảyN ra</h2><p>${data.error || 'Không thể lưu kết quả.'}</p>`;
             }
         } catch (error) {
             console.error('Lỗi khi gửi kết quả về server Flask:', error);
