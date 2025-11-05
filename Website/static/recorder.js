@@ -19,36 +19,24 @@ function blobToBase64(blob) {
 // --- HÀM TRỢ GIÚP MỚI: Kiểm tra file âm thanh có bị im lặng không ---
 async function isAudioSilent(audioBlob) {
     try {
-        // 1. Tạo AudioContext (bộ xử lý âm thanh của trình duyệt)
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        
-        // 2. Chuyển Blob thành một định dạng mà AudioContext có thể đọc
         const arrayBuffer = await audioBlob.arrayBuffer();
-        
-        // 3. Giải mã dữ liệu âm thanh
         const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-        
-        // 4. Lấy dữ liệu từ kênh đầu tiên (thường là mono hoặc kênh trái)
         const channelData = audioBuffer.getChannelData(0);
         
-        // 5. Tính toán RMS (Root Mean Square) để đo năng lượng/âm lượng trung bình
         let sumSquares = 0.0;
         for (let i = 0; i < channelData.length; i++) {
             sumSquares += channelData[i] * channelData[i];
         }
         const rms = Math.sqrt(sumSquares / channelData.length);
         
-        // 6. Đặt ngưỡng im lặng (ví dụ: 0.01)
-        // Bất cứ tín hiệu nào dưới 1% biên độ tối đa được coi là im lặng.
-        // Bạn có thể điều chỉnh con số này nếu cần (ví dụ: 0.005)
         const SILENCE_THRESHOLD = 0.01; 
         
-        console.log("Audio RMS (âm lượng):", rms); // In ra để bạn kiểm tra
+        console.log("Audio RMS (âm lượng):", rms);
         return rms < SILENCE_THRESHOLD;
 
     } catch (error) {
         console.error("Không thể phân tích âm thanh:", error);
-        // Nếu lỗi, tạm thời coi như không im lặng để code chạy tiếp
         return false;
     }
 }
@@ -58,6 +46,7 @@ async function isAudioSilent(audioBlob) {
 document.addEventListener('DOMContentLoaded', () => {
     // Lấy các phần tử HTML cần thiết
     const recordButton = document.getElementById('record-button');
+    const fileUploadInput = document.getElementById('file-upload'); // <-- THÊM DÒNG NÀY
     const timerDisplay = document.getElementById('timer');
     const recordingPanel = document.getElementById('recording-panel');
     const resultsPanel = document.getElementById('results-panel');
@@ -71,7 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let audioChunks = [];
     let isRecording = false;
     let timerInterval;
-    let seconds = 0;
+    let seconds = 0; // Biến này quan trọng để kiểm tra thời lượng
 
     if (recordButton) {
         recordButton.addEventListener('click', toggleRecording);
@@ -84,6 +73,26 @@ document.addEventListener('DOMContentLoaded', () => {
             resetTimer();
         });
     }
+
+    // --- BỘ XỬ LÝ SỰ KIỆN MỚI CHO TẢI FILE ---
+    if (fileUploadInput) {
+        fileUploadInput.addEventListener('change', handleFileSelect);
+    }
+
+    async function handleFileSelect(event) {
+        const file = event.target.files[0];
+        if (!file) {
+            return; // Người dùng hủy
+        }
+
+        // Đặt lại giá trị input để họ có thể upload file y hệt lần nữa
+        event.target.value = null; 
+
+        // File chính là một Blob, gọi hàm xử lý và báo đây là file upload
+        await handleRecordingStop(file, true);
+    }
+    // --- HẾT BỘ XỬ LÝ MỚI ---
+
 
     async function toggleRecording() {
         if (isRecording) {
@@ -106,7 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
             mediaRecorder.onstop = () => {
                 const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
                 
-                // Gọi hàm xử lý logic API Hugging Face
+                // Gọi hàm xử lý, isUpload sẽ mặc định là false
                 handleRecordingStop(audioBlob); 
 
                 stream.getTracks().forEach(track => track.stop());
@@ -155,19 +164,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 
-    // --- HÀM XỬ LÝ MỚI KHI GHI ÂM DỪNG (ĐÃ THÊM VALIDATION) ---
-    async function handleRecordingStop(audioBlob) {
+    // --- HÀM XỬ LÝ ĐÃ SỬA: Thêm tham số "isUpload" ---
+    async function handleRecordingStop(audioBlob, isUpload = false) {
         
-        // --- BẮT ĐẦU PHẦN KIỂM TRA MỚI ---
+        // --- BẮT ĐẦU PHẦN KIỂM TRA ---
 
         // 1. Hiển thị bảng kết quả và ẩn bảng ghi âm
         recordingPanel.style.display = 'none';
         resultsPanel.style.display = 'block';
-        resultPlayer.style.display = 'none'; // Ẩn trình phát nhạc trước
+        resultPlayer.style.display = 'none'; 
 
-        // 2. Kiểm tra thời lượng
-        // (Chúng ta dùng 'seconds' từ đồng hồ bấm giờ)
-        if (seconds < 1) { 
+        // 2. Kiểm tra thời lượng (CHỈ ÁP DỤNG CHO GHI ÂM)
+        // 'seconds' là biến toàn cục của đồng hồ
+        if (!isUpload && seconds < 1) { 
             console.log("Validation Lỗi: Âm thanh quá ngắn");
             resultsContent.innerHTML = `
                 <div class="result-display warning"> 
@@ -176,14 +185,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     <p class="result-text-sub">Bản ghi âm của bạn dưới 1 giây. Vui lòng ghi âm lại và ho rõ ràng hơn.</p>
                 </div>`;
             
-            // Hiển thị nút "Chẩn đoán lại"
             resultPlayer.style.display = 'block'; 
-            audioPlayer.style.display = 'none'; // Ẩn trình phát nhạc
+            audioPlayer.style.display = 'none'; 
             audioPlayer.src = '';
             return; // Dừng hàm, không gọi API
         }
 
-        // 3. Kiểm tra file có bị im lặng không
+        // 3. Kiểm tra file có bị im lặng không (Áp dụng cho cả 2)
         resultsContent.innerHTML = '<p>Đang kiểm tra chất lượng âm thanh...</p>';
         
         const audioIsSilent = await isAudioSilent(audioBlob);
@@ -193,10 +201,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="result-display warning">
                     <div class="result-icon"><i class="fas fa-exclamation-triangle"></i></div>
                     <p class="result-text-main">Không phát hiện âm thanh</p>
-                    <p class="result-text-sub">Không phát hiện thấy tiếng ho hoặc âm thanh quá nhỏ. Vui lòng ghi âm lại ở nơi yên tĩnh và ho gần micro hơn.</p>
+                    <p class="result-text-sub">Không phát hiện thấy tiếng ho hoặc âm thanh quá nhỏ. Vui lòng ghi âm lại hoặc tải lên file khác rõ ràng hơn.</p>
                 </div>`;
             
-            // Hiển thị nút "Chẩn đoán lại"
             resultPlayer.style.display = 'block';
             audioPlayer.style.display = 'none';
             audioPlayer.src = '';
@@ -296,8 +303,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
                 resultsContent.innerHTML = resultHtml;
                 audioPlayer.src = data.filename; 
-                audioPlayer.style.display = 'block'; // Hiển thị lại trình phát nhạc
-                resultPlayer.style.display = 'block'; // Đảm bảo toàn bộ block hiển thị
+                audioPlayer.style.display = 'block'; 
+                resultPlayer.style.display = 'block';
 
             } else {
                 resultsContent.innerHTML = `<h2>Đã có lỗi xảy ra</h2><p>${data.error || 'Không thể lưu kết quả.'}</p>`;
