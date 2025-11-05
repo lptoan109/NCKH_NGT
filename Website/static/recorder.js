@@ -19,9 +19,7 @@ function blobToBase64(blob) {
 
 
 document.addEventListener('DOMContentLoaded', () => {
-    // ... (Toàn bộ code từ dòng 20 đến 130 giữ nguyên, tôi ẩn đi cho gọn) ...
-    
-    // Lấy các phần tử HTML cần thiết từ trang diagnose.html
+    // Lấy các phần tử HTML cần thiết
     const recordButton = document.getElementById('record-button');
     const timerDisplay = document.getElementById('timer');
     const recordingPanel = document.getElementById('recording-panel');
@@ -132,6 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const HF_SPACE_URL = "https://nckhngt-ngt-cough-api.hf.space/";
 
         let hfResultData;
+        let resultObject; // Biến mới để lưu object kết quả
         try {
             const client = await Client.connect(HF_SPACE_URL);
 
@@ -141,13 +140,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
             hfResultData = result.data;
 
-            // --- THAY ĐỔI DUY NHẤT: In kết quả ra Console để debug ---
-            console.log("DỮ LIỆU THÔ TRẢ VỀ TỪ API:", hfResultData);
-            // ----------------------------------------------------
-
-            if (!hfResultData || !hfResultData.confidences) {
-                throw new Error("Kết quả trả về từ API không hợp lệ hoặc thiếu 'confidences'.");
+            // --- BẮT ĐẦU SỬA LỖI ---
+            // Dữ liệu trả về là một MẢNG (Array) chứa 1 object, ví dụ: [ { label: '...', confidences: [...] } ]
+            
+            // 1. Kiểm tra xem có phải là mảng và có phần tử không
+            if (!Array.isArray(hfResultData) || hfResultData.length === 0) {
+                console.error("Dữ liệu trả về không phải mảng hoặc rỗng:", hfResultData);
+                throw new Error("Kết quả API trả về có cấu trúc không mong đợi (không phải mảng).");
             }
+
+            // 2. Lấy object đầu tiên từ mảng
+            resultObject = hfResultData[0]; 
+
+            // 3. Kiểm tra object đó có 'confidences' không
+            if (!resultObject || !resultObject.confidences) {
+                console.error("Đối tượng kết quả không có 'confidences':", resultObject);
+                throw new Error("Kết quả API không hợp lệ hoặc thiếu 'confidences'.");
+            }
+            // --- KẾT THÚC SỬA LỖI ---
 
         } catch (error) {
             console.error('Lỗi khi gọi API Hugging Face:', error);
@@ -156,7 +166,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // 4. Lấy kết quả chẩn đoán và độ tin cậy
-        const predictions = hfResultData.confidences;
+        
+        // --- SỬA LỖI: Lấy 'confidences' từ 'resultObject' (thay vì hfResultData) ---
+        const predictions = resultObject.confidences;
         
         const topPrediction = predictions.reduce((prev, current) => (prev.confidence > current.confidence) ? prev : current);
         const diagnosis_result = topPrediction.label; // vd: "healthy"
