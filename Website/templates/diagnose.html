@@ -13,8 +13,8 @@
             Hãy đưa micro gần miệng và ho một cách tự nhiên. Nhấn nút bên dưới để bắt đầu.
         </p>
         
-        <p class="diagnose-tip">
-            💡 **Mẹo:** Để có kết quả tốt nhất, bạn nên ho kéo dài **trên 4 giây**.
+        <p class="diagnose-tip" style="font-style: italic; color: var(--text-light);">
+            💡 <strong>Mẹo:</strong> Để có kết quả tốt nhất, bạn nên ho kéo dài <strong>từ 4 giây trở lên</strong>.
         </p>
         
         <div class="recorder">
@@ -51,7 +51,5 @@
 {% endblock %}
 
 {% block scripts %}
-    <script type="module" src="https://cdn.jsdelivr.net/npm/@gradio/client/dist/index.min.js"></script>
-    
     <script type="module" src="{{ url_for('static', filename='recorder.js') }}"></script>
 {% endblock %}
