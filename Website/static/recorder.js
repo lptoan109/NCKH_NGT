@@ -1,10 +1,9 @@
 // recorder.js
 
-// THAY ĐỔI 1: Import thư viện Gradio Client trực tiếp ở đầu file
+// Import thư viện Gradio Client trực tiếp ở đầu file
 import { Client } from "https://cdn.jsdelivr.net/npm/@gradio/client/dist/index.min.js";
 
 // --- HÀM TRỢ GIÚP: Chuyển Blob sang Base64 ---
-// (Không còn cần thiết cho Gradio, nhưng giữ lại cho Flask)
 function blobToBase64(blob) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -20,6 +19,8 @@ function blobToBase64(blob) {
 
 
 document.addEventListener('DOMContentLoaded', () => {
+    // ... (Toàn bộ code từ dòng 20 đến 130 giữ nguyên, tôi ẩn đi cho gọn) ...
+    
     // Lấy các phần tử HTML cần thiết từ trang diagnose.html
     const recordButton = document.getElementById('record-button');
     const timerDisplay = document.getElementById('timer');
@@ -118,7 +119,8 @@ document.addEventListener('DOMContentLoaded', () => {
         timerDisplay.textContent = '00:00';
     }
 
-    // --- HÀM XỬ LÝ MỚI KHI GHI ÂM DỪNG (ĐÃ VIẾT LẠI) ---
+
+    // --- HÀM XỬ LÝ MỚI KHI GHI ÂM DỪNG ---
     async function handleRecordingStop(audioBlob) {
         // 1. Hiển thị bảng kết quả và thông báo chờ
         recordingPanel.style.display = 'none';
@@ -126,26 +128,22 @@ document.addEventListener('DOMContentLoaded', () => {
         resultsContent.innerHTML = '<p>Đang phân tích... Vui lòng chờ trong giây lát.</p>'; 
         resultPlayer.style.display = 'none';
 
-        // 2. Không cần chuyển sang Base64 cho Gradio
-
         // 3. Gọi API Hugging Face bằng @gradio/client
-        
         const HF_SPACE_URL = "https://nckhngt-ngt-cough-api.hf.space/";
-        
-        // **THAY ĐỔI 2: Xóa dòng "const { Client } = window.gradio_client;"**
-        // Vì "Client" đã được import ở đầu file.
 
         let hfResultData;
         try {
-            // Kết nối (connect) tới Space
             const client = await Client.connect(HF_SPACE_URL);
 
-            // Gọi hàm predict với api_name và payload
             const result = await client.predict("/predict", {
                 audio_file: audioBlob 
             });
 
             hfResultData = result.data;
+
+            // --- THAY ĐỔI DUY NHẤT: In kết quả ra Console để debug ---
+            console.log("DỮ LIỆU THÔ TRẢ VỀ TỪ API:", hfResultData);
+            // ----------------------------------------------------
 
             if (!hfResultData || !hfResultData.confidences) {
                 throw new Error("Kết quả trả về từ API không hợp lệ hoặc thiếu 'confidences'.");
