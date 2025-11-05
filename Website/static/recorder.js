@@ -134,18 +134,25 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // 3. Gọi API Hugging Face
-        // URL API chính xác (viết hoa NGT)
-        const HF_API_URL = "https://nckhNGT-NGT-cough-api.hf.space/run/predict";
+        
+        // **THAY ĐỔI 1: Sửa URL endpoint sang /api/predict/ (thay vì /run/predict)**
+        // URL /run/predict là để xem (GET), /api/predict/ mới là để gửi dữ liệu (POST)
+        const HF_API_URL = "https://nckhNGT-NGT-cough-api.hf.space/api/predict/";
 
         let hfResultData;
         try {
             const hfResponse = await fetch(HF_API_URL, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
+
+                // **THAY ĐỔI 2: Cấu trúc body cho Gradio Audio component**
+                // API Gradio yêu cầu một object chứa "name" và "data" (chuỗi base64)
                 body: JSON.stringify({
                     "data": [
-                        // Gradio API cần toàn bộ chuỗi base64
-                        base64Audio
+                        {
+                            "name": "recording.wav", // Đặt tên file bất kỳ
+                            "data": base64Audio      // Chuỗi base64 đầy đủ từ hàm blobToBase64
+                        }
                     ]
                 })
             });
@@ -153,6 +160,10 @@ document.addEventListener('DOMContentLoaded', () => {
             hfResultData = await hfResponse.json();
 
             if (!hfResultData.data || !hfResultData.data[0]) {
+                // Kiểm tra xem có phải lỗi do server Gradio đang bận không
+                if (hfResultData.error) {
+                    throw new Error(`Lỗi từ API: ${hfResultData.error}`);
+                }
                 throw new Error("Kết quả trả về từ API không hợp lệ.");
             }
 
@@ -163,7 +174,22 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // 4. Lấy kết quả chẩn đoán và độ tin cậy
-        const predictions = hfResultData.data[0].confidences;
+        // Cấu trúc trả về của Gradio có thể là data[0] (cho audio) và data[1] (cho label)
+        // Hoặc data[0] là một object JSON chứa kết quả.
+        // Dựa theo code cũ của bạn, chúng ta giả định nó là data[0].confidences
+        let predictions;
+        if (hfResultData.data[0].confidences) {
+            // Cấu trúc cũ
+            predictions = hfResultData.data[0].confidences;
+        } else if (Array.isArray(hfResultData.data[0])) {
+            // Cấu trúc mới có thể là: data[0] là mảng các { "label": ..., "conf": ... }
+            predictions = hfResultData.data[0].map(p => ({ label: p.label, confidence: p.conf }));
+        } else {
+             console.error('Cấu trúc data trả về không xác định:', hfResultData.data);
+             resultsContent.innerHTML = `<h2>Đã có lỗi xảy ra</h2><p>Không thể đọc định dạng kết quả từ máy chủ AI.</p>`;
+             return;
+        }
+        
         const topPrediction = predictions.reduce((prev, current) => (prev.confidence > current.confidence) ? prev : current);
         
         const diagnosis_result = topPrediction.label; // vd: "healthy"
@@ -221,4 +247,4 @@ document.addEventListener('DOMContentLoaded', () => {
             resultsContent.innerHTML = '<h2>Đã có lỗi xảy ra</h2><p>Lỗi kết nối tới server (để lưu file).</p>';
         }
     }
-});//a
+});
