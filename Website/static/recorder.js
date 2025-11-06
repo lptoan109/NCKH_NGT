@@ -19,34 +19,24 @@ function blobToBase64(blob) {
 // --- HÀM TRỢ GIÚP MỚI: Kiểm tra file âm thanh có bị im lặng không ---
 async function isAudioSilent(audioBlob) {
     try {
-        // 1. Tạo AudioContext (bộ xử lý âm thanh của trình duyệt)
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        
-        // 2. Chuyển Blob thành một định dạng mà AudioContext có thể đọc
         const arrayBuffer = await audioBlob.arrayBuffer();
-        
-        // 3. Giải mã dữ liệu âm thanh
         const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-        
-        // 4. Lấy dữ liệu từ kênh đầu tiên (thường là mono hoặc kênh trái)
         const channelData = audioBuffer.getChannelData(0);
         
-        // 5. Tính toán RMS (Root Mean Square) để đo năng lượng/âm lượng trung bình
         let sumSquares = 0.0;
         for (let i = 0; i < channelData.length; i++) {
             sumSquares += channelData[i] * channelData[i];
         }
         const rms = Math.sqrt(sumSquares / channelData.length);
         
-        // 6. Đặt ngưỡng im lặng (ví dụ: 0.01)
         const SILENCE_THRESHOLD = 0.01; 
         
-        console.log("Audio RMS (âm lượng):", rms); // In ra để bạn kiểm tra
+        console.log("Audio RMS (âm lượng):", rms);
         return rms < SILENCE_THRESHOLD;
 
     } catch (error) {
         console.error("Không thể phân tích âm thanh:", error);
-        // Nếu lỗi, tạm thời coi như không im lặng để code chạy tiếp
         return false;
     }
 }
@@ -70,7 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let audioChunks = [];
     let isRecording = false;
     let timerInterval;
-    let seconds = 0; // Biến này quan trọng để kiểm tra thời lượng
+    let seconds = 0; 
 
     if (recordButton) {
         recordButton.addEventListener('click', toggleRecording);
@@ -84,7 +74,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- BỘ XỬ LÝ SỰ KIỆN MỚI CHO TẢI FILE ---
     if (fileUploadInput) {
         fileUploadInput.addEventListener('change', handleFileSelect);
     }
@@ -92,16 +81,11 @@ document.addEventListener('DOMContentLoaded', () => {
     async function handleFileSelect(event) {
         const file = event.target.files[0];
         if (!file) {
-            return; // Người dùng hủy
+            return;
         }
-
-        // Đặt lại giá trị input để họ có thể upload file y hệt lần nữa
         event.target.value = null; 
-
-        // File chính là một Blob, gọi hàm xử lý và báo đây là file upload
         await handleRecordingStop(file, true);
     }
-    // --- HẾT BỘ XỬ LÝ MỚI ---
 
 
     async function toggleRecording() {
@@ -124,10 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             mediaRecorder.onstop = () => {
                 const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-                
-                // Gọi hàm xử lý, isUpload sẽ mặc định là false
                 handleRecordingStop(audioBlob); 
-
                 stream.getTracks().forEach(track => track.stop());
             };
 
@@ -174,11 +155,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 
-    // --- HÀM XỬ LÝ ĐÃ SỬA: Thêm tham số "isUpload" ---
+    // --- HÀM XỬ LÝ MỚI KHI GHI ÂM DỪNG ---
     async function handleRecordingStop(audioBlob, isUpload = false) {
         
-        // --- BẮT ĐẦU PHẦN KIỂM TRA ---
-
         // 1. Hiển thị bảng kết quả và ẩn bảng ghi âm
         recordingPanel.style.display = 'none';
         resultsPanel.style.display = 'block';
@@ -193,25 +172,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     <p class="result-text-main">Âm thanh quá ngắn</p>
                     <p class="result-text-sub">Bản ghi âm của bạn dưới 1 giây. Vui lòng ghi âm lại và ho rõ ràng hơn.</p>
                 </div>`;
-            
             resultPlayer.style.display = 'block'; 
             audioPlayer.style.display = 'none'; 
             audioPlayer.src = '';
-            return; // Dừng hàm, không gọi API
+            return;
         }
 
-        // 3. Kiểm tra file có bị im lặng không
+        // 3. Kiểm tra file có bị im lặng không (CHỈ ÁP DỤNG CHO GHI ÂM)
         resultsContent.innerHTML = '<p>Đang kiểm tra chất lượng âm thanh...</p>';
         
-        // --- THAY ĐỔI QUAN TRỌNG ---
-        // Chỉ kiểm tra im lặng cho file GHI ÂM (isUpload == false).
-        // Bỏ qua kiểm tra cho file TẢI LÊN (isUpload == true)
-        // vì giải mã MP3/WAV trên trình duyệt không ổn định.
         let audioIsSilent = false; 
         if (!isUpload) {
             audioIsSilent = await isAudioSilent(audioBlob);
         }
-        // --- KẾT THÚC THAY ĐỔI ---
 
         if (audioIsSilent) {
             console.log("Validation Lỗi: Âm thanh quá im lặng");
@@ -221,43 +194,50 @@ document.addEventListener('DOMContentLoaded', () => {
                     <p class="result-text-main">Không phát hiện âm thanh</p>
                     <p class="result-text-sub">Không phát hiện thấy tiếng ho hoặc âm thanh quá nhỏ. Vui lòng ghi âm lại hoặc tải lên file khác rõ ràng hơn.</p>
                 </div>`;
-            
             resultPlayer.style.display = 'block';
             audioPlayer.style.display = 'none';
             audioPlayer.src = '';
-            return; // Dừng hàm, không gọi API
+            return;
         }
         
-        // --- KẾT THÚC PHẦN KIỂM TRA ---
-
         // Nếu vượt qua, tiếp tục gọi API
         resultsContent.innerHTML = '<p>Đang phân tích... Vui lòng chờ trong giây lát.</p>';
 
-        // 3. Gọi API Hugging Face bằng @gradio/client
+        // 3. Gọi API Hugging Face
         const HF_SPACE_URL = "https://nckhngt-ngt-cough-api.hf.space/";
 
         let hfResultData;
-        let resultObject; 
+        
+        // --- BẮT ĐẦU SỬA LỖI (Sửa logic để đọc object) ---
+        let predictions; // Sẽ là mảng: [{label: '...', confidence: ...}, ...]
+        // --- KẾT THÚC SỬA LỖI ---
+        
         try {
             const client = await Client.connect(HF_SPACE_URL);
-
             const result = await client.predict("/predict", {
                 audio_file: audioBlob 
             });
 
-            hfResultData = result.data;
+            hfResultData = result.data; // hfResultData là {"healthy": 0.32, ...}
             
-            if (!Array.isArray(hfResultData) || hfResultData.length === 0) {
-                console.error("Dữ liệu trả về không phải mảng hoặc rỗng:", hfResultData);
-                throw new Error("Kết quả API trả về có cấu trúc không mong đợi (không phải mảng).");
+            // --- BẮT ĐẦU SỬA LỖI (Sửa logic để đọc object) ---
+
+            // 1. Kiểm tra xem có phải là object và có key không
+            if (typeof hfResultData !== 'object' || hfResultData === null || Object.keys(hfResultData).length === 0) {
+                console.error("Dữ liệu trả về không phải object hoặc rỗng:", hfResultData);
+                throw new Error("Kết quả API trả về có cấu trúc không mong đợi (không phải object).");
             }
 
-            resultObject = hfResultData[0]; 
+            // 2. Chuyển object {label: prob} thành mảng [{label: '...', confidence: ...}]
+            // để code bên dưới có thể tái sử dụng
+            predictions = Object.entries(hfResultData).map(([label, confidence]) => {
+                return { label: label, confidence: parseFloat(confidence) };
+            });
 
-            if (!resultObject || !resultObject.confidences) {
-                console.error("Đối tượng kết quả không có 'confidences':", resultObject);
-                throw new Error("Kết quả API không hợp lệ hoặc thiếu 'confidences'.");
+            if (predictions.length === 0) {
+                 throw new Error("Không có kết quả nào trong object trả về.");
             }
+            // --- KẾT THÚC SỬA LỖI ---
 
         } catch (error) {
             console.error('Lỗi khi gọi API Hugging Face:', error);
@@ -266,8 +246,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // 4. Lấy kết quả chẩn đoán và độ tin cậy
-        const predictions = resultObject.confidences;
-        
+        // (Phần này giữ nguyên vì 'predictions' đã được chuẩn hóa ở trên)
         const topPrediction = predictions.reduce((prev, current) => (prev.confidence > current.confidence) ? prev : current);
         const diagnosis_result = topPrediction.label; 
         
