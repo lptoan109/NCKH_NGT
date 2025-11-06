@@ -33,7 +33,9 @@ app.config['MAIL_PASSWORD'] = config.EMAIL_PASS
 
 # Cấu hình chung
 # SỬA LỖI: Đường dẫn DB này sẽ tạo file 'database.db' bên trong thư mục 'Website'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
+# SỬA LỖI: Dùng đường dẫn tuyệt đối để CSDL luôn đúng chỗ
+basedir = os.path.abspath(os.path.dirname(__file__))
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'database.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 # SỬA LỖI: UPLOAD_FOLDER phải là đường dẫn tương đối từ app.py
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
