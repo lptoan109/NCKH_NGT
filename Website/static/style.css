@@ -489,7 +489,8 @@ main {
     margin: 0 2px;
     flex-shrink: 0;
     border-radius: 4px;
-    background: linear-gradient(to top, #3B82F6, #8B5CF6);
+    /* background: linear-gradient(to top, #3B82F6, #8B5CF6); */
+    background: linear-gradient(to top, var(--primary-color), var(--primary-hover));
     transition: height 0.2s ease-out;
 }
 
