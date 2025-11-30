@@ -218,30 +218,39 @@ document.addEventListener('DOMContentLoaded', () => {
                 audio_file: audioBlob 
             });
 
-            hfResultData = result.data[0]; // Đúng: Lấy phần tử đầu tiên trong mảng
-            
-            // --- BẮT ĐẦU SỬA LỖI (Sửa logic để đọc object) ---
+            hfResultData = result.data[0]; 
+            console.log("API Result Data:", hfResultData); // In ra để debug nếu cần
 
-            // 1. Kiểm tra xem có phải là object và có key không
-            if (typeof hfResultData !== 'object' || hfResultData === null || Object.keys(hfResultData).length === 0) {
-                console.error("Dữ liệu trả về không phải object hoặc rỗng:", hfResultData);
-                throw new Error("Kết quả API trả về có cấu trúc không mong đợi (không phải object).");
+            // --- BẮT ĐẦU SỬA LỖI (Logic xử lý đa năng) ---
+            
+            // Kiểm tra xem dữ liệu có phải dạng phức tạp của Gradio không (có key 'confidences')
+            if (hfResultData && Array.isArray(hfResultData.confidences)) {
+                // TRƯỜNG HỢP 1: Cấu trúc { label: "...", confidences: [...] }
+                predictions = hfResultData.confidences.map(item => ({
+                    label: item.label,
+                    confidence: typeof item.confidence === 'number' ? item.confidence : parseFloat(item.confidence)
+                }));
+            } else if (typeof hfResultData === 'object' && hfResultData !== null) {
+                // TRƯỜNG HỢP 2: Cấu trúc Dictionary đơn giản { "healthy": 0.9, ... }
+                predictions = Object.entries(hfResultData)
+                    // Lọc bỏ các key không phải là số (đề phòng có key lạ như 'label')
+                    .filter(([key, value]) => typeof value === 'number' || (typeof value === 'string' && !isNaN(parseFloat(value))))
+                    .map(([label, confidence]) => ({
+                        label: label,
+                        confidence: parseFloat(confidence)
+                    }));
+            } else {
+                 throw new Error("Format dữ liệu từ API không xác định.");
             }
 
-            // 2. Chuyển object {label: prob} thành mảng [{label: '...', confidence: ...}]
-            // để code bên dưới có thể tái sử dụng
-            predictions = Object.entries(hfResultData).map(([label, confidence]) => {
-                return { label: label, confidence: parseFloat(confidence) };
-            });
-
-            if (predictions.length === 0) {
-                 throw new Error("Không có kết quả nào trong object trả về.");
+            if (!predictions || predictions.length === 0) {
+                 throw new Error("Không tìm thấy kết quả dự đoán hợp lệ.");
             }
             // --- KẾT THÚC SỬA LỖI ---
 
         } catch (error) {
             console.error('Lỗi khi gọi API Hugging Face:', error);
-            resultsContent.innerHTML = `<h2>Đã có lỗi xảy ra</h2><p>Không thể kết nối tới máy chủ AI. Vui lòng thử lại sau.</p><p style="font-size: 0.8em; color: var(--text-light);">${error.message}</p>`;
+            resultsContent.innerHTML = `<h2>Đã có lỗi xảy ra</h2><p>Lỗi xử lý kết quả AI.</p><p style="font-size: 0.8em; color: var(--text-light);">${error.message}</p>`;
             return;
         }
 
