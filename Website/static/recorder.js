@@ -218,7 +218,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 audio_file: audioBlob 
             });
 
-            hfResultData = result.data; // hfResultData là {"healthy": 0.32, ...}
+            hfResultData = result.data[0]; // Đúng: Lấy phần tử đầu tiên trong mảng
             
             // --- BẮT ĐẦU SỬA LỖI (Sửa logic để đọc object) ---
 
