@@ -241,48 +241,53 @@ def edit_profile():
 # Nó chỉ nhận file âm thanh VÀ kết quả dự đoán (từ JS) để lưu vào DB.
 @app.route('/upload_audio', methods=['POST'])
 def upload_audio():
+    # 1. Nhận dữ liệu từ client
     audio_file = request.files.get('audio_data')
-    # Lấy kết quả chẩn đoán và độ tin cậy do JavaScript gửi lên
     diagnosis_result = request.form.get('diagnosis_result')
     confidence_str = request.form.get('confidence')
 
     if not audio_file or not diagnosis_result:
-        return jsonify({"error": "Không có file âm thanh hoặc kết quả chẩn đoán"}), 400
+        return jsonify({"error": "Thiếu thông tin (file hoặc kết quả)"}), 400
 
-    # 1. Lưu file âm thanh
-    user_prefix = f"user_{current_user.id}" if current_user.is_authenticated else "guest"
-    timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = secure_filename(f"{user_prefix}_{timestamp_str}.wav")
-    
-    # Đảm bảo thư mục 'uploads' tồn tại bên trong 'static'
-    upload_path = os.path.join(app.root_path, app.config['UPLOAD_FOLDER'])
-    os.makedirs(upload_path, exist_ok=True)
-    filepath = os.path.join(upload_path, filename)
-    
     try:
+        # 2. Tạo tên file và đường dẫn
+        user_prefix = f"user_{current_user.id}" if current_user.is_authenticated else "guest"
+        timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = secure_filename(f"{user_prefix}_{timestamp_str}.wav")
+        
+        # Đường dẫn lưu file
+        upload_path = os.path.join(app.root_path, 'static', 'uploads')
+        
+        # Tạo thư mục nếu chưa có (đề phòng)
+        if not os.path.exists(upload_path):
+            os.makedirs(upload_path)
+            
+        filepath = os.path.join(upload_path, filename)
+        
+        # 3. Lưu file âm thanh
         audio_file.save(filepath)
 
-        # 2. Lưu kết quả vào Database (nếu đã đăng nhập)
+        # 4. Lưu vào Database (QUAN TRỌNG: Chỉ lưu nếu đã đăng nhập)
         if current_user.is_authenticated:
             new_prediction = Prediction(
                 filename=filename,
                 user_id=current_user.id,
-                result=diagnosis_result, # Dùng kết quả từ JS
-                confidence=confidence_str or 'N/A' # Dùng độ tin cậy từ JS
+                result=diagnosis_result,
+                confidence=confidence_str or 'N/A'
             )
             db.session.add(new_prediction)
             db.session.commit()
 
-        # 3. Trả về JSON để JS hiển thị
+        # 5. Trả về kết quả thành công
         return jsonify({
             "success": True, 
-            # Trả về đường dẫn file đã lưu
             "filename": url_for('static', filename=f'uploads/{filename}'), 
-            "diagnosis_result": diagnosis_result # Gửi trả lại kết quả
+            "diagnosis_result": diagnosis_result
         })
+
     except Exception as e:
-        print(f"Lỗi khi lưu file hoặc lưu vào DB: {e}")
-        return jsonify({"error": "Lỗi máy chủ khi lưu kết quả"}), 500
+        print(f"LỖI UPLOAD: {e}") # In lỗi ra log để kiểm tra nếu cần
+        return jsonify({"error": "Lỗi máy chủ khi lưu dữ liệu"}), 500
 # ---------------------------------------------------
 
 # --- CÁC HÀM VÀ ROUTE "QUÊN MẬT KHẨU" (Giữ nguyên) ---
