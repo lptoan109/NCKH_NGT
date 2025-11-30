@@ -1,6 +1,5 @@
-// recorder.js
+// recorder.js - Bản Final (Đã bỏ hiển thị độ tin cậy)
 
-// Import thư viện Gradio Client trực tiếp ở đầu file
 import { Client } from "https://cdn.jsdelivr.net/npm/@gradio/client/dist/index.min.js";
 
 // --- HÀM TRỢ GIÚP: Chuyển Blob sang Base64 ---
@@ -8,15 +7,12 @@ function blobToBase64(blob) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.readAsDataURL(blob);
-        reader.onloadend = () => {
-            const base64data = reader.result;
-            resolve(base64data);
-        };
+        reader.onloadend = () => resolve(reader.result);
         reader.onerror = error => reject(error);
     });
 }
 
-// --- HÀM TRỢ GIÚP MỚI: Kiểm tra file âm thanh có bị im lặng không ---
+// --- HÀM TRỢ GIÚP: Kiểm tra file âm thanh im lặng ---
 async function isAudioSilent(audioBlob) {
     try {
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -29,22 +25,18 @@ async function isAudioSilent(audioBlob) {
             sumSquares += channelData[i] * channelData[i];
         }
         const rms = Math.sqrt(sumSquares / channelData.length);
-        
         const SILENCE_THRESHOLD = 0.01; 
         
         console.log("Audio RMS (âm lượng):", rms);
         return rms < SILENCE_THRESHOLD;
-
     } catch (error) {
-        console.error("Không thể phân tích âm thanh:", error);
+        console.error("Lỗi phân tích âm thanh:", error);
         return false;
     }
 }
-// -------------------------------------------
-
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Lấy các phần tử HTML cần thiết
+    // Lấy các phần tử HTML
     const recordButton = document.getElementById('record-button');
     const fileUploadInput = document.getElementById('file-upload');
     const timerDisplay = document.getElementById('timer');
@@ -55,17 +47,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const audioPlayer = resultPlayer.querySelector('audio');
     const diagnoseAgainButton = document.getElementById('diagnose-again-button');
 
-    // Các biến để quản lý trạng thái ghi âm
+    // Biến quản lý
     let mediaRecorder;
     let audioChunks = [];
     let isRecording = false;
     let timerInterval;
     let seconds = 0; 
 
-    if (recordButton) {
-        recordButton.addEventListener('click', toggleRecording);
-    }
-
+    if (recordButton) recordButton.addEventListener('click', toggleRecording);
     if (diagnoseAgainButton) {
         diagnoseAgainButton.addEventListener('click', () => {
             resultsPanel.style.display = 'none';
@@ -73,27 +62,18 @@ document.addEventListener('DOMContentLoaded', () => {
             resetTimer();
         });
     }
-
-    if (fileUploadInput) {
-        fileUploadInput.addEventListener('change', handleFileSelect);
-    }
+    if (fileUploadInput) fileUploadInput.addEventListener('change', handleFileSelect);
 
     async function handleFileSelect(event) {
         const file = event.target.files[0];
-        if (!file) {
-            return;
-        }
+        if (!file) return;
         event.target.value = null; 
         await handleRecordingStop(file, true);
     }
 
-
     async function toggleRecording() {
-        if (isRecording) {
-            stopRecording();
-        } else {
-            await startRecording();
-        }
+        if (isRecording) stopRecording();
+        else await startRecording();
     }
 
     async function startRecording() {
@@ -102,10 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
             mediaRecorder = new MediaRecorder(stream);
             audioChunks = [];
 
-            mediaRecorder.ondataavailable = event => {
-                audioChunks.push(event.data);
-            };
-
+            mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
             mediaRecorder.onstop = () => {
                 const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
                 handleRecordingStop(audioBlob); 
@@ -116,10 +93,9 @@ document.addEventListener('DOMContentLoaded', () => {
             isRecording = true;
             recordButton.classList.add('is-recording');
             startTimer();
-
         } catch (error) {
-            console.error('Lỗi khi truy cập micro:', error);
-            alert('Không thể truy cập micro. Vui lòng kiểm tra lại quyền truy cập trong cài đặt của trình duyệt.');
+            console.error('Lỗi mic:', error);
+            alert('Không thể truy cập micro. Kiểm tra quyền truy cập.');
         }
     }
 
@@ -132,7 +108,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    // --- Các hàm quản lý đồng hồ (giữ nguyên) ---
     function startTimer() {
         seconds = 0;
         timerDisplay.textContent = '00:00';
@@ -144,180 +119,125 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 1000);
     }
 
-    function stopTimer() {
-        clearInterval(timerInterval);
-    }
+    function stopTimer() { clearInterval(timerInterval); }
+    function resetTimer() { stopTimer(); seconds = 0; timerDisplay.textContent = '00:00'; }
 
-    function resetTimer() {
-        stopTimer();
-        seconds = 0;
-        timerDisplay.textContent = '00:00';
-    }
-
-
-    // --- HÀM XỬ LÝ MỚI KHI GHI ÂM DỪNG ---
+    // --- HÀM XỬ LÝ CHÍNH ---
     async function handleRecordingStop(audioBlob, isUpload = false) {
-        
-        // 1. Hiển thị bảng kết quả và ẩn bảng ghi âm
         recordingPanel.style.display = 'none';
         resultsPanel.style.display = 'block';
         resultPlayer.style.display = 'none'; 
 
-        // 2. Kiểm tra thời lượng (CHỈ ÁP DỤNG CHO GHI ÂM)
         if (!isUpload && seconds < 1) { 
-            console.log("Validation Lỗi: Âm thanh quá ngắn");
-            resultsContent.innerHTML = `
-                <div class="result-display warning"> 
-                    <div class="result-icon"><i class="fas fa-exclamation-triangle"></i></div>
-                    <p class="result-text-main">Âm thanh quá ngắn</p>
-                    <p class="result-text-sub">Bản ghi âm của bạn dưới 1 giây. Vui lòng ghi âm lại và ho rõ ràng hơn.</p>
-                </div>`;
-            resultPlayer.style.display = 'block'; 
-            audioPlayer.style.display = 'none'; 
-            audioPlayer.src = '';
+            showError("Âm thanh quá ngắn", "Bản ghi dưới 1 giây. Vui lòng thử lại.");
             return;
         }
 
-        // 3. Kiểm tra file có bị im lặng không (CHỈ ÁP DỤNG CHO GHI ÂM)
         resultsContent.innerHTML = '<p>Đang kiểm tra chất lượng âm thanh...</p>';
-        
         let audioIsSilent = false; 
-        if (!isUpload) {
-            audioIsSilent = await isAudioSilent(audioBlob);
-        }
+        if (!isUpload) audioIsSilent = await isAudioSilent(audioBlob);
 
         if (audioIsSilent) {
-            console.log("Validation Lỗi: Âm thanh quá im lặng");
-            resultsContent.innerHTML = `
-                <div class="result-display warning">
-                    <div class="result-icon"><i class="fas fa-exclamation-triangle"></i></div>
-                    <p class="result-text-main">Không phát hiện âm thanh</p>
-                    <p class="result-text-sub">Không phát hiện thấy tiếng ho hoặc âm thanh quá nhỏ. Vui lòng ghi âm lại hoặc tải lên file khác rõ ràng hơn.</p>
-                </div>`;
-            resultPlayer.style.display = 'block';
-            audioPlayer.style.display = 'none';
-            audioPlayer.src = '';
+            showError("Không phát hiện âm thanh", "Không thấy tiếng ho hoặc âm thanh quá nhỏ.");
             return;
         }
         
-        // Nếu vượt qua, tiếp tục gọi API
         resultsContent.innerHTML = '<p>Đang phân tích... Vui lòng chờ trong giây lát.</p>';
 
-        // 3. Gọi API Hugging Face
         const HF_SPACE_URL = "https://nckhngt-ngt-cough-api.hf.space/";
-
-        let hfResultData;
-        
-        // --- BẮT ĐẦU SỬA LỖI (Sửa logic để đọc object) ---
-        let predictions; // Sẽ là mảng: [{label: '...', confidence: ...}, ...]
-        // --- KẾT THÚC SỬA LỖI ---
+        let predictions;
         
         try {
             const client = await Client.connect(HF_SPACE_URL);
-            const result = await client.predict("/predict", {
-                audio_file: audioBlob 
-            });
-
-            hfResultData = result.data[0]; 
-            console.log("API Result Data:", hfResultData); // In ra để debug nếu cần
-
-            // --- BẮT ĐẦU SỬA LỖI (Logic xử lý đa năng) ---
+            const result = await client.predict("/predict", { audio_file: audioBlob });
             
-            // Kiểm tra xem dữ liệu có phải dạng phức tạp của Gradio không (có key 'confidences')
+            // Xử lý dữ liệu trả về từ API (Hỗ trợ cả 2 định dạng phổ biến)
+            const hfResultData = result.data[0];
+            console.log("Dữ liệu từ API:", hfResultData);
+
             if (hfResultData && Array.isArray(hfResultData.confidences)) {
-                // TRƯỜNG HỢP 1: Cấu trúc { label: "...", confidences: [...] }
                 predictions = hfResultData.confidences.map(item => ({
                     label: item.label,
-                    confidence: typeof item.confidence === 'number' ? item.confidence : parseFloat(item.confidence)
+                    confidence: item.confidence
                 }));
             } else if (typeof hfResultData === 'object' && hfResultData !== null) {
-                // TRƯỜNG HỢP 2: Cấu trúc Dictionary đơn giản { "healthy": 0.9, ... }
                 predictions = Object.entries(hfResultData)
-                    // Lọc bỏ các key không phải là số (đề phòng có key lạ như 'label')
-                    .filter(([key, value]) => typeof value === 'number' || (typeof value === 'string' && !isNaN(parseFloat(value))))
+                    .filter(([key, val]) => key !== 'label' && key !== 'confidences')
                     .map(([label, confidence]) => ({
                         label: label,
                         confidence: parseFloat(confidence)
                     }));
             } else {
-                 throw new Error("Format dữ liệu từ API không xác định.");
+                throw new Error("Không hiểu định dạng dữ liệu từ API.");
             }
 
-            if (!predictions || predictions.length === 0) {
-                 throw new Error("Không tìm thấy kết quả dự đoán hợp lệ.");
-            }
-            // --- KẾT THÚC SỬA LỖI ---
+            if (!predictions || predictions.length === 0) throw new Error("Không có kết quả dự đoán.");
 
         } catch (error) {
-            console.error('Lỗi khi gọi API Hugging Face:', error);
-            resultsContent.innerHTML = `<h2>Đã có lỗi xảy ra</h2><p>Lỗi xử lý kết quả AI.</p><p style="font-size: 0.8em; color: var(--text-light);">${error.message}</p>`;
+            console.error('Lỗi API:', error);
+            resultsContent.innerHTML = `<h2>Lỗi phân tích AI</h2><p>${error.message}</p>`;
             return;
         }
 
-        // 4. Lấy kết quả chẩn đoán và độ tin cậy
-        // (Phần này giữ nguyên vì 'predictions' đã được chuẩn hóa ở trên)
+        // Tìm kết quả tốt nhất
         const topPrediction = predictions.reduce((prev, current) => (prev.confidence > current.confidence) ? prev : current);
         const diagnosis_result = topPrediction.label; 
-        
         const confidence_raw = topPrediction.confidence;
-        const confidence_display = (confidence_raw * 100).toFixed(0); 
 
-
-        // 5. Gửi file âm thanh VÀ kết quả về server Flask để lưu
+        // Gửi về Server Flask để lưu (Vẫn gửi độ tin cậy để lưu vào DB cho admin xem, nhưng không hiện lên web)
         const formData = new FormData();
         formData.append('audio_data', audioBlob);
         formData.append('diagnosis_result', diagnosis_result);
         formData.append('confidence', confidence_raw.toFixed(2)); 
 
         try {
-            // Gọi về server Flask (trên PythonAnywhere)
             const flaskResponse = await fetch('/upload_audio', { method: 'POST', body: formData });
             const data = await flaskResponse.json();
 
             if (data.success) {
-                let iconHtml = '';
-                let resultClass = '';
-                
-                const classDisplayNames = {
-                    "healthy": "Khỏe mạnh",
-                    "asthma": "Hen suyễn",
-                    "covid": "Covid",
-                    "tuberculosis": "Bệnh lao"
-                };
-                
-                const displayResult = classDisplayNames[data.diagnosis_result] || data.diagnosis_result;
-
-                if (data.diagnosis_result === 'healthy') {
-                    iconHtml = '<i class="fas fa-check-circle"></i>';
-                    resultClass = 'success';
-                } else {
-                    iconHtml = '<i class="fas fa-exclamation-triangle"></i>';
-                    resultClass = 'warning';
-                }
-                
-                const resultHtml = `
-                    <div class="result-display ${resultClass}">
-                        <div class="result-icon">${iconHtml}</div>
-                        <p class="result-text-main">${displayResult}</p>
-                        
-                        <p style="color: var(--text-light); margin-top: 5px; font-size: 1em;">
-                            Độ tin cậy: <strong>${confidence_display}%</strong>
-                        </p>
-                        
-                        <p class="result-text-sub" style="margin-top: 15px;">Lưu ý: Kết quả chỉ mang tính chất tham khảo.</p>
-                    </div>
-                `;
-                resultsContent.innerHTML = resultHtml;
-                audioPlayer.src = data.filename; 
-                audioPlayer.style.display = 'block'; 
-                resultPlayer.style.display = 'block';
-
+                // Gọi hàm hiển thị kết quả (không truyền tham số confidence nữa)
+                showSuccess(data.diagnosis_result, data.filename);
             } else {
-                resultsContent.innerHTML = `<h2>Đã có lỗi xảy ra</h2><p>${data.error || 'Không thể lưu kết quả.'}</p>`;
+                resultsContent.innerHTML = `<h2>Lỗi máy chủ</h2><p>${data.error}</p>`;
             }
         } catch (error) {
-            console.error('Lỗi khi gửi kết quả về server Flask:', error);
-            resultsContent.innerHTML = '<h2>Đã có lỗi xảy ra</h2><p>Lỗi kết nối tới server (để lưu file).</p>';
+            resultsContent.innerHTML = '<h2>Lỗi kết nối</h2><p>Không thể lưu kết quả.</p>';
         }
+    }
+
+    function showError(title, message) {
+        resultsContent.innerHTML = `
+            <div class="result-display warning"> 
+                <div class="result-icon"><i class="fas fa-exclamation-triangle"></i></div>
+                <p class="result-text-main">${title}</p>
+                <p class="result-text-sub">${message}</p>
+            </div>`;
+        resultPlayer.style.display = 'block'; 
+        audioPlayer.style.display = 'none'; 
+        audioPlayer.src = '';
+    }
+
+    // --- HÀM HIỂN THỊ KẾT QUẢ ĐÃ ĐƯỢC CHỈNH SỬA ---
+    function showSuccess(diagnosis, filename) {
+        const classDisplayNames = {
+            "healthy": "Khỏe mạnh", "asthma": "Hen suyễn", "covid": "Covid", "tuberculosis": "Bệnh lao"
+        };
+        const displayResult = classDisplayNames[diagnosis] || diagnosis;
+        
+        let iconHtml = (diagnosis === 'healthy') ? '<i class="fas fa-check-circle"></i>' : '<i class="fas fa-exclamation-triangle"></i>';
+        let resultClass = (diagnosis === 'healthy') ? 'success' : 'warning';
+
+        // Đã xóa phần hiển thị Độ tin cậy (Confidence)
+        resultsContent.innerHTML = `
+            <div class="result-display ${resultClass}">
+                <div class="result-icon">${iconHtml}</div>
+                <p class="result-text-main">${displayResult}</p>
+                
+                <p class="result-text-sub" style="margin-top: 15px;">Lưu ý: Kết quả chỉ mang tính chất tham khảo.</p>
+            </div>`;
+            
+        audioPlayer.src = filename; 
+        audioPlayer.style.display = 'block'; 
+        resultPlayer.style.display = 'block';
     }
 });
