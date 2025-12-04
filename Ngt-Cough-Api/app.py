@@ -4,36 +4,42 @@ import torch.nn as nn
 from torchvision import models, transforms
 import librosa
 import numpy as np
-import noisereduce as nr
 import os
 
-# --- 1. CẤU HÌNH (Đã chỉnh theo notebook huấn luyện) ---
-SAMPLE_RATE = 16000
-N_MELS = 128       # QUAN TRỌNG: Sửa từ 256 thành 128 theo log huấn luyện
+# ==========================================
+# 1. CẤU HÌNH (ĐỒNG BỘ VỚI NOTEBOOK)
+# ==========================================
+SAMPLE_RATE = 22050        # Đã sửa từ 16000 -> 22050
+N_MELS = 128
 N_FFT = 2048
 HOP_LENGTH = 512
 SILENCE_THRESHOLD_DB = 20
-SEGMENT_LENGTH_S = 4
-TARGET_SAMPLES = SEGMENT_LENGTH_S * SAMPLE_RATE 
+SEGMENT_LENGTH_S = 5       # Đã sửa từ 4s -> 5s
+TARGET_SAMPLES = int(SAMPLE_RATE * SEGMENT_LENGTH_S) # 110250 samples
+TARGET_WIDTH = (TARGET_SAMPLES // HOP_LENGTH) + 1    # 216 frames
 CLASS_NAMES = ["asthma", "covid", "healthy", "tuberculosis"]
 DEVICE = torch.device("cpu")
 
+print(f"Cấu hình Audio: SR={SAMPLE_RATE}, Duration={SEGMENT_LENGTH_S}s")
+print(f"Input Shape mong đợi (trước khi vào model): (128, {TARGET_WIDTH})")
+
 # ==========================================
-# 2. ĐỊNH NGHĨA MÔ HÌNH: EffNetV2B0_CNN (Model 2)
+# 2. ĐỊNH NGHĨA MÔ HÌNH
 # ==========================================
 class EffNetV2B0_CNN(nn.Module):
     def __init__(self, num_classes=4, dropout=0.5):
         super(EffNetV2B0_CNN, self).__init__()
         
-        # Chuyển 1 kênh (trắng đen) sang 3 kênh (màu) cho EfficientNet
+        # Chuyển 1 kênh (Spectrogram) sang 3 kênh (RGB giả lập) cho EfficientNet
         self.channel_converter = nn.Conv2d(1, 3, kernel_size=1, stride=1, padding=0, bias=False)
         self.bn = nn.BatchNorm2d(3)
         self.relu = nn.ReLU(inplace=True)
         
-        # Resize về 224x224 như lúc train
+        # Resize về 224x224 (Kích thước chuẩn của EfficientNet)
+        # Lưu ý: Model sẽ nhận input (128, 216) và resize thành (224, 224) bên trong
         self.resizer = transforms.Resize((224, 224), antialias=True)
         
-        # Tải kiến trúc EfficientNet-B0 (Không tải weights pre-trained để tránh lỗi mạng)
+        # Tải kiến trúc EfficientNet-B0
         self.base_model = models.efficientnet_b0(weights=None)
         
         # Thay thế lớp classifier cuối cùng
@@ -44,62 +50,88 @@ class EffNetV2B0_CNN(nn.Module):
         )
 
     def forward(self, x):
-        # x shape: (batch, 1, 128, time)
+        # x shape đầu vào: (batch, 1, 128, 216)
         x = self.relu(self.bn(self.channel_converter(x))) 
-        x = self.resizer(x) # Resize về (224, 224)
+        x = self.resizer(x) # Resize nội bộ về (224, 224)
         output = self.base_model(x)
         return output
 
 # ==========================================
-
-# --- 3. Tải Model ---
+# 3. TẢI MODEL
+# ==========================================
 print("Đang tải mô hình...")
 model = EffNetV2B0_CNN(num_classes=len(CLASS_NAMES))
 try:
-    # Load trọng số từ file
+    # Load trọng số từ file best_model.pth
     state_dict = torch.load("best_model.pth", map_location=DEVICE)
     
-    # Xử lý trường hợp key có prefix 'module.' (nếu train nhiều GPU) hoặc sai lệch nhỏ
+    # Xử lý nếu file save có prefix 'module.' hoặc nằm trong key 'model_state_dict'
     if 'model_state_dict' in state_dict:
         state_dict = state_dict['model_state_dict']
         
-    model.load_state_dict(state_dict, strict=False) # strict=False để bỏ qua các lỗi nhỏ không quan trọng
+    model.load_state_dict(state_dict, strict=False)
     model.to(DEVICE)
     model.eval()
-    print("-> Tải thành công Model 2 (EffNetV2B0_CNN)!")
+    print("-> Tải thành công Model!")
 except Exception as e:
     print(f"-> LỖI TẢI MODEL: {e}")
+    print("Vui lòng đảm bảo file 'best_model.pth' nằm cùng thư mục với app.py")
 
-# --- 4. Hàm Tiền xử lý ---
-def normalize_spectrogram(data):
-    data_min = np.min(data)
-    data_max = np.max(data)
-    if data_max == data_min: return np.zeros_like(data)
-    return (data - data_min) / (data_max - data_min + 1e-8)
-
+# ==========================================
+# 4. HÀM TIỀN XỬ LÝ (ĐỒNG BỘ VỚI NOTEBOOK)
+# ==========================================
 def process_audio(file_path):
+    """
+    Quy trình xử lý khớp hoàn toàn với hàm wav_to_spec trong notebook:
+    1. Load SR 22050
+    2. Trim silence
+    3. Pad/Crop audio length
+    4. Mel Spectrogram -> DB
+    5. Min-Max Normalize (0-1)
+    6. Fix Spectrogram shape (128, 216)
+    """
     try:
-        y, sr = librosa.load(file_path, sr=SAMPLE_RATE, mono=True)
-        y = librosa.util.normalize(y)
-        y_denoised = nr.reduce_noise(y=y, sr=sr)
-        y_trimmed, _ = librosa.effects.trim(y_denoised, top_db=SILENCE_THRESHOLD_DB)
+        # 1. Load audio
+        y, sr = librosa.load(file_path, sr=SAMPLE_RATE)
         
-        if len(y_trimmed) < 1: return None
-
-        if len(y_trimmed) < TARGET_SAMPLES:
-            y_padded = np.pad(y_trimmed, (0, TARGET_SAMPLES - len(y_trimmed)), 'constant')
-        else:
-            y_padded = y_trimmed[:TARGET_SAMPLES]
+        # Lưu ý: Đã BỎ bước khử nhiễu (noisereduce) vì trong notebook code đó bị comment
+        
+        # 2. Loại bỏ khoảng lặng
+        y, _ = librosa.effects.trim(y, top_db=SILENCE_THRESHOLD_DB)
+        
+        # 3. Pad/Crop audio array về đúng độ dài (TARGET_SAMPLES)
+        if len(y) > TARGET_SAMPLES:
+            y = y[:TARGET_SAMPLES]
+        elif len(y) < TARGET_SAMPLES:
+            y = np.pad(y, (0, TARGET_SAMPLES - len(y)), mode='constant')
             
-        # Tính Mel Spectrogram với N_MELS=128
-        mel_spec = librosa.feature.melspectrogram(
-            y=y_padded, sr=sr, n_mels=N_MELS, n_fft=N_FFT, hop_length=HOP_LENGTH
+        # 4. Tạo Mel Spectrogram
+        S = librosa.feature.melspectrogram(
+            y=y, 
+            sr=sr, 
+            n_mels=N_MELS, 
+            n_fft=N_FFT, 
+            hop_length=HOP_LENGTH
         )
-        mel_spec_db = librosa.power_to_db(mel_spec, ref=np.max, amin=1e-10)
-        mel_spec_norm = normalize_spectrogram(mel_spec_db)
+        
+        # 5. Chuyển sang dB
+        S_db = librosa.power_to_db(S, ref=np.max)
+        
+        # 6. Chuẩn hóa Min-Max (về 0-1) - Quan trọng!
+        # Notebook: S_db = (S_db - S_db.min()) / (S_db.max() - S_db.min() + 1e-6)
+        min_val = S_db.min()
+        max_val = S_db.max()
+        S_db = (S_db - min_val) / (max_val - min_val + 1e-6)
+        
+        # 7. Đảm bảo đúng shape (128, 216) cho spectrogram
+        # Do sai số làm tròn khi tính frame, chiều rộng có thể lệch 1-2 pixel
+        if S_db.shape[1] > TARGET_WIDTH:
+            S_db = S_db[:, :TARGET_WIDTH]
+        elif S_db.shape[1] < TARGET_WIDTH:
+            S_db = np.pad(S_db, ((0,0), (0, TARGET_WIDTH - S_db.shape[1])), mode='constant')
 
-        # PyTorch shape: (1, 1, 128, time)
-        tensor_input = torch.tensor(mel_spec_norm, dtype=torch.float32).unsqueeze(0).unsqueeze(0)
+        # Chuyển sang Tensor PyTorch: (Batch, Channel, Height, Width) -> (1, 1, 128, 216)
+        tensor_input = torch.tensor(S_db, dtype=torch.float32).unsqueeze(0).unsqueeze(0)
         
         return tensor_input
         
@@ -107,29 +139,44 @@ def process_audio(file_path):
         print(f"Lỗi tiền xử lý: {e}")
         return None
 
-# --- 5. Hàm dự đoán (Trả về đúng định dạng cho Web) ---
+# ==========================================
+# 5. HÀM DỰ ĐOÁN
+# ==========================================
 def predict(audio_file):
-    if model is None: return {"Lỗi": "Mô hình chưa được tải"}
-    if audio_file is None: return {"Lỗi": "Chưa có file âm thanh"}
+    if model is None: 
+        return "Lỗi: Mô hình chưa được tải (thiếu file .pth)"
     
+    if audio_file is None: 
+        return "Vui lòng tải lên file âm thanh."
+    
+    # Tiền xử lý
     tensor_input = process_audio(audio_file)
-    if tensor_input is None: return {"Lỗi": "File âm thanh không hợp lệ (quá ngắn hoặc im lặng)"}
+    if tensor_input is None: 
+        return "Lỗi: Không thể xử lý file âm thanh này."
     
+    # Dự đoán
     with torch.no_grad():
         tensor_input = tensor_input.to(DEVICE)
         outputs = model(tensor_input)
         probabilities = torch.nn.functional.softmax(outputs[0], dim=0)
     
-    # Trả về dictionary {Tên bệnh: Xác suất}
+    # Format kết quả
     confidences = {CLASS_NAMES[i]: float(probabilities[i]) for i in range(len(CLASS_NAMES))}
     return confidences
 
-# --- 6. Giao diện ---
+# ==========================================
+# 6. GIAO DIỆN GRADIO
+# ==========================================
+description = """
+Dự đoán bệnh hô hấp từ tiếng ho. 
+"""
+
 iface = gr.Interface(
     fn=predict,
-    inputs=gr.Audio(type="filepath", label="Tải lên file tiếng ho"),
-    outputs=gr.Label(num_top_classes=4),
-    title="NGT Cough AI - PyTorch (Model 2)",
+    inputs=gr.Audio(type="filepath", label="Tải lên file tiếng ho (.wav)"),
+    outputs=gr.Label(num_top_classes=4, label="Kết quả dự đoán"),
+    title="AI Chẩn Đoán Tiếng Ho (Đồng bộ Training)",
+    description=description,
     allow_flagging="never"
 )
 
