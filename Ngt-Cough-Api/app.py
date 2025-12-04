@@ -77,7 +77,7 @@ def process_audio(file_path):
         y, _ = librosa.effects.trim(y, top_db=SILENCE_THRESHOLD_DB)
         
         # KIỂM TRA FILE RỖNG (Quan trọng)
-        if len(y) == 0:
+        if len(y) <1:
             return None
         
         # 3. Pad/Crop audio về đúng độ dài 5s
