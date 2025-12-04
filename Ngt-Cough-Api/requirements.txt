@@ -1,0 +1,7 @@
+gradio
+librosa
+numpy
+noisereduce
+torch
+torchvision
+torchaudio
