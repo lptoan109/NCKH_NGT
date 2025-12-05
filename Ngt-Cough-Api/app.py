@@ -4,10 +4,17 @@ import torch.nn as nn
 from torchvision import models, transforms
 import librosa
 import numpy as np
+import noisereduce as nr  # <--- Đã thêm thư viện lọc nhiễu
 import os
+import warnings
+
+# --- TẮT CẢNH BÁO RÁC ---
+warnings.filterwarnings("ignore", category=FutureWarning)
+warnings.filterwarnings("ignore", message="PySoundFile failed")
+# -------------------------
 
 # ==========================================
-# 1. CẤU HÌNH (ĐỒNG BỘ VỚI NOTEBOOK TRAIN)
+# 1. CẤU HÌNH
 # ==========================================
 SAMPLE_RATE = 22050        # Chuẩn: 22050Hz
 N_MELS = 128
@@ -15,8 +22,8 @@ N_FFT = 2048
 HOP_LENGTH = 512
 SILENCE_THRESHOLD_DB = 20
 SEGMENT_LENGTH_S = 5       # Chuẩn: 5 giây
-TARGET_SAMPLES = int(SAMPLE_RATE * SEGMENT_LENGTH_S) # 110250 samples
-TARGET_WIDTH = (TARGET_SAMPLES // HOP_LENGTH) + 1    # 216 frames
+TARGET_SAMPLES = int(SAMPLE_RATE * SEGMENT_LENGTH_S) 
+TARGET_WIDTH = (TARGET_SAMPLES // HOP_LENGTH) + 1    
 CLASS_NAMES = ["asthma", "covid", "healthy", "tuberculosis"]
 DEVICE = torch.device("cpu")
 
@@ -28,15 +35,11 @@ print(f"Cấu hình Audio: SR={SAMPLE_RATE}, Duration={SEGMENT_LENGTH_S}s")
 class EffNetV2B0_CNN(nn.Module):
     def __init__(self, num_classes=4, dropout=0.5):
         super(EffNetV2B0_CNN, self).__init__()
-        # Chuyển 1 kênh (Spectrogram) sang 3 kênh (RGB giả lập)
         self.channel_converter = nn.Conv2d(1, 3, kernel_size=1, stride=1, padding=0, bias=False)
         self.bn = nn.BatchNorm2d(3)
         self.relu = nn.ReLU(inplace=True)
-        # Resize về 224x224 (Input chuẩn EfficientNet)
         self.resizer = transforms.Resize((224, 224), antialias=True)
-        # Tải kiến trúc EfficientNet-B0
         self.base_model = models.efficientnet_b0(weights=None)
-        # Thay thế lớp classifier cuối cùng
         in_features = self.base_model.classifier[1].in_features
         self.base_model.classifier = nn.Sequential(
             nn.Dropout(p=dropout, inplace=True),
@@ -66,18 +69,27 @@ except Exception as e:
     print(f"-> LỖI TẢI MODEL: {e}")
 
 # ==========================================
-# 4. HÀM TIỀN XỬ LÝ (GIỐNG NOTEBOOK)
+# 4. HÀM TIỀN XỬ LÝ
 # ==========================================
 def process_audio(file_path):
     try:
-        # 1. Load audio với SR chuẩn 22050
+        # 1. Load audio
         y, sr = librosa.load(file_path, sr=SAMPLE_RATE)
         
+        # --- BƯỚC MỚI: LỌC NHIỄU (DENOISE) ---
+        try:
+            # stationarity=True giúp lọc nhiễu nền ổn định (tiếng quạt, gió...)
+            # prop_decrease=1.0: Mức độ giảm nhiễu tối đa
+            y = nr.reduce_noise(y=y, sr=sr, stationary=True, prop_decrease=1.0)
+        except Exception as e:
+            print(f"Cảnh báo: Không thể lọc nhiễu ({e}), tiếp tục xử lý gốc.")
+        # -------------------------------------
+
         # 2. Loại bỏ khoảng lặng
         y, _ = librosa.effects.trim(y, top_db=SILENCE_THRESHOLD_DB)
         
-        # KIỂM TRA FILE RỖNG (Quan trọng)
-        if len(y) <1:
+        # Kiểm tra file rỗng
+        if len(y) == 0:
             return None
         
         # 3. Pad/Crop audio về đúng độ dài 5s
@@ -94,7 +106,7 @@ def process_audio(file_path):
         # 5. Chuyển sang dB
         S_db = librosa.power_to_db(S, ref=np.max)
         
-        # 6. Chuẩn hóa Min-Max (về 0-1) - Khớp notebook
+        # 6. Chuẩn hóa Min-Max (0-1)
         min_val = S_db.min()
         max_val = S_db.max()
         S_db = (S_db - min_val) / (max_val - min_val + 1e-6)
@@ -105,7 +117,7 @@ def process_audio(file_path):
         elif S_db.shape[1] < TARGET_WIDTH:
             S_db = np.pad(S_db, ((0,0), (0, TARGET_WIDTH - S_db.shape[1])), mode='constant')
 
-        # Chuyển sang Tensor: (1, 1, 128, 216)
+        # Chuyển sang Tensor
         tensor_input = torch.tensor(S_db, dtype=torch.float32).unsqueeze(0).unsqueeze(0)
         return tensor_input
         
@@ -114,32 +126,25 @@ def process_audio(file_path):
         return None
 
 # ==========================================
-# 5. HÀM DỰ ĐOÁN (RETURN DICTIONARY CHO API)
+# 5. HÀM DỰ ĐOÁN
 # ==========================================
 def predict(audio_file):
-    # 1. Kiểm tra model
     if model is None: 
-        return {"Lỗi": "Server"}
+        return {"Lỗi": "Mô hình chưa được tải (thiếu file .pth)"}
     
-    # 2. Kiểm tra file input
     if audio_file is None: 
         return {"Lỗi": "Chưa có file âm thanh"}
     
-    # 3. Tiền xử lý
     tensor_input = process_audio(audio_file)
     if tensor_input is None: 
         return {"Lỗi": "File âm thanh không hợp lệ (quá ngắn hoặc im lặng)"}
     
-    # 4. Dự đoán
     with torch.no_grad():
         tensor_input = tensor_input.to(DEVICE)
         outputs = model(tensor_input)
         probabilities = torch.nn.functional.softmax(outputs[0], dim=0)
     
-    # 5. Trả về kết quả dạng Dictionary {Label: Probability}
-    # Đây là định dạng chuẩn để web app có thể đọc được JSON
     confidences = {CLASS_NAMES[i]: float(probabilities[i]) for i in range(len(CLASS_NAMES))}
-    
     return confidences
 
 # ==========================================
@@ -149,7 +154,7 @@ iface = gr.Interface(
     fn=predict,
     inputs=gr.Audio(type="filepath", label="Tải lên file tiếng ho"),
     outputs=gr.Label(num_top_classes=4),
-    title="NGT Cough AI - PyTorch (Final)",
+    title="NGT Cough AI - PyTorch (Có lọc nhiễu)",
     allow_flagging="never"
 )
 
