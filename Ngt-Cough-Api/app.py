@@ -154,7 +154,7 @@ iface = gr.Interface(
     fn=predict,
     inputs=gr.Audio(type="filepath", label="Tải lên file tiếng ho"),
     outputs=gr.Label(num_top_classes=4),
-    title="NGT Cough AI - PyTorch (Có lọc nhiễu)",
+    title="API NGT",
     allow_flagging="never"
 )
 
